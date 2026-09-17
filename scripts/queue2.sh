@@ -9,7 +9,7 @@ export HF_HUB_DISABLE_PROGRESS_BARS=1
 mkdir -p results logs
 
 until grep -q "queue finished" logs_queue.log 2>/dev/null; do sleep 120; done
-echo "[$(date '+%H:%M:%S')] stage 6: tool selection on top of the base model"
+echo "[$(date '+%H:%M:%S')] stage 6: the agent sector (tools and browser actions)"
 
 # Where the model stood before this sector was trained.
 $PY scripts/eval_general.py --checkpoint runs/v6-all/best-calibrated.pt \
@@ -17,14 +17,14 @@ $PY scripts/eval_general.py --checkpoint runs/v6-all/best-calibrated.pt \
   --out results/v6-base_tools_before.json > logs/v6_tools_before.log 2>&1
 
 $PY scripts/train.py --backbone answerdotai/ModernBERT-base --init-from runs/v6-all/best.pt \
-  --train data/tools.jsonl --replay data/train_v4.jsonl --replay-share 0.4 \
+  --train data/agent.jsonl --replay data/train_v4.jsonl --replay-share 0.4 \
   --dev data/dev_strat_v2.jsonl --out runs/v11-tools \
   --steps 6000 --decision-batch 6 --anchor-batch 12 --max-length 320 --lr 1.5e-5 \
   --eval-every 2000 --eval-rows 3000 > logs/v11.log 2>&1
 
 $PY scripts/calibrate.py --checkpoint runs/v11-tools/best.pt --dev data/dev_strat_v2.jsonl \
   --rows 3000 > logs/v11_calib.log 2>&1
-for set in tools general quiz multilingual; do
+for set in tools browser general quiz multilingual; do
   [ -f "data/test_${set}.jsonl" ] || continue
   $PY scripts/eval_general.py --checkpoint runs/v11-tools/best-calibrated.pt \
     --test "data/test_${set}.jsonl" --batch-size 8 --max-length 512 \
