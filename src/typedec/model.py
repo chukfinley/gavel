@@ -34,11 +34,24 @@ ENTAILMENT, NEUTRAL, CONTRADICTION = 0, 1, 2
 
 
 class EntailmentScorer(nn.Module):
-    def __init__(self, backbone: str):
+    """Works with an encoder backbone and with a decoder backbone.
+
+    A decoder (Qwen and friends) has no padding token and pools the last
+    token instead of the first, which `AutoModelForSequenceClassification`
+    handles once the padding id is set.
+    """
+
+    def __init__(self, backbone: str, gradient_checkpointing: bool = False):
         super().__init__()
         self.backbone_name = backbone
         self.model = AutoModelForSequenceClassification.from_pretrained(
             backbone, num_labels=3, trust_remote_code=True)
+        if self.model.config.pad_token_id is None:
+            self.model.config.pad_token_id = getattr(
+                self.model.config, "eos_token_id", 0) or 0
+        if gradient_checkpointing:
+            self.model.gradient_checkpointing_enable()
+            self.model.config.use_cache = False
         self.register_buffer("log_temperature", torch.zeros(1))
 
     def pair_logits(self, encoding: dict) -> torch.Tensor:
@@ -54,4 +67,7 @@ class EntailmentScorer(nn.Module):
 
 
 def build_tokenizer(backbone: str):
-    return AutoTokenizer.from_pretrained(backbone, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(backbone, trust_remote_code=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    return tokenizer

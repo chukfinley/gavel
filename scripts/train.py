@@ -103,6 +103,8 @@ def main() -> None:
     parser.add_argument("--init-from", default="", help="continue from this checkpoint")
     parser.add_argument("--replay", default="", help="older data mixed in, against forgetting")
     parser.add_argument("--replay-share", type=float, default=0.3)
+    parser.add_argument("--grad-checkpoint", action="store_true",
+                        help="trade speed for memory, needed for decoder backbones")
     parser.add_argument("--source-alpha", type=float, default=0.5,
                         help="0 = every source equally often, 1 = by size")
     parser.add_argument("--seed", type=int, default=17)
@@ -115,7 +117,7 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     tokenizer = build_tokenizer(args.backbone)
-    model = EntailmentScorer(args.backbone)
+    model = EntailmentScorer(args.backbone, gradient_checkpointing=args.grad_checkpoint)
     if args.init_from:
         # A new sector does not change the model: the head keeps its three
         # outputs and the options live in the text. Continuing from a
@@ -158,40 +160,48 @@ def main() -> None:
 
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimiser, schedule)
 
-    best, started, history = 0.0, time.time(), []
+    best, started, history, skipped = 0.0, time.time(), [], 0
     for step in range(1, args.steps + 1):
-        anchor = rng.sample(anchor_rows, args.anchor_batch)
-        encoding, labels = encode_anchor(anchor, tokenizer, args.max_length)
-        with torch.autocast("cuda", dtype=torch.bfloat16):
-            anchor_loss = F.cross_entropy(
-                model.pair_logits(to_device(encoding, device)).float(), labels.to(device))
-        anchor_loss.backward()
+        try:
+            anchor = rng.sample(anchor_rows, args.anchor_batch)
+            encoding, labels = encode_anchor(anchor, tokenizer, args.max_length)
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                anchor_loss = F.cross_entropy(
+                    model.pair_logits(to_device(encoding, device)).float(), labels.to(device))
+            anchor_loss.backward()
 
-        # Every few steps the batch comes from the long pool, so that the model
-        # learns to read states of a few thousand tokens. Training only on short
-        # pairs gives a model that cannot use a long state at inference.
-        use_long = long_rows and step % args.long_every == 0
-        source_rows = long_rows if use_long else rows
-        size = args.long_batch if use_long else args.decision_batch
-        length = args.long_max_length if use_long else args.max_length
-        if replay_rows and not use_long and rng.random() < args.replay_share:
-            decision = rng.sample(replay_rows, size)
-        elif use_long:
-            decision = rng.sample(long_rows, size)
-        else:
-            decision = [rng.choice(pools[name]) for name in
-                        rng.choices(names, weights=weights, k=size)]
-        encoding, mask, labels = encode_options(decision, tokenizer, length)
-        mask, labels = mask.to(device), labels.to(device)
-        with torch.autocast("cuda", dtype=torch.bfloat16):
-            logits = model.option_logits(to_device(encoding, device), mask).float()
-        decision_loss = F.cross_entropy(logits, labels) + args.brier_weight * brier(logits, labels, mask)
-        decision_loss.backward()
+            # Every few steps the batch comes from the long pool, so that the model
+            # learns to read states of a few thousand tokens. Training only on short
+            # pairs gives a model that cannot use a long state at inference.
+            use_long = long_rows and step % args.long_every == 0
+            source_rows = long_rows if use_long else rows
+            size = args.long_batch if use_long else args.decision_batch
+            length = args.long_max_length if use_long else args.max_length
+            if replay_rows and not use_long and rng.random() < args.replay_share:
+                decision = rng.sample(replay_rows, size)
+            elif use_long:
+                decision = rng.sample(long_rows, size)
+            else:
+                decision = [rng.choice(pools[name]) for name in
+                            rng.choices(names, weights=weights, k=size)]
+            encoding, mask, labels = encode_options(decision, tokenizer, length)
+            mask, labels = mask.to(device), labels.to(device)
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                logits = model.option_logits(to_device(encoding, device), mask).float()
+            decision_loss = F.cross_entropy(logits, labels) + args.brier_weight * brier(logits, labels, mask)
+            decision_loss.backward()
 
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-        optimiser.step()
-        scheduler.step()
-        optimiser.zero_grad(set_to_none=True)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            optimiser.step()
+            scheduler.step()
+            optimiser.zero_grad(set_to_none=True)
+        except torch.OutOfMemoryError:
+            # One long row with many options can exceed the card. Skipping
+            # that batch costs one step; raising costs the whole run.
+            optimiser.zero_grad(set_to_none=True)
+            torch.cuda.empty_cache()
+            skipped += 1
+            continue
 
         if step % 100 == 0:
             print(f"step {step}/{args.steps} anchor {anchor_loss.item():.4f} "
@@ -208,7 +218,7 @@ def main() -> None:
                             "args": vars(args)}, out / "best.pt")
             (out / "history.json").write_text(json.dumps(history, indent=2))
 
-    print(f"best mean over strata {best:.4f}")
+    print(f"best mean over strata {best:.4f}  (skipped {skipped} batches)")
 
 
 if __name__ == "__main__":
