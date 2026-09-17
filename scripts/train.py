@@ -28,6 +28,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import torch
 from torch.nn import functional as F
 
+from collections import defaultdict                                                # noqa: E402
+
 from typedec.encoding import NLI_SOURCES, encode_anchor, encode_options, to_device  # noqa: E402
 from typedec.losses import balanced_accuracy, brier, expected_calibration_error      # noqa: E402
 from typedec.model import EntailmentScorer, build_tokenizer                          # noqa: E402
@@ -36,25 +38,46 @@ from typedec.schema import read_jsonl                                           
 
 @torch.no_grad()
 def evaluate(model, rows, tokenizer, device, batch_size, max_length) -> dict:
+    """Accuracy for each source, and the mean over sources.
+
+    The mean over strata is the selection number. Pooled accuracy lets the
+    largest source decide, which in run 3 hid the loss of language
+    understanding behind a rising curve.
+    """
     model.eval()
-    probabilities, labels = [], []
-    for start in range(0, len(rows), batch_size):
-        chunk = rows[start : start + batch_size]
-        encoding, mask, label = encode_options(chunk, tokenizer, max_length)
-        with torch.autocast("cuda", dtype=torch.bfloat16):
-            logits = model.option_logits(to_device(encoding, device), mask.to(device))
-        probabilities.append(torch.softmax(logits.float(), dim=-1).cpu())
-        labels.append(label)
-    width = max(p.size(1) for p in probabilities)
-    stacked = torch.cat([F.pad(p, (0, width - p.size(1))) for p in probabilities])
-    target = torch.cat(labels)
-    prediction = stacked.argmax(dim=-1)
+    by_source = defaultdict(list)
+    for row in rows:
+        by_source[row.source or "all"].append(row)
+
+    strata, pooled_correct, pooled_rows = {}, 0, 0
+    all_probabilities, all_labels = [], []
+    for source, source_rows in sorted(by_source.items()):
+        probabilities, labels = [], []
+        for start in range(0, len(source_rows), batch_size):
+            chunk = source_rows[start : start + batch_size]
+            encoding, mask, label = encode_options(chunk, tokenizer, max_length)
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                logits = model.option_logits(to_device(encoding, device), mask.to(device))
+            probabilities.append(torch.softmax(logits.float(), dim=-1).cpu())
+            labels.append(label)
+        width = max(p.size(1) for p in probabilities)
+        stacked = torch.cat([F.pad(p, (0, width - p.size(1))) for p in probabilities])
+        target = torch.cat(labels)
+        prediction = stacked.argmax(dim=-1)
+        correct = (prediction == target).float()
+        strata[source] = round(correct.mean().item(), 4)
+        pooled_correct += correct.sum().item()
+        pooled_rows += target.numel()
+        all_probabilities.append(F.pad(stacked, (0, 16 - stacked.size(1))))
+        all_labels.append(target)
+
     model.train()
     return {
-        "accuracy": (prediction == target).float().mean().item(),
-        "balanced_accuracy": balanced_accuracy(prediction, target),
-        "ece": expected_calibration_error(stacked, target),
-        "rows": target.numel(),
+        "mean_over_strata": sum(strata.values()) / max(len(strata), 1),
+        "pooled_accuracy": pooled_correct / max(pooled_rows, 1),
+        "ece": expected_calibration_error(torch.cat(all_probabilities), torch.cat(all_labels)),
+        "rows": pooled_rows,
+        "strata": strata,
     }
 
 
@@ -80,6 +103,8 @@ def main() -> None:
     parser.add_argument("--init-from", default="", help="continue from this checkpoint")
     parser.add_argument("--replay", default="", help="older data mixed in, against forgetting")
     parser.add_argument("--replay-share", type=float, default=0.3)
+    parser.add_argument("--source-alpha", type=float, default=0.5,
+                        help="0 = every source equally often, 1 = by size")
     parser.add_argument("--seed", type=int, default=17)
     args = parser.parse_args()
 
@@ -103,6 +128,15 @@ def main() -> None:
 
     rows = list(read_jsonl(args.train))
     anchor_rows = [r for r in rows if r.source in NLI_SOURCES]
+
+    # Sources are drawn with a dampened weight (count ** alpha). With the raw
+    # count the three large inference sets and the generated packets take most
+    # of the batches, which is how run 3 lost the smaller domains.
+    pools = defaultdict(list)
+    for row in rows:
+        pools[row.source].append(row)
+    names = sorted(pools)
+    weights = [len(pools[name]) ** args.source_alpha for name in names]
     long_rows = list(read_jsonl(args.long)) if args.long else []
     # Training only on the new sector makes the model forget the old ones.
     # A share of old rows in every draw keeps them.
@@ -139,8 +173,12 @@ def main() -> None:
         size = args.long_batch if use_long else args.decision_batch
         length = args.long_max_length if use_long else args.max_length
         if replay_rows and not use_long and rng.random() < args.replay_share:
-            source_rows = replay_rows
-        decision = rng.sample(source_rows, size)
+            decision = rng.sample(replay_rows, size)
+        elif use_long:
+            decision = rng.sample(long_rows, size)
+        else:
+            decision = [rng.choice(pools[name]) for name in
+                        rng.choices(names, weights=weights, k=size)]
         encoding, mask, labels = encode_options(decision, tokenizer, length)
         mask, labels = mask.to(device), labels.to(device)
         with torch.autocast("cuda", dtype=torch.bfloat16):
@@ -162,13 +200,13 @@ def main() -> None:
             metrics["step"] = step
             history.append(metrics)
             print(f"  dev {metrics}", flush=True)
-            if metrics["accuracy"] > best:
-                best = metrics["accuracy"]
+            if metrics["mean_over_strata"] > best:
+                best = metrics["mean_over_strata"]
                 torch.save({"model": model.state_dict(), "backbone": args.backbone,
                             "args": vars(args)}, out / "best.pt")
             (out / "history.json").write_text(json.dumps(history, indent=2))
 
-    print(f"best dev accuracy {best:.4f}")
+    print(f"best mean over strata {best:.4f}")
 
 
 if __name__ == "__main__":
