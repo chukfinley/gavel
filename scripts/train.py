@@ -77,6 +77,9 @@ def main() -> None:
     parser.add_argument("--long-every", type=int, default=4, help="use a long batch every N steps")
     parser.add_argument("--long-batch", type=int, default=1)
     parser.add_argument("--long-max-length", type=int, default=1024)
+    parser.add_argument("--init-from", default="", help="continue from this checkpoint")
+    parser.add_argument("--replay", default="", help="older data mixed in, against forgetting")
+    parser.add_argument("--replay-share", type=float, default=0.3)
     parser.add_argument("--seed", type=int, default=17)
     args = parser.parse_args()
 
@@ -87,12 +90,23 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     tokenizer = build_tokenizer(args.backbone)
-    model = EntailmentScorer(args.backbone).to(device)
+    model = EntailmentScorer(args.backbone)
+    if args.init_from:
+        # A new sector does not change the model: the head keeps its three
+        # outputs and the options live in the text. Continuing from a
+        # checkpoint is therefore enough, no part has to be replaced.
+        state = torch.load(args.init_from, map_location="cpu", weights_only=False)
+        model.load_state_dict(state["model"])
+        print(f"continued from {args.init_from}", flush=True)
+    model = model.to(device)
     model.train()
 
     rows = list(read_jsonl(args.train))
     anchor_rows = [r for r in rows if r.source in NLI_SOURCES]
     long_rows = list(read_jsonl(args.long)) if args.long else []
+    # Training only on the new sector makes the model forget the old ones.
+    # A share of old rows in every draw keeps them.
+    replay_rows = list(read_jsonl(args.replay)) if args.replay else []
     dev_rows = list(read_jsonl(args.dev))[: args.eval_rows]
     print(f"train {len(rows)}  anchor {len(anchor_rows)}  long {len(long_rows)}  "
           f"dev {len(dev_rows)}", flush=True)
@@ -124,6 +138,8 @@ def main() -> None:
         source_rows = long_rows if use_long else rows
         size = args.long_batch if use_long else args.decision_batch
         length = args.long_max_length if use_long else args.max_length
+        if replay_rows and not use_long and rng.random() < args.replay_share:
+            source_rows = replay_rows
         decision = rng.sample(source_rows, size)
         encoding, mask, labels = encode_options(decision, tokenizer, length)
         mask, labels = mask.to(device), labels.to(device)
