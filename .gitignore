@@ -1,0 +1,6 @@
+.venv/
+data/
+data_smoke/
+runs/
+*.log
+__pycache__/

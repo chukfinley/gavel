@@ -1,0 +1,20 @@
+[project]
+name = "typedec"
+version = "0.1.0"
+description = "Typed decision model: one forward pass, runtime-defined options, calibrated probabilities."
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.4",
+    "transformers>=4.48",
+    "datasets>=3.0",
+    "scikit-learn>=1.5",
+    "numpy>=1.26",
+    "tqdm>=4.66",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
