@@ -13,9 +13,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import torch
 
-from typedec.encoding import encode                      # noqa: E402
+from typedec.encoding import encode_options, to_device   # noqa: E402
 from typedec.losses import balanced_accuracy, expected_calibration_error  # noqa: E402
-from typedec.model import OptionScorer, build_tokenizer  # noqa: E402
+from typedec.model import EntailmentScorer, build_tokenizer  # noqa: E402
 from typedec.schema import read_jsonl                    # noqa: E402
 
 
@@ -31,8 +31,7 @@ def main() -> None:
 
     state = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
     tokenizer = build_tokenizer(state["backbone"])
-    model = OptionScorer(state["backbone"])
-    model.resize(tokenizer)
+    model = EntailmentScorer(state["backbone"])
     model.load_state_dict(state["model"])
     model.to("cuda").eval()
 
@@ -45,9 +44,9 @@ def main() -> None:
         probabilities, labels = [], []
         for start in range(0, len(rows), args.batch_size):
             chunk = rows[start : start + args.batch_size]
-            batch = encode(chunk, tokenizer, args.max_length).to("cuda")
+            encoding, mask, _ = encode_options(chunk, tokenizer, args.max_length)
             with torch.autocast("cuda", dtype=torch.bfloat16):
-                logits = model(batch)
+                logits = model.option_logits(to_device(encoding, "cuda"), mask.to("cuda"))
             probabilities.append(torch.softmax(logits.float(), dim=-1).cpu())
             labels.extend(row.label for row in chunk)
         width = max(p.size(1) for p in probabilities)

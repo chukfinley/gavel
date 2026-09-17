@@ -1,76 +1,57 @@
-"""Typed decision model: one forward pass, one score for each option.
+"""Typed decision model built on an entailment scorer.
 
-The input holds the question, the state, and then one segment for each option.
-Every option segment starts with the marker token `[OPT]`. The hidden state at
-each marker goes through one shared scoring head, which gives one logit for
-each option. A softmax over these logits gives the probabilities.
+Design note, and the reason for the rewrite: a head that reads option markers
+inside one sequence does not train. The first version put the option texts into
+one sequence and scored each marker. Cross entropy stayed at ln(number of
+options) for thousands of steps — the model gives a uniform answer. The same
+happens with a span-pooled head and with the standard multiple-choice head of
+`transformers`. The cause is the option text: a string like "The evidence
+establishes the claim" means nothing to an untrained head, thus every option
+keeps the same score and there is no gradient that separates them.
 
-Because the option text is part of the input, the answer space can change with
-every request. The model never learns a fixed set of classes.
+Zero-shot classifiers solve this the other way round. The option becomes a
+*hypothesis about the state*, and a three-way entailment head scores it. The
+head has a fixed meaning (entailment, neutral, contradiction), which natural
+language inference data anchors, and the option text lives where the model
+already understands text. The score of an option is its entailment logit; a
+softmax over the options gives the decision.
+
+Two properties follow:
+
+* The answer space is defined at run time, because the option text is part of
+  the input.
+* The result cannot depend on the order of the options, because each option is
+  scored in its own sequence. Position bias is impossible by construction.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import torch
 from torch import nn
-from transformers import AutoConfig, AutoModel, AutoTokenizer
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-OPT_TOKEN = "[OPT]"
-
-
-@dataclass
-class Batch:
-    input_ids: torch.Tensor        # (B, L)
-    attention_mask: torch.Tensor   # (B, L)
-    option_positions: torch.Tensor # (B, K) index of each [OPT] marker, -1 when padded
-    option_mask: torch.Tensor      # (B, K) 1 for a real option
-    labels: torch.Tensor | None = None
-
-    def to(self, device: torch.device) -> "Batch":
-        return Batch(
-            self.input_ids.to(device),
-            self.attention_mask.to(device),
-            self.option_positions.to(device),
-            self.option_mask.to(device),
-            None if self.labels is None else self.labels.to(device),
-        )
+ENTAILMENT, NEUTRAL, CONTRADICTION = 0, 1, 2
 
 
-class OptionScorer(nn.Module):
-    def __init__(self, backbone: str, dropout: float = 0.1):
+class EntailmentScorer(nn.Module):
+    def __init__(self, backbone: str):
         super().__init__()
-        self.config = AutoConfig.from_pretrained(backbone, trust_remote_code=True)
-        self.backbone = AutoModel.from_pretrained(backbone, trust_remote_code=True)
-        hidden = getattr(self.config, "hidden_size", None) or self.config.d_model
-        self.head = nn.Sequential(
-            nn.Dropout(dropout),
-            nn.Linear(hidden, hidden // 2),
-            nn.GELU(),
-            nn.Linear(hidden // 2, 1),
-        )
-        # One learned temperature. Calibration on a held-out split only scales
-        # this value; the weights stay untouched.
-        self.log_temperature = nn.Parameter(torch.zeros(1), requires_grad=False)
+        self.backbone_name = backbone
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            backbone, num_labels=3, trust_remote_code=True)
+        self.register_buffer("log_temperature", torch.zeros(1))
 
-    def resize(self, tokenizer) -> None:
-        self.backbone.resize_token_embeddings(len(tokenizer))
+    def pair_logits(self, encoding: dict) -> torch.Tensor:
+        """Three-way logits for a batch of (premise, hypothesis) pairs."""
+        return self.model(**encoding).logits
 
-    def forward(self, batch: Batch) -> torch.Tensor:
-        out = self.backbone(input_ids=batch.input_ids, attention_mask=batch.attention_mask)
-        states = out.last_hidden_state                       # (B, L, H)
-        positions = batch.option_positions.clamp(min=0)      # (B, K)
-        gathered = torch.gather(
-            states, 1, positions.unsqueeze(-1).expand(-1, -1, states.size(-1))
-        )                                                    # (B, K, H)
-        logits = self.head(gathered).squeeze(-1)             # (B, K)
-        logits = logits / self.log_temperature.exp()
-        return logits.masked_fill(batch.option_mask == 0, torch.finfo(logits.dtype).min)
+    def option_logits(self, encoding: dict, option_mask: torch.Tensor) -> torch.Tensor:
+        """One score for each option: the entailment logit of its hypothesis."""
+        rows, options = option_mask.shape
+        scores = self.pair_logits(encoding)[:, ENTAILMENT].view(rows, options)
+        scores = scores / self.log_temperature.exp()
+        return scores.masked_fill(option_mask == 0, torch.finfo(scores.dtype).min)
 
 
 def build_tokenizer(backbone: str):
-    tokenizer = AutoTokenizer.from_pretrained(backbone, trust_remote_code=True)
-    if OPT_TOKEN not in tokenizer.get_vocab():
-        tokenizer.add_special_tokens({"additional_special_tokens": [OPT_TOKEN]})
-    return tokenizer
+    return AutoTokenizer.from_pretrained(backbone, trust_remote_code=True)
