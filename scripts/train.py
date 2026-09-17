@@ -73,6 +73,10 @@ def main() -> None:
     parser.add_argument("--warmup", type=float, default=0.06)
     parser.add_argument("--eval-every", type=int, default=1000)
     parser.add_argument("--eval-rows", type=int, default=768)
+    parser.add_argument("--long", default="", help="jsonl with long-state decisions")
+    parser.add_argument("--long-every", type=int, default=4, help="use a long batch every N steps")
+    parser.add_argument("--long-batch", type=int, default=1)
+    parser.add_argument("--long-max-length", type=int, default=1024)
     parser.add_argument("--seed", type=int, default=17)
     args = parser.parse_args()
 
@@ -88,8 +92,10 @@ def main() -> None:
 
     rows = list(read_jsonl(args.train))
     anchor_rows = [r for r in rows if r.source in NLI_SOURCES]
+    long_rows = list(read_jsonl(args.long)) if args.long else []
     dev_rows = list(read_jsonl(args.dev))[: args.eval_rows]
-    print(f"train {len(rows)}  anchor {len(anchor_rows)}  dev {len(dev_rows)}", flush=True)
+    print(f"train {len(rows)}  anchor {len(anchor_rows)}  long {len(long_rows)}  "
+          f"dev {len(dev_rows)}", flush=True)
 
     optimiser = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
     warmup = int(args.steps * args.warmup)
@@ -111,8 +117,15 @@ def main() -> None:
                 model.pair_logits(to_device(encoding, device)).float(), labels.to(device))
         anchor_loss.backward()
 
-        decision = rng.sample(rows, args.decision_batch)
-        encoding, mask, labels = encode_options(decision, tokenizer, args.max_length)
+        # Every few steps the batch comes from the long pool, so that the model
+        # learns to read states of a few thousand tokens. Training only on short
+        # pairs gives a model that cannot use a long state at inference.
+        use_long = long_rows and step % args.long_every == 0
+        source_rows = long_rows if use_long else rows
+        size = args.long_batch if use_long else args.decision_batch
+        length = args.long_max_length if use_long else args.max_length
+        decision = rng.sample(source_rows, size)
+        encoding, mask, labels = encode_options(decision, tokenizer, length)
         mask, labels = mask.to(device), labels.to(device)
         with torch.autocast("cuda", dtype=torch.bfloat16):
             logits = model.option_logits(to_device(encoding, device), mask).float()
