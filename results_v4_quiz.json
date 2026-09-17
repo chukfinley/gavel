@@ -1,0 +1,29 @@
+{
+  "strata": {
+    "belebele-de": {
+      "rows": 400,
+      "accuracy": 0.3050000071525574,
+      "balanced_accuracy": 0.3051511198282242,
+      "ece": 0.18369818717241287
+    },
+    "belebele-en": {
+      "rows": 400,
+      "accuracy": 0.6524999737739563,
+      "balanced_accuracy": 0.6513589769601822,
+      "ece": 0.06757923647761344
+    },
+    "medmcqa-test": {
+      "rows": 400,
+      "accuracy": 0.26499998569488525,
+      "balanced_accuracy": 0.2596485987305641,
+      "ece": 0.14257101397961378
+    },
+    "sciq-test": {
+      "rows": 400,
+      "accuracy": 0.9800000190734863,
+      "balanced_accuracy": 0.9802408069372177,
+      "ece": 0.12769442439079287
+    }
+  },
+  "mean": 0.549099875614047
+}

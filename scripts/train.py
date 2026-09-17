@@ -127,7 +127,10 @@ def main() -> None:
     model.train()
 
     rows = list(read_jsonl(args.train))
-    anchor_rows = [r for r in rows if r.source in NLI_SOURCES]
+    # The anchor may live in the replay file: when a new sector is trained on
+    # top, the inference rows come from the old mix and not from the new one.
+    replay_rows = list(read_jsonl(args.replay)) if args.replay else []
+    anchor_rows = [r for r in rows + replay_rows if r.source in NLI_SOURCES]
 
     # Sources are drawn with a dampened weight (count ** alpha). With the raw
     # count the three large inference sets and the generated packets take most
@@ -140,7 +143,6 @@ def main() -> None:
     long_rows = list(read_jsonl(args.long)) if args.long else []
     # Training only on the new sector makes the model forget the old ones.
     # A share of old rows in every draw keeps them.
-    replay_rows = list(read_jsonl(args.replay)) if args.replay else []
     dev_rows = list(read_jsonl(args.dev))[: args.eval_rows]
     print(f"train {len(rows)}  anchor {len(anchor_rows)}  long {len(long_rows)}  "
           f"dev {len(dev_rows)}", flush=True)
