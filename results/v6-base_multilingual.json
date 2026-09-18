@@ -1,0 +1,119 @@
+{
+  "strata": {
+    "belebele-ar": {
+      "rows": 200,
+      "accuracy": 0.29499998688697815,
+      "balanced_accuracy": 0.29460978880524635,
+      "ece": 0.020844704657793044
+    },
+    "belebele-de": {
+      "rows": 200,
+      "accuracy": 0.5649999976158142,
+      "balanced_accuracy": 0.5598311871290207,
+      "ece": 0.0863635066151619
+    },
+    "belebele-en": {
+      "rows": 200,
+      "accuracy": 0.8149999976158142,
+      "balanced_accuracy": 0.8171140104532242,
+      "ece": 0.08259393736720086
+    },
+    "belebele-es": {
+      "rows": 200,
+      "accuracy": 0.6200000047683716,
+      "balanced_accuracy": 0.6138060390949249,
+      "ece": 0.13006216615438462
+    },
+    "belebele-fr": {
+      "rows": 200,
+      "accuracy": 0.5950000286102295,
+      "balanced_accuracy": 0.6015389263629913,
+      "ece": 0.10487938120961189
+    },
+    "belebele-hi": {
+      "rows": 200,
+      "accuracy": 0.30000001192092896,
+      "balanced_accuracy": 0.2929932326078415,
+      "ece": 0.06032053545117378
+    },
+    "belebele-it": {
+      "rows": 200,
+      "accuracy": 0.5600000023841858,
+      "balanced_accuracy": 0.5569279044866562,
+      "ece": 0.09721917793154718
+    },
+    "belebele-pt": {
+      "rows": 200,
+      "accuracy": 0.5,
+      "balanced_accuracy": 0.5032937750220299,
+      "ece": 0.10305930539965628
+    },
+    "belebele-ru": {
+      "rows": 200,
+      "accuracy": 0.49000000953674316,
+      "balanced_accuracy": 0.49275097250938416,
+      "ece": 0.08760879561305046
+    },
+    "belebele-zh": {
+      "rows": 200,
+      "accuracy": 0.5950000286102295,
+      "balanced_accuracy": 0.6010373681783676,
+      "ece": 0.09557315573096276
+    },
+    "xnli-test-ar": {
+      "rows": 200,
+      "accuracy": 0.4749999940395355,
+      "balanced_accuracy": 0.47610432902971905,
+      "ece": 0.08292880415916444
+    },
+    "xnli-test-de": {
+      "rows": 200,
+      "accuracy": 0.625,
+      "balanced_accuracy": 0.625734955072403,
+      "ece": 0.1015148252248764
+    },
+    "xnli-test-en": {
+      "rows": 200,
+      "accuracy": 0.8550000190734863,
+      "balanced_accuracy": 0.8554198543230692,
+      "ece": 0.08111661538481713
+    },
+    "xnli-test-es": {
+      "rows": 200,
+      "accuracy": 0.6899999976158142,
+      "balanced_accuracy": 0.6903361876805624,
+      "ece": 0.1035295572131872
+    },
+    "xnli-test-hi": {
+      "rows": 200,
+      "accuracy": 0.47999998927116394,
+      "balanced_accuracy": 0.48100406924883526,
+      "ece": 0.0825855851173401
+    },
+    "xnli-test-ru": {
+      "rows": 200,
+      "accuracy": 0.5950000286102295,
+      "balanced_accuracy": 0.5958088239034017,
+      "ece": 0.10474464938044548
+    },
+    "xnli-test-tr": {
+      "rows": 200,
+      "accuracy": 0.4749999940395355,
+      "balanced_accuracy": 0.4763304789861043,
+      "ece": 0.08417382195591926
+    },
+    "xnli-test-vi": {
+      "rows": 200,
+      "accuracy": 0.5799999833106995,
+      "balanced_accuracy": 0.5808080832163492,
+      "ece": 0.07679017797112465
+    },
+    "xnli-test-zh": {
+      "rows": 200,
+      "accuracy": 0.6549999713897705,
+      "balanced_accuracy": 0.6549826463063558,
+      "ece": 0.0642082180082798
+    }
+  },
+  "mean": 0.5668648753903414
+}

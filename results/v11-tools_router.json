@@ -1,0 +1,38 @@
+{
+  "typedec": {
+    "tier_accuracy": 0.464,
+    "quality": 0.464,
+    "relative_spend": 1.0,
+    "sent_to_person": 0.0
+  },
+  "always_small": {
+    "tier_accuracy": 0.4633,
+    "quality": 0.4633,
+    "relative_spend": 1.0,
+    "sent_to_person": 0.0
+  },
+  "always_middle": {
+    "tier_accuracy": 0.452,
+    "quality": 0.8987,
+    "relative_spend": 4.0,
+    "sent_to_person": 0.0
+  },
+  "always_frontier": {
+    "tier_accuracy": 0.056,
+    "quality": 0.9227,
+    "relative_spend": 90.0,
+    "sent_to_person": 0.0
+  },
+  "random": {
+    "tier_accuracy": 0.4633,
+    "quality": 0.4633,
+    "relative_spend": 1.0,
+    "sent_to_person": 0.0
+  },
+  "oracle": {
+    "tier_accuracy": 1.0,
+    "quality": 1.0,
+    "relative_spend": 7.31,
+    "sent_to_person": 0.0287
+  }
+}

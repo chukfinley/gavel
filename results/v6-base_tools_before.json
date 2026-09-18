@@ -1,0 +1,17 @@
+{
+  "strata": {
+    "tools-glaive": {
+      "rows": 342,
+      "accuracy": 0.8567251563072205,
+      "balanced_accuracy": 0.895678182442983,
+      "ece": 0.06973524818643492
+    },
+    "tools-hermes": {
+      "rows": 58,
+      "accuracy": 0.8103448152542114,
+      "balanced_accuracy": 0.6205882430076599,
+      "ece": 0.08764125612275353
+    }
+  },
+  "mean": 0.7581332127253215
+}

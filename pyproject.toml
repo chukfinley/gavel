@@ -1,7 +1,7 @@
 [project]
-name = "typedec"
+name = "gavel"
 version = "0.1.0"
-description = "Typed decision model: one forward pass, runtime-defined options, calibrated probabilities."
+description = "A decision model: typed answers from runtime-defined options, with calibrated probabilities and no text generation."
 requires-python = ">=3.10"
 dependencies = [
     "torch>=2.4",

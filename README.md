@@ -1,4 +1,8 @@
-# typedec — typed decisions without a generation loop
+# gavel — a decision model, not a language model
+
+A gavel ends a hearing with a verdict. This model does the same for
+software: state and options go in, one typed answer and a calibrated
+probability come out. Nothing is written.
 
 A decision model that answers "which of these options" in **one forward pass**.
 No tokens are generated. The answer space arrives with the request, thus the

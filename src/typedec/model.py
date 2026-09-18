@@ -46,9 +46,12 @@ class EntailmentScorer(nn.Module):
         self.backbone_name = backbone
         self.model = AutoModelForSequenceClassification.from_pretrained(
             backbone, num_labels=3, trust_remote_code=True)
-        if self.model.config.pad_token_id is None:
-            self.model.config.pad_token_id = getattr(
-                self.model.config, "eos_token_id", 0) or 0
+        # Some multimodal configurations keep the text settings in a sub-config
+        # and have no pad id at the top level.
+        for config in filter(None, [self.model.config,
+                                    getattr(self.model.config, "text_config", None)]):
+            if getattr(config, "pad_token_id", None) is None:
+                config.pad_token_id = getattr(config, "eos_token_id", None) or 0
         if gradient_checkpointing:
             self.model.gradient_checkpointing_enable()
             self.model.config.use_cache = False

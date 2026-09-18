@@ -1,0 +1,59 @@
+{
+  "strata": {
+    "anli-r1-test": {
+      "rows": 400,
+      "accuracy": 0.5649999976158142,
+      "balanced_accuracy": 0.5624807973702749,
+      "ece": 0.16526390351355078
+    },
+    "anli-r2-test": {
+      "rows": 400,
+      "accuracy": 0.3824999928474426,
+      "balanced_accuracy": 0.38242994745572406,
+      "ece": 0.31799504041671756
+    },
+    "arc-easy-test": {
+      "rows": 400,
+      "accuracy": 0.5975000262260437,
+      "balanced_accuracy": 0.5987859964370728,
+      "ece": 0.14851806707680226
+    },
+    "boolq-val": {
+      "rows": 400,
+      "accuracy": 0.7850000262260437,
+      "balanced_accuracy": 0.7651909589767456,
+      "ece": 0.030694354698061945
+    },
+    "clinc-test": {
+      "rows": 400,
+      "accuracy": 0.9474999904632568,
+      "balanced_accuracy": 0.9476073483626047,
+      "ece": 0.06262903198599816
+    },
+    "mmlu-test": {
+      "rows": 400,
+      "accuracy": 0.30250000953674316,
+      "balanced_accuracy": 0.30545753985643387,
+      "ece": 0.10349483028054239
+    },
+    "openbookqa-test": {
+      "rows": 400,
+      "accuracy": 0.41749998927116394,
+      "balanced_accuracy": 0.41580694168806076,
+      "ece": 0.04782646268606186
+    },
+    "snli-test": {
+      "rows": 400,
+      "accuracy": 0.7275000214576721,
+      "balanced_accuracy": 0.7288510004679362,
+      "ece": 0.046964866071939476
+    },
+    "sst5-test": {
+      "rows": 400,
+      "accuracy": 0.46000000834465027,
+      "balanced_accuracy": 0.4677956342697144,
+      "ece": 0.09065488219261171
+    }
+  },
+  "mean": 0.5749340183205075
+}

@@ -103,6 +103,8 @@ def main() -> None:
     parser.add_argument("--init-from", default="", help="continue from this checkpoint")
     parser.add_argument("--replay", default="", help="older data mixed in, against forgetting")
     parser.add_argument("--replay-share", type=float, default=0.3)
+    parser.add_argument("--adam8bit", action="store_true",
+                        help="8-bit optimiser states, for a backbone that would not fit")
     parser.add_argument("--grad-checkpoint", action="store_true",
                         help="trade speed for memory, needed for decoder backbones")
     parser.add_argument("--source-alpha", type=float, default=0.5,
@@ -149,7 +151,13 @@ def main() -> None:
     print(f"train {len(rows)}  anchor {len(anchor_rows)}  long {len(long_rows)}  "
           f"dev {len(dev_rows)}", flush=True)
 
-    optimiser = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
+    if args.adam8bit:
+        # Adam keeps two fp32 states for every weight. At 0.8 B parameters that
+        # alone is 6.4 GB, which does not fit next to the weights on this card.
+        import bitsandbytes as bnb
+        optimiser = bnb.optim.AdamW8bit(model.parameters(), lr=args.lr, weight_decay=0.01)
+    else:
+        optimiser = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
     warmup = int(args.steps * args.warmup)
 
     def schedule(step: int) -> float:
