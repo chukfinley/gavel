@@ -67,6 +67,16 @@ Two levels:
    The OpenJev fixtures are 144, 256, 102 and 36 rows; a three-point difference
    there is four rows. Accuracy is never pooled across strata.
 
+## Status
+
+A larger model is training right now. This repository holds the working
+pipeline and the first published checkpoint
+([chukfinley/gavel-base](https://huggingface.co/chukfinley/gavel-base),
+150 M parameters). Queued behind it: the same encoder on 542000 rows for 40000
+steps, a 395 M encoder, a decoder backbone for comparison, a small search over
+the sampling and calibration settings, and three specialised branches for
+routing, documents and agents. `COMPARISON.md` is rebuilt after every job.
+
 ## Run
 
 ```bash
