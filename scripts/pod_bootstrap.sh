@@ -27,6 +27,33 @@ uv pip install -q "transformers>=4.48" "datasets>=3.0" scikit-learn tqdm pandas 
                   accelerate bitsandbytes huggingface_hub
 PY=.venv/bin/python
 
+# Publish logs and results every few minutes, so the run can be watched from
+# outside without a shell on this machine.
+cat > /workspace/publish.sh <<'PUB'
+#!/usr/bin/env bash
+cd /workspace/gavel || exit 0
+while true; do
+  .venv/bin/python - <<'PYEOF' >/dev/null 2>&1
+import os
+from huggingface_hub import HfApi
+api = HfApi(token=os.environ["HF_TOKEN"])
+repo = os.environ.get("RESULTS_REPO", "chukfinley/gavel-runs")
+api.create_repo(repo, repo_type="dataset", exist_ok=True)
+for folder, prefix in [("results", "results"), ("logs", "logs")]:
+    if os.path.isdir(folder):
+        api.upload_folder(folder_path=folder, path_in_repo=prefix, repo_id=repo,
+                          repo_type="dataset", commit_message="progress")
+for name in ("COMPARISON.md", "/workspace/bootstrap.log", "/workspace/build.log"):
+    if os.path.isfile(name):
+        api.upload_file(path_or_fileobj=name, path_in_repo=os.path.basename(name),
+                        repo_id=repo, repo_type="dataset", commit_message="progress")
+PYEOF
+  sleep 600
+done
+PUB
+chmod +x /workspace/publish.sh
+nohup /workspace/publish.sh >/dev/null 2>&1 &
+
 log "building datasets from public sources"
 $PY scripts/build_data.py        --per-source 40000 --out data   >> /workspace/build.log 2>&1
 $PY scripts/build_business.py                                    >> /workspace/build.log 2>&1
@@ -77,32 +104,6 @@ print("train_v6", len(rows))
 PYEOF
 log "training rows: $(wc -l < data/train_v6.jsonl)"
 
-# Publish logs and results every few minutes, so the run can be watched from
-# outside without a shell on this machine.
-cat > /workspace/publish.sh <<'PUB'
-#!/usr/bin/env bash
-cd /workspace/gavel || exit 0
-while true; do
-  .venv/bin/python - <<'PYEOF' >/dev/null 2>&1
-import os
-from huggingface_hub import HfApi
-api = HfApi(token=os.environ["HF_TOKEN"])
-repo = os.environ.get("RESULTS_REPO", "chukfinley/gavel-runs")
-api.create_repo(repo, repo_type="dataset", exist_ok=True)
-for folder, prefix in [("results", "results"), ("logs", "logs")]:
-    if os.path.isdir(folder):
-        api.upload_folder(folder_path=folder, path_in_repo=prefix, repo_id=repo,
-                          repo_type="dataset", commit_message="progress")
-for name in ("COMPARISON.md", "/workspace/bootstrap.log", "/workspace/build.log"):
-    if os.path.isfile(name):
-        api.upload_file(path_or_fileobj=name, path_in_repo=os.path.basename(name),
-                        repo_id=repo, repo_type="dataset", commit_message="progress")
-PYEOF
-  sleep 600
-done
-PUB
-chmod +x /workspace/publish.sh
-nohup /workspace/publish.sh >/dev/null 2>&1 &
 
 # A 24 GB card takes roughly three times the batch of the 12 GB card this was
 # written on, which is where the rented time is saved.
