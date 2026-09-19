@@ -119,7 +119,7 @@ def strip_state(decision: Decision, rng: random.Random) -> Decision:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--short", default="data/train_v2.jsonl")
+    parser.add_argument("--short", default="data/train.jsonl")
     parser.add_argument("--long", default="data/long.jsonl")
     parser.add_argument("--out-short", default="data/abstain_short.jsonl")
     parser.add_argument("--out-long", default="data/abstain_long.jsonl")
