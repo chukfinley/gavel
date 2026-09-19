@@ -2,7 +2,7 @@
 # Keeps the card busy without supervision. Every job logs on its own and a
 # failure of one job does not stop the rest.
 set -u
-cd /home/user/git/typedec
+cd "$(dirname "$(readlink -f "$0")")/.." || exit 1
 PY=".venv/bin/python"
 export MEMGUARD_ALLOW_MB=22000
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True

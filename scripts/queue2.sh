@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs after the first queue: the agent sector (tool selection).
 set -u
-cd /home/user/git/typedec
+cd "$(dirname "$(readlink -f "$0")")/.." || exit 1
 PY=".venv/bin/python"
 export MEMGUARD_ALLOW_MB=22000
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
