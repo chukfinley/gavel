@@ -21,11 +21,16 @@ export PATH="$HOME/.local/bin:$PATH"
 log "cloning $REPO"
 git clone --depth 1 "$REPO" "$WORK" >/dev/null 2>&1
 cd "$WORK" || exit 1
-uv venv --python 3.12 >/dev/null 2>&1
-uv pip install -q torch --index-url https://download.pytorch.org/whl/cu124
+# The rented image already ships a working torch against the installed driver.
+# Downloading another 2.5 GB copy is the slowest step of the whole start, so the
+# environment is built on top of what is there.
+uv venv --system-site-packages >/dev/null 2>&1
+PY=.venv/bin/python
+$PY -c "import torch" 2>/dev/null || \
+  uv pip install -q torch --index-url https://download.pytorch.org/whl/cu124
 uv pip install -q "transformers>=4.48" "datasets>=3.0" scikit-learn tqdm pandas \
                   accelerate bitsandbytes huggingface_hub
-PY=.venv/bin/python
+log "torch: $($PY -c 'import torch;print(torch.__version__, torch.cuda.is_available())' 2>&1 | tail -1)"
 
 # Publish logs and results every few minutes, so the run can be watched from
 # outside without a shell on this machine.
