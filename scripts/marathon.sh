@@ -17,6 +17,7 @@ DB=${DECISION_BATCH:-6}          # decisions per step
 AB=${ANCHOR_BATCH:-12}           # inference pairs per step
 LB=${LONG_BATCH:-1}              # long documents per step
 EB=${EVAL_BATCH:-4}
+LONG_CTX=${LONG_CTX:-2048}       # how far the long curriculum reaches
 
 measure () {                        # measure <name> <checkpoint> [typesafe-ctx]
   local name=$1 ckpt=$2 long=${3:-2048}
@@ -62,13 +63,13 @@ job v13-qwen08 --train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl \
 
 # 2. The larger encoder.
 job v14-large $COMMON --backbone answerdotai/ModernBERT-large --grad-checkpoint --adam8bit \
-  --long-every 8 --long-batch "$LB" --long-max-length 512 --steps 16000 \
+  --long-every 8 --long-batch "$LB" --long-max-length "$((${LONG_CTX:-2048} / 2))" --steps 16000 \
   --decision-batch "$((DB / 2))" --anchor-batch "$((AB / 2))" --max-length 192 --lr 2e-5 \
   --eval-every 4000 --eval-rows 3000
 
 # 3. The main model on everything, longer than before.
 job v12-base $COMMON --backbone answerdotai/ModernBERT-base --augment 0.7 \
-  --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 40000 \
+  --long-every 5 --long-batch "$LB" --long-max-length "${LONG_CTX:-2048}" --steps 40000 \
   --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
   --eval-every 4000 --eval-rows 3000
 
@@ -79,7 +80,7 @@ job v17-route --init-from runs/v12-base/best.pt --backbone answerdotai/ModernBER
   --eval-every 4000 --eval-rows 3000
 job v18-doc --init-from runs/v12-base/best.pt --backbone answerdotai/ModernBERT-base \
   --train data/train_doc.jsonl --dev data/dev_strat_v2.jsonl --long data/long_v2.jsonl \
-  --long-every 3 --long-batch "$LB" --long-max-length 896 --steps 8000 \
+  --long-every 3 --long-batch "$LB" --long-max-length "${LONG_CTX:-2048}" --steps 8000 \
   --decision-batch "$((DB * 2 / 3))" --anchor-batch "$((AB * 2 / 3))" --max-length 224 --lr 1.5e-5 \
   --eval-every 4000 --eval-rows 3000
 job v19-agent --init-from runs/v12-base/best.pt --backbone answerdotai/ModernBERT-base \
@@ -90,24 +91,24 @@ job v19-agent --init-from runs/v12-base/best.pt --backbone answerdotai/ModernBER
 # 5. Settings search, the first thing to drop, short runs, so that the long run uses the better values.
 for alpha in 0.3 0.7; do
   job "v15-alpha${alpha}" $COMMON --backbone answerdotai/ModernBERT-base \
-    --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 9000 \
+    --long-every 5 --long-batch "$LB" --long-max-length "${LONG_CTX:-2048}" --steps 9000 \
     --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
     --source-alpha "$alpha" --eval-every 3000 --eval-rows 3000
 done
 for brier in 0.0 1.0; do
   job "v16-brier${brier}" $COMMON --backbone answerdotai/ModernBERT-base \
-    --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 9000 \
+    --long-every 5 --long-batch "$LB" --long-max-length "${LONG_CTX:-2048}" --steps 9000 \
     --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
     --brier-weight "$brier" --eval-every 3000 --eval-rows 3000
 done
 
 # The same model without augmentation, to measure what it is worth.
 job v20-noaug $COMMON --backbone answerdotai/ModernBERT-base --augment 0.0 \
-  --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 9000 \
+  --long-every 5 --long-batch "$LB" --long-max-length "${LONG_CTX:-2048}" --steps 9000 \
   --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
   --eval-every 3000 --eval-rows 3000
 job v21-aug $COMMON --backbone answerdotai/ModernBERT-base --augment 0.7 \
-  --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 9000 \
+  --long-every 5 --long-batch "$LB" --long-max-length "${LONG_CTX:-2048}" --steps 9000 \
   --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
   --eval-every 3000 --eval-rows 3000
 

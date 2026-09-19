@@ -77,6 +77,35 @@ steps, a 395 M encoder, a decoder backbone for comparison, a small search over
 the sampling and calibration settings, and three specialised branches for
 routing, documents and agents. `COMPARISON.md` is rebuilt after every job.
 
+
+## What was taken from other work, and from whom
+
+* **The entailment framing** — an option becomes a hypothesis and a three-way
+  head scores it — is the old zero-shot-classification recipe behind
+  `bart-large-mnli`. [AlexWortega/openjev](https://huggingface.co/AlexWortega/openjev)
+  arrived at the same shape independently, on a 4 B decoder.
+* **Question augmentation** (paraphrasing, dropping distractors, negating a
+  yes-no question together with its label) is taken from
+  [com-kotobalabs/open-jev-deberta-v3-large](https://huggingface.co/com-kotobalabs/open-jev-deberta-v3-large),
+  which measures what it is for: 0.854 on question types it trained on against
+  0.690 on unseen wording. That report also confirms the failure documented
+  below — "a fresh marker-token head does not learn; the span head does".
+* **The interface** — unstructured state in, typed answers with probabilities
+  out, no generation — is the shape of TypeSafe's closed Jev model, reproduced
+  by [TheoLeeCJ/openjev](https://github.com/TheoLeeCJ/openjev) with frozen
+  letter logits.
+* **The measurement discipline** — never pool sources, report each stratum with
+  its denominator — is taken from the OpenJev metric contract.
+
+## Context length
+
+The backbone reads 8192 tokens natively. The limit is the training curriculum,
+not the architecture: a model trained at 224 tokens cannot use 3072 at
+inference. Measured on the business fixture with one checkpoint: 0.353 at 256
+tokens, 0.471 at 1024, 0.392 at 3072. The long curriculum now reaches 2048 and
+the generated review packets come in two lengths, so that finding one line
+inside a few thousand tokens is trained and not hoped for.
+
 ## Run
 
 ```bash

@@ -155,6 +155,8 @@ def main() -> None:
     parser.add_argument("--out", default="data/long.jsonl")
     parser.add_argument("--per-source", type=int, default=6000)
     parser.add_argument("--packets", type=int, default=6000)
+    parser.add_argument("--filler-lines", type=int, default=8,
+                        help="invoice lines per packet; more lines make a longer state")
     parser.add_argument("--seed", type=int, default=31)
     args = parser.parse_args()
 
@@ -204,7 +206,12 @@ def main() -> None:
     except Exception as error:                                   # noqa: BLE001
         print("  race failed:", error, flush=True)
 
-    report("synth-packet", packet_rows(args.packets, rng, filler_lines=8))
+    # A mixture of lengths: short packets teach the task, long ones teach the
+    # model to find one line inside a few thousand tokens, which is what the
+    # business fixtures actually ask.
+    report("synth-packet", packet_rows(args.packets // 2, rng, filler_lines=args.filler_lines))
+    report("synth-packet-long", packet_rows(args.packets // 2, rng,
+                                            filler_lines=args.filler_lines * 4))
     report("synth-incident", incident_rows(args.packets // 2, rng))
 
     rng.shuffle(rows)

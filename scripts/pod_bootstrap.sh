@@ -57,7 +57,7 @@ nohup /workspace/publish.sh >/dev/null 2>&1 &
 log "building datasets from public sources"
 $PY scripts/build_data.py        --per-source 40000 --out data   >> /workspace/build.log 2>&1
 $PY scripts/build_business.py                                    >> /workspace/build.log 2>&1
-$PY scripts/build_long.py                                        >> /workspace/build.log 2>&1
+$PY scripts/build_long.py --filler-lines 10                      >> /workspace/build.log 2>&1
 $PY scripts/build_abstain.py                                     >> /workspace/build.log 2>&1
 $PY scripts/build_router.py                                      >> /workspace/build.log 2>&1
 $PY scripts/build_quiz.py                                        >> /workspace/build.log 2>&1
@@ -111,6 +111,7 @@ export DECISION_BATCH=${DECISION_BATCH:-16}
 export ANCHOR_BATCH=${ANCHOR_BATCH:-32}
 export LONG_BATCH=${LONG_BATCH:-2}
 export EVAL_BATCH=${EVAL_BATCH:-16}
+export LONG_CTX=${LONG_CTX:-2048}
 log "starting the marathon"
 ./scripts/marathon.sh >> /workspace/bootstrap.log 2>&1
 
