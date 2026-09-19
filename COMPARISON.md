@@ -27,7 +27,7 @@ number was measured here; published numbers are marked as such.
 | openbookqa-test | 0.4200 | 0.4175 | 0.4175 | 0.4075 |
 | snli-test | 0.7150 | 0.7275 | 0.7350 | 0.7400 |
 | sst5-test | 0.4975 | 0.4600 | 0.4800 | 0.4675 |
-| **mean** | 0.5701 | 0.5749 | 0.5737 | 0.5713 |
+| **mean** | 0.5764 | 0.5761 | 0.5789 | 0.5758 |
 
 ## Question banks
 
@@ -37,7 +37,7 @@ number was measured here; published numbers are marked as such.
 | belebele-en | 0.8400 | 0.8225 | 0.8375 | 0.8300 |
 | medmcqa-test | 0.3175 | 0.2975 | 0.3075 | 0.2850 |
 | sciq-test | 0.9875 | 0.9925 | 0.9900 | 0.9850 |
-| **mean** | 0.6924 | 0.6821 | 0.6915 | 0.6852 |
+| **mean** | 0.6937 | 0.6831 | 0.6944 | 0.6875 |
 
 ## Ten languages
 
@@ -62,7 +62,7 @@ number was measured here; published numbers are marked as such.
 | xnli-test-tr | 0.4850 | 0.4550 | 0.4750 | 0.4750 |
 | xnli-test-vi | 0.5300 | 0.5900 | 0.5800 | 0.5300 |
 | xnli-test-zh | 0.6450 | 0.6450 | 0.6550 | 0.6450 |
-| **mean** | 0.5551 | 0.5593 | 0.5669 | 0.5591 |
+| **mean** | 0.5542 | 0.5603 | 0.5666 | 0.5582 |
 
 ## Tool selection
 
@@ -70,14 +70,14 @@ number was measured here; published numbers are marked as such.
 |---|---|
 | tools-glaive | 0.9971 |
 | tools-hermes | 0.9828 |
-| **mean** | 0.9928 |
+| **mean** | 0.9899 |
 
 ## Browser actions
 
 | stratum | v11-tools |
 |---|---|
 | browser-mind2web | 0.6550 |
-| **mean** | 0.6769 |
+| **mean** | 0.6550 |
 
 ## Routing economics
 

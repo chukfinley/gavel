@@ -88,7 +88,13 @@ def main() -> None:
                 value = rows[name]["strata"].get(stratum, {}).get("accuracy")
                 cells.append(f"{value:.4f}" if value is not None else "—")
             lines.append(f"| {stratum} | " + " | ".join(cells) + " |")
-        means = [f"{rows[name]['mean']:.4f}" for name in sorted(rows)]
+        # The cells show accuracy, thus the mean must be over the same number.
+        # The stored mean is over balanced accuracy and would not match.
+        means = []
+        for name in sorted(rows):
+            values = [block.get("accuracy") for block in rows[name]["strata"].values()
+                      if block.get("accuracy") is not None]
+            means.append(f"{sum(values) / len(values):.4f}" if values else "—")
         lines.append("| **mean** | " + " | ".join(means) + " |")
 
     routers = {name: blocks["router"] for name, blocks in variants.items()
