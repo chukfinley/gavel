@@ -39,7 +39,10 @@ def call(method: str, path: str, body: dict | None = None) -> dict:
     request = urllib.request.Request(
         f"{BASE}{path}", method=method,
         data=json.dumps(body).encode() if body is not None else None,
-        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+                 # The endpoint sits behind a filter that rejects the default
+                 # Python user agent with a 403.
+                 "User-Agent": "curl/8.5.0", "Accept": "*/*"})
     try:
         with urllib.request.urlopen(request, timeout=120) as response:
             text = response.read().decode()
