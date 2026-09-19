@@ -25,7 +25,7 @@ measure () {                        # measure <name> <checkpoint> [typesafe-ctx]
       --out "results/${name}_fixtures.json" > "logs/${name}_fixtures.log" 2>&1
   $PY scripts/eval_typesafe.py --checkpoint "$cal" --max-length "$long" \
       --out "results/${name}_typesafe.json" > "logs/${name}_typesafe.log" 2>&1
-  for set in general quiz multilingual tools browser; do
+  for set in general quiz multilingual tools browser moderation; do
     [ -f "data/test_${set}.jsonl" ] || continue
     $PY scripts/eval_general.py --checkpoint "$cal" --test "data/test_${set}.jsonl" \
         --batch-size 4 --max-length 512 --out "results/${name}_${set}.json" \
@@ -45,7 +45,7 @@ job () {                            # job <name> <args...>
   measure "$name" "runs/${name}/best.pt"
 }
 
-COMMON="--train data/train_v5.jsonl --dev data/dev_strat_v2.jsonl --long data/long_v2.jsonl"
+COMMON="--train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl --long data/long_v2.jsonl"
 
 # 1. The main model on everything, longer than before.
 job v12-base $COMMON --backbone answerdotai/ModernBERT-base \
@@ -54,7 +54,7 @@ job v12-base $COMMON --backbone answerdotai/ModernBERT-base \
   --eval-every 4000 --eval-rows 3000
 
 # 2. A decoder backbone at the size the other project published.
-job v13-qwen08 --train data/train_v5.jsonl --dev data/dev_strat_v2.jsonl \
+job v13-qwen08 --train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl \
   --backbone Qwen/Qwen3.5-0.8B --grad-checkpoint --adam8bit \
   --steps 6000 --decision-batch 2 --anchor-batch 4 --max-length 192 --lr 1e-5 \
   --eval-every 2000 --eval-rows 1500
@@ -90,7 +90,7 @@ job v18-doc --init-from runs/v12-base/best.pt --backbone answerdotai/ModernBERT-
   --decision-batch 4 --anchor-batch 8 --max-length 224 --lr 1.5e-5 \
   --eval-every 4000 --eval-rows 3000
 job v19-agent --init-from runs/v12-base/best.pt --backbone answerdotai/ModernBERT-base \
-  --train data/agent.jsonl --replay data/train_v5.jsonl --replay-share 0.4 \
+  --train data/agent.jsonl --replay data/train_v6.jsonl --replay-share 0.4 \
   --dev data/dev_strat_v2.jsonl --steps 8000 --decision-batch 6 --anchor-batch 12 \
   --max-length 320 --lr 1.5e-5 --eval-every 4000 --eval-rows 3000
 
