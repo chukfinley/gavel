@@ -80,12 +80,22 @@ def main() -> None:
     # strata move over from the multilingual test file so that checkpoint
     # selection can see whether the skill crosses a language.
     dev = list(read_jsonl(folder / "dev_strat.jsonl"))
+    # The language slice is kept in its own file. Moving rows out of the test
+    # file was destructive: a second assembly found nothing left to move and
+    # silently produced a development set with two strata fewer, which makes
+    # runs from different days incomparable.
+    slice_path = folder / "dev_extra_multilingual.jsonl"
     try:
-        test = list(read_jsonl(folder / "test_multilingual.jsonl"))
-        move = {"xnli-test-fr", "belebele-ja"}
-        extra = [r for r in test if r.source in move][: args.dev_per_stratum * 2]
-        write_jsonl(folder / "test_multilingual.jsonl", [r for r in test if r.source not in move])
-        dev += extra
+        if slice_path.exists():
+            dev += list(read_jsonl(slice_path))
+        else:
+            test = list(read_jsonl(folder / "test_multilingual.jsonl"))
+            move = {"xnli-test-fr", "belebele-ja"}
+            extra = [r for r in test if r.source in move][: args.dev_per_stratum * 2]
+            write_jsonl(slice_path, extra)
+            write_jsonl(folder / "test_multilingual.jsonl",
+                        [r for r in test if r.source not in move])
+            dev += extra
     except Exception as error:                                   # noqa: BLE001
         print("  multilingual dev slice missing:", error)
     for name, tag in [("knowledge.jsonl", "knowledge-held"), ("moderation.jsonl", "moderation-held")]:
