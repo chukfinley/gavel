@@ -54,39 +54,25 @@ job () {                            # job <name> <args...>
 
 COMMON="--train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl --long data/long_v2.jsonl"
 
-# 1. The main model on everything, longer than before.
-job v12-base $COMMON --backbone answerdotai/ModernBERT-base \
-  --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 40000 \
-  --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
-  --eval-every 4000 --eval-rows 3000
-
-# 2. A decoder backbone at the size the other project published.
+# 1. A decoder backbone at the size the other project published.
 job v13-qwen08 --train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl \
   --backbone Qwen/Qwen3.5-0.8B --grad-checkpoint --adam8bit \
   --steps 6000 --decision-batch "$((DB / 3))" --anchor-batch "$((AB / 3))" --max-length 192 --lr 1e-5 \
   --eval-every 2000 --eval-rows 1500
 
-# 3. The larger encoder.
+# 2. The larger encoder.
 job v14-large $COMMON --backbone answerdotai/ModernBERT-large --grad-checkpoint --adam8bit \
   --long-every 8 --long-batch "$LB" --long-max-length 512 --steps 16000 \
   --decision-batch "$((DB / 2))" --anchor-batch "$((AB / 2))" --max-length 192 --lr 2e-5 \
   --eval-every 4000 --eval-rows 3000
 
-# 4. Settings search, short runs, so that the long run uses the better values.
-for alpha in 0.3 0.7; do
-  job "v15-alpha${alpha}" $COMMON --backbone answerdotai/ModernBERT-base \
-    --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 9000 \
-    --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
-    --source-alpha "$alpha" --eval-every 3000 --eval-rows 3000
-done
-for brier in 0.0 1.0; do
-  job "v16-brier${brier}" $COMMON --backbone answerdotai/ModernBERT-base \
-    --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 9000 \
-    --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
-    --brier-weight "$brier" --eval-every 3000 --eval-rows 3000
-done
+# 3. The main model on everything, longer than before.
+job v12-base $COMMON --backbone answerdotai/ModernBERT-base \
+  --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 40000 \
+  --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
+  --eval-every 4000 --eval-rows 3000
 
-# 5. Specialised branches from the main model.
+# 4. Specialised branches from the main model.
 job v17-route --init-from runs/v12-base/best.pt --backbone answerdotai/ModernBERT-base \
   --train data/train_route.jsonl --dev data/dev_strat_v2.jsonl \
   --steps 8000 --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 1.5e-5 \
@@ -100,5 +86,19 @@ job v19-agent --init-from runs/v12-base/best.pt --backbone answerdotai/ModernBER
   --train data/agent.jsonl --replay data/train_v6.jsonl --replay-share 0.4 \
   --dev data/dev_strat_v2.jsonl --steps 8000 --decision-batch "$DB" --anchor-batch "$AB" \
   --max-length 320 --lr 1.5e-5 --eval-every 4000 --eval-rows 3000
+
+# 5. Settings search, the first thing to drop, short runs, so that the long run uses the better values.
+for alpha in 0.3 0.7; do
+  job "v15-alpha${alpha}" $COMMON --backbone answerdotai/ModernBERT-base \
+    --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 9000 \
+    --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
+    --source-alpha "$alpha" --eval-every 3000 --eval-rows 3000
+done
+for brier in 0.0 1.0; do
+  job "v16-brier${brier}" $COMMON --backbone answerdotai/ModernBERT-base \
+    --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 9000 \
+    --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
+    --brier-weight "$brier" --eval-every 3000 --eval-rows 3000
+done
 
 echo "[$(stamp)] marathon finished"

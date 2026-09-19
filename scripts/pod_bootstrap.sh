@@ -48,7 +48,7 @@ for name in ("COMPARISON.md", "/workspace/bootstrap.log", "/workspace/build.log"
         api.upload_file(path_or_fileobj=name, path_in_repo=os.path.basename(name),
                         repo_id=repo, repo_type="dataset", commit_message="progress")
 PYEOF
-  sleep 600
+  sleep 120
 done
 PUB
 chmod +x /workspace/publish.sh
