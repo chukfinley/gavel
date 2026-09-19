@@ -39,8 +39,25 @@ def rid(*parts: str) -> str:
 
 
 def fetch(path: str) -> list[dict]:
-    with urllib.request.urlopen(f"{BASE}/{path}", timeout=300) as response:
-        return [json.loads(line) for line in response.read().decode().splitlines() if line.strip()]
+    """Download to a file first. A 50 MB body read in one go truncates."""
+    import subprocess
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as handle:
+        target = handle.name
+    subprocess.run(["curl", "-sL", "--retry", "5", "--retry-delay", "3",
+                    "-o", target, f"{BASE}/{path}"], check=True, timeout=900)
+    rows = []
+    with open(target, encoding="utf-8") as handle:
+        for line in handle:
+            line = line.strip()
+            if line:
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    Path(target).unlink(missing_ok=True)
+    return rows
 
 
 def convert(rows: list[dict], tag: str, keep_known: bool) -> list[Decision]:
