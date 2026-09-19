@@ -20,14 +20,16 @@ from typedec.schema import read_jsonl, write_jsonl  # noqa: E402
 
 TRAIN_PARTS = ["train.jsonl", "business.jsonl", "router.jsonl", "abstain_short.jsonl",
                "quiz.jsonl", "knowledge.jsonl", "multilingual.jsonl", "tools.jsonl",
-               "browser.jsonl", "moderation.jsonl"]
-LONG_PARTS = ["long.jsonl", "abstain_long.jsonl"]
+               "browser.jsonl", "moderation.jsonl", "more.jsonl"]
+LONG_PARTS = ["long.jsonl", "abstain_long.jsonl", "more_long.jsonl"]
 AGENT_PARTS = ["tools.jsonl", "browser.jsonl"]
 ROUTE = {"router-difficulty", "router-tier", "banking77", "ag-news", "dbpedia",
          "tweet-offensive", "tweet-hate", "sms-spam", "synth-routing", "synth-action",
-         "mnli", "wanli-train", "anli-r3"}
+         "mnli", "wanli-train", "anli-r3", "tickets-queue", "tickets-priority",
+         "bitext-intent", "safety-aegis", "safety-injection"}
 DOC = {"boolq", "quality", "race", "synth-packet", "synth-packet-long", "synth-incident",
-       "synth-evidence", "sciq-passage", "mnli", "wanli-train", "anli-r3"}
+       "synth-evidence", "sciq-passage", "mnli", "wanli-train", "anli-r3",
+       "case-hold", "pubmedqa", "longbench-v2", "swiss-judgment"}
 # Languages that stay out of training, so transfer can be measured.
 SKIP_SUFFIX = ("-hi",)
 

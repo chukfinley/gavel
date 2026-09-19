@@ -1,2 +1,0 @@
-kazzand/ru-longformer-tiny-16384
-togethercomputer/m2-bert-80M-32k-retrieval

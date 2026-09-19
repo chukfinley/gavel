@@ -112,4 +112,14 @@ job v21-aug $COMMON --backbone answerdotai/ModernBERT-base --augment 0.7 \
   --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
   --eval-every 3000 --eval-rows 3000
 
+# A genuine 32768-token encoder, found by searching for anything bidirectional
+# above ModernBERT's 8192. It is ModernBERT underneath, so only the name changes.
+# Multilingual pretraining comes with it, which the language strata should show.
+job v22-vela32k --train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl \
+  --long data/long_v2.jsonl --backbone llm-semantic-router/Vela-1.0-Encoder-307M \
+  --grad-checkpoint --adam8bit --augment 0.7 \
+  --long-every 4 --long-batch 1 --long-max-length 8192 --steps 12000 \
+  --decision-batch "$((DB / 4))" --anchor-batch "$((AB / 4))" --max-length 256 --lr 2e-5 \
+  --eval-every 3000 --eval-rows 3000
+
 echo "[$(stamp)] marathon finished"
