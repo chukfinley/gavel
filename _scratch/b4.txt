@@ -1,0 +1,17 @@
+Muennighoff/xwinograd|en
+Muennighoff/xwinograd|jp
+sbintuitions/JMTEB|
+llm-jp/jcommonsenseqa|
+hpprc/jsick|
+MadeAgents/xlam-irrelevance-60k|
+Salesforce/APIGen-MT-5k|
+THUDM/AgentInstruct|os
+JailbreakBench/JBB-Behaviors|behaviors
+Anthropic/hh-rlhf|
+lighteval/lextreme|swiss_judgment_prediction
+lighteval/lextreme|swiss_judgment_prediction|test
+lighteval/lextreme|german_argument_mining|test
+nlpaueb/multi_eurlex|
+ai-forever/MERA|parus|train
+CohereForAI/include-base-44|German|test
+MBZUAI/ArabicMMLU|All|test

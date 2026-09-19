@@ -1,0 +1,8 @@
+Tobi-Bueck/customer-support-tickets|
+CFPB/consumer-finance-complaints|
+claritystorm/cfpb-consumer-complaints|
+Muennighoff/xwinograd|jp|test
+sbintuitions/JMTEB|amazon_review_classification
+llm-book/JGLUE|
+shunk031/jcommonsenseqa|
+tokyotech-llm/lmsys-chat-1m-synth|

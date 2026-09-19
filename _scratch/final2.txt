@@ -1,0 +1,14 @@
+lighteval/lextreme|swiss_judgment_prediction|test
+nguha/legalbench|cuad_audit_rights|test
+google/code_x_glue_cc_clone_detection_big_clone_bench||train
+Maxscha/commitbench||train
+McGill-NLP/WebLINX||train
+Team-ACE/ToolACE||train
+Salesforce/APIGen-MT-5k||train
+nvidia/Aegis-AI-Content-Safety-Dataset-1.0||train
+xTRam1/safe-guard-prompt-injection||train
+ai4privacy/pii-masking-200k||train
+bitext/Bitext-customer-support-llm-chatbot-training-dataset||train
+Tobi-Bueck/customer-support-tickets||train
+mhardalov/exams|multilingual|train
+Muennighoff/xwinograd|jp|test

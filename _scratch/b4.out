@@ -1,0 +1,17 @@
+{"id": "Muennighoff/xwinograd", "cfg": "en", "split": "train", "status": "FAIL", "info": "ValueError: Bad split: train. Available splits: ['test']"}
+{"id": "Muennighoff/xwinograd", "cfg": "jp", "split": "train", "status": "FAIL", "info": "ValueError: Bad split: train. Available splits: ['test']"}
+{"id": "sbintuitions/JMTEB", "cfg": null, "split": "train", "status": "FAIL", "info": "ValueError: Config name is missing.\nPlease pick one among the available configs: ['livedoor_news', 'mewsc16_ja', 'sib200_japanese_clustering', 'amazon_review_classification"}
+{"id": "llm-jp/jcommonsenseqa", "cfg": null, "split": "train", "status": "FAIL", "info": "DatasetNotFoundError: Dataset 'llm-jp/jcommonsenseqa' doesn't exist on the Hub or cannot be accessed."}
+{"id": "hpprc/jsick", "cfg": null, "split": "train", "status": "FAIL", "info": "RuntimeError: Dataset scripts are no longer supported, but found jsick.py"}
+{"id": "MadeAgents/xlam-irrelevance-60k", "cfg": null, "split": "train", "status": "FAIL", "info": "DatasetNotFoundError: Dataset 'MadeAgents/xlam-irrelevance-60k' doesn't exist on the Hub or cannot be accessed."}
+{"id": "Salesforce/APIGen-MT-5k", "cfg": null, "split": "train", "status": "OK", "info": ["conversations", "tools", "system"]}
+{"id": "THUDM/AgentInstruct", "cfg": "os", "split": "train", "status": "FAIL", "info": "ValueError: BuilderConfig 'os' not found. Available: ['default']"}
+{"id": "JailbreakBench/JBB-Behaviors", "cfg": "behaviors", "split": "train", "status": "FAIL", "info": "ValueError: Bad split: train. Available splits: ['harmful', 'benign']"}
+{"id": "Anthropic/hh-rlhf", "cfg": null, "split": "train", "status": "OK", "info": ["chosen", "rejected"]}
+{"id": "lighteval/lextreme", "cfg": "swiss_judgment_prediction", "split": "train", "status": "FAIL", "info": "ValueError: Bad split: train. Available splits: ['test']"}
+{"id": "lighteval/lextreme", "cfg": "swiss_judgment_prediction", "split": "test", "status": "OK", "info": ["input", "references", "gold"]}
+{"id": "lighteval/lextreme", "cfg": "german_argument_mining", "split": "test", "status": "OK", "info": ["input", "references", "gold"]}
+{"id": "nlpaueb/multi_eurlex", "cfg": null, "split": "train", "status": "FAIL", "info": "RuntimeError: Dataset scripts are no longer supported, but found multi_eurlex.py"}
+{"id": "ai-forever/MERA", "cfg": "parus", "split": "train", "status": "OK", "info": ["instruction", "inputs", "outputs", "meta"]}
+{"id": "CohereForAI/include-base-44", "cfg": "German", "split": "test", "status": "OK", "info": ["language", "country", "domain", "subject", "regional_feature", "level", "question", "option_a", "option_b", "option_c", "option_d", "answer"]}
+{"id": "MBZUAI/ArabicMMLU", "cfg": "All", "split": "test", "status": "OK", "info": ["ID", "Source", "Country", "Group", "Subject", "Level", "Question", "Context", "Answer Key", "Option 1", "Option 2", "Option 3", "Option 4", "Option 5", "is_few_shot"]}

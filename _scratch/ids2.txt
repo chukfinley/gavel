@@ -1,0 +1,17 @@
+llm-semantic-router/modernbert-base-32k
+llm-semantic-router/modernbert-base-32k-haldetect
+jinaai/jina-embeddings-v5-text-nano
+jinaai/jina-embeddings-v5-text-small
+jinaai/jina-embeddings-v4
+jinaai/jina-embeddings-v2-base-en
+Alibaba-NLP/gte-modernbert-base
+Alibaba-NLP/gte-reranker-modernbert-base
+nomic-ai/nomic-embed-text-v1.5
+tasksource/ModernBERT-base-nli
+tasksource/ModernBERT-large-nli
+MoritzLaurer/ModernBERT-large-zeroshot-v2.0
+yikuan8/Clinical-BigBird
+google/bigbird-roberta-large
+uw-madison/nystromformer-4096
+EuroBERT/EuroBERT-610m
+jhu-clsp/mmBERT-small

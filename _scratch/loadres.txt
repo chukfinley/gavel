@@ -1,0 +1,12 @@
+Loading weights:   0%|          | 0/136 [00:00<?, ?it/s]Loading weights: 100%|██████████| 136/136 [00:00<00:00, 10700.16it/s]
+[transformers] [1mModernBertForSequenceClassification LOAD REPORT[0m from: llm-semantic-router/Vela-1.0-Encoder-307M
+Key               | Status     | 
+------------------+------------+-
+decoder.bias      | UNEXPECTED | 
+classifier.bias   | MISSING    | 
+classifier.weight | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+OK   llm-semantic-router/Vela-1.0-Encoder-307M                     307.5M  ModernBertForSequenceClassification

@@ -1,0 +1,4 @@
+llm-semantic-router/Vela-1.0-Encoder-307M
+llm-semantic-router/mmbert32k-intent-classifier-merged
+llm-semantic-router/mmbert-rerank-32k-2d-matryoshka
+llm-semantic-router/elephant-embeddings-v1-text-small

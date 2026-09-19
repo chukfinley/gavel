@@ -1,0 +1,5 @@
+BAAI/bge-m3
+Alibaba-NLP/gte-large-en-v1.5
+dwzhu/e5-base-4k
+lightonai/modernbert-embed-large
+tasksource/deberta-base-long-nli

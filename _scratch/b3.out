@@ -1,0 +1,18 @@
+{"id": "cambridgeltl/xcopa", "cfg": "it", "split": "test", "status": "OK", "info": ["premise", "choice1", "choice2", "question", "label", "idx", "changed"]}
+{"id": "juletxara/xstory_cloze", "cfg": "ru", "split": "train", "status": "OK", "info": ["story_id", "input_sentence_1", "input_sentence_2", "input_sentence_3", "input_sentence_4", "sentence_quiz1", "sentence_quiz2", "answer_right_ending"]}
+{"id": "mhardalov/exams", "cfg": "multilingual", "split": "train", "status": "OK", "info": ["id", "question", "answerKey", "info"]}
+{"id": "CohereForAI/include-base-44", "cfg": null, "split": "test", "status": "FAIL", "info": "ValueError: Config name is missing.\nPlease pick one among the available configs: ['Albanian', 'Arabic', 'Armenian', 'Azerbaijani', 'Basque', 'Belarusian', 'Bengali', 'Bulga"}
+{"id": "MBZUAI/ArabicMMLU", "cfg": null, "split": "test", "status": "FAIL", "info": "ValueError: Config name is missing.\nPlease pick one among the available configs: ['All', 'Islamic Studies', 'Islamic Studies (Middle School)', 'Islamic Studies (Primary Sch"}
+{"id": "clue/clue", "cfg": "c3", "split": "train", "status": "OK", "info": ["id", "context", "question", "choice", "answer"]}
+{"id": "RussianNLP/russian_super_glue", "cfg": "danetqa", "split": "train", "status": "FAIL", "info": "RuntimeError: Dataset scripts are no longer supported, but found russian_super_glue.py"}
+{"id": "RussianNLP/russian_super_glue", "cfg": "parus", "split": "train", "status": "FAIL", "info": "RuntimeError: Dataset scripts are no longer supported, but found russian_super_glue.py"}
+{"id": "joelniklaus/lextreme", "cfg": "german_argument_mining", "split": "train", "status": "FAIL", "info": "RuntimeError: Dataset scripts are no longer supported, but found lextreme.py"}
+{"id": "lighteval/lextreme", "cfg": "german_argument_mining", "split": "train", "status": "FAIL", "info": "ValueError: Bad split: train. Available splits: ['test']"}
+{"id": "NomaDamas/qasper", "cfg": null, "split": "train", "status": "OK", "info": ["id", "title", "abstract", "full_text", "qas", "figures_and_tables", "question", "retrieval_gt", "answer_gt", "__index_level_0__"]}
+{"id": "Muennighoff/multi_eurlex", "cfg": null, "split": "train", "status": "FAIL", "info": "RuntimeError: Dataset scripts are no longer supported, but found multi_eurlex.py"}
+{"id": "rcds/swiss_judgment_prediction_xl", "cfg": null, "split": "train", "status": "FAIL", "info": "RuntimeError: Dataset scripts are no longer supported, but found swiss_judgment_prediction_xl.py"}
+{"id": "presencesw/contract-nli", "cfg": null, "split": "train", "status": "OK", "info": ["sentence1", "sentence2", "gold_label"]}
+{"id": "shunk031/JGLUE", "cfg": "JCommonsenseQA", "split": "train", "status": "FAIL", "info": "RuntimeError: Dataset scripts are no longer supported, but found JGLUE.py"}
+{"id": "PORTULAN/extraglue", "cfg": "rte_pt-PT", "split": "train", "status": "OK", "info": ["premise", "hypothesis", "idx", "label"]}
+{"id": "community-datasets/gnad10", "cfg": null, "split": "train", "status": "OK", "info": ["text", "label"]}
+{"id": "maximedb/fquad", "cfg": null, "split": "train", "status": "FAIL", "info": "DatasetNotFoundError: Dataset 'maximedb/fquad' doesn't exist on the Hub or cannot be accessed."}
