@@ -104,6 +104,12 @@ PUB
 chmod +x /workspace/publish.sh
 nohup /workspace/publish.sh >/dev/null 2>&1 &
 
+# A 24 GB card takes roughly three times the batch of the 12 GB card this was
+# written on, which is where the rented time is saved.
+export DECISION_BATCH=${DECISION_BATCH:-16}
+export ANCHOR_BATCH=${ANCHOR_BATCH:-32}
+export LONG_BATCH=${LONG_BATCH:-2}
+export EVAL_BATCH=${EVAL_BATCH:-16}
 log "starting the marathon"
 ./scripts/marathon.sh >> /workspace/bootstrap.log 2>&1
 
