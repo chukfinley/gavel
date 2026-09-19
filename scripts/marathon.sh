@@ -67,7 +67,7 @@ job v14-large $COMMON --backbone answerdotai/ModernBERT-large --grad-checkpoint 
   --eval-every 4000 --eval-rows 3000
 
 # 3. The main model on everything, longer than before.
-job v12-base $COMMON --backbone answerdotai/ModernBERT-base \
+job v12-base $COMMON --backbone answerdotai/ModernBERT-base --augment 0.7 \
   --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 40000 \
   --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
   --eval-every 4000 --eval-rows 3000
@@ -100,5 +100,15 @@ for brier in 0.0 1.0; do
     --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
     --brier-weight "$brier" --eval-every 3000 --eval-rows 3000
 done
+
+# The same model without augmentation, to measure what it is worth.
+job v20-noaug $COMMON --backbone answerdotai/ModernBERT-base --augment 0.0 \
+  --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 9000 \
+  --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
+  --eval-every 3000 --eval-rows 3000
+job v21-aug $COMMON --backbone answerdotai/ModernBERT-base --augment 0.7 \
+  --long-every 5 --long-batch "$LB" --long-max-length 896 --steps 9000 \
+  --decision-batch "$DB" --anchor-batch "$AB" --max-length 224 --lr 3e-5 \
+  --eval-every 3000 --eval-rows 3000
 
 echo "[$(stamp)] marathon finished"

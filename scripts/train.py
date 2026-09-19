@@ -30,6 +30,7 @@ from torch.nn import functional as F
 
 from collections import defaultdict                                                # noqa: E402
 
+from typedec.augment import augment                                               # noqa: E402
 from typedec.encoding import NLI_SOURCES, encode_anchor, encode_options, to_device  # noqa: E402
 from typedec.losses import balanced_accuracy, brier, expected_calibration_error      # noqa: E402
 from typedec.model import EntailmentScorer, build_tokenizer                          # noqa: E402
@@ -103,6 +104,8 @@ def main() -> None:
     parser.add_argument("--init-from", default="", help="continue from this checkpoint")
     parser.add_argument("--replay", default="", help="older data mixed in, against forgetting")
     parser.add_argument("--replay-share", type=float, default=0.3)
+    parser.add_argument("--augment", type=float, default=0.0,
+                        help="share of decision rows that get a question transform")
     parser.add_argument("--adam8bit", action="store_true",
                         help="8-bit optimiser states, for a backbone that would not fit")
     parser.add_argument("--grad-checkpoint", action="store_true",
@@ -192,6 +195,8 @@ def main() -> None:
             else:
                 decision = [rng.choice(pools[name]) for name in
                             rng.choices(names, weights=weights, k=size)]
+            if args.augment > 0:
+                decision = [augment(row, rng, args.augment) for row in decision]
             encoding, mask, labels = encode_options(decision, tokenizer, length)
             mask, labels = mask.to(device), labels.to(device)
             with torch.autocast("cuda", dtype=torch.bfloat16):
