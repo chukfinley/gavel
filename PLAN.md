@@ -31,6 +31,26 @@ decider adds engineering on top — shape-bucketed CUDA graphs, FP8 weights, a
 batching server, and a path that answers one question with 151 options at 19x
 the full-forward rate. That is worth copying later, not now.
 
+## Measured on 2026-09-20, before any of this
+
+JevBench public items, pair scorer, `chukfinley/gavel-vela-32k`:
+
+| tier | ours | open-jev-deberta (435 M) | decider-2b | Jev |
+|---|---:|---:|---:|---:|
+| easy (48) | 0.958 | 1.000 | 1.000 | 1.000 |
+| standard (72) | **0.514** | 0.431 | 0.847 | 0.986 |
+| hard (111) | running | 0.378 | 0.459 | 0.730 |
+
+We already beat the only other encoder on that board on the standard tier,
+at 308 M against its 435 M. Per family, standard tier:
+
+    ordinal 0.750 · intent 0.667 · policy 0.583 · adequacy 0.500 ·
+    extraction 0.417 · routing 0.167
+
+Ordinal was 0.333 before the evaluator was fixed, so that hole was the
+reader, not the model. Routing at 2 of 12 is the real one, and item 2b below
+is the answer to it.
+
 ## 1. The span head, taught by the model we already have
 
 **Change.** A second head on the same Vela-32k backbone that reads
@@ -93,6 +113,18 @@ they are one loader each: `allenai/social_i_qa`, `allenai/reward-bench`,
 **How we know.** v2 micro, per task, with its denominator. The target is to
 beat GLiNER2's 0.688 and Von's 0.666 there, which is the only honest
 comparison left after what Von's generator does to v1.
+
+## 2b. Routing as a rule over overlapping categories — done, untested
+
+`build_routing.py` exists now. The JevBench routing items are short requests
+over six named specialists where the tie-break lives in the instruction
+("file edits with test execution use the agent, even if it is code-related").
+Our mix only had tier routing, which is a different task. The new rows carry
+overlapping categories and a rule that separates them; the categories and
+requests are written for the file, not copied from any suite.
+
+Untested until a GPU run finishes. The number to watch is the routing family
+on JevBench standard, currently 0.167.
 
 ## 3. Rules over ordered levels, not more levels
 
