@@ -225,7 +225,7 @@ def main() -> None:
                                         "NVIDIA GeForce RTX 3090,"
                                         "NVIDIA GeForce RTX 3090 Ti")
     keep.add_argument("--tries", type=int, default=6)
-    keep.add_argument("--wait", type=int, default=420,
+    keep.add_argument("--wait", type=int, default=900,
                       help="seconds to give one machine before giving up on it")
     keep.add_argument("--interval", type=int, default=40)
     keep.add_argument("--name", default="gavel-training")

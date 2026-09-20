@@ -21,7 +21,7 @@ from gavel.schema import read_jsonl, write_jsonl
 TRAIN_PARTS = ["train.jsonl", "business.jsonl", "router.jsonl", "abstain_short.jsonl",
                "quiz.jsonl", "knowledge.jsonl", "multilingual.jsonl", "tools.jsonl",
                "browser.jsonl", "moderation.jsonl", "more.jsonl", "semrouter.jsonl", "kotoba.jsonl", "grounded.jsonl", "scales.jsonl",
-               "criteria.jsonl", "claims.jsonl"]
+               "criteria.jsonl", "claims.jsonl", "domains.jsonl"]
 LONG_PARTS = ["long.jsonl", "abstain_long.jsonl", "more_long.jsonl"]
 AGENT_PARTS = ["tools.jsonl", "browser.jsonl"]
 ROUTE = {"router-difficulty", "router-tier", "banking77", "ag-news", "dbpedia",
@@ -105,7 +105,8 @@ def main() -> None:
                       ("moderation.jsonl", "moderation-held"),
                       ("criteria.jsonl", "criteria-held"),
                       ("claims.jsonl", "claims-held"),
-                      ("scales.jsonl", "scales-held")]:
+                      ("scales.jsonl", "scales-held"),
+                      ("domains.jsonl", "domains-held")]:
         try:
             pool = list(read_jsonl(folder / name))
             rng.shuffle(pool)
