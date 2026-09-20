@@ -55,7 +55,7 @@ if ! cuda_ok; then
   log "after reinstall: $($PY -c 'import torch;print(torch.__version__, torch.cuda.is_available())' 2>&1 | tail -1)"
 fi
 if ! cuda_ok; then
-  log "FATAL this pod cannot run CUDA. Terminate it and start another."
+  log "FATAL pod ${RUNPOD_POD_ID:-unknown} cannot run CUDA. Terminate it."
   $PY - <<'PYEOF' 2>/dev/null
 import os
 from huggingface_hub import HfApi
@@ -69,6 +69,11 @@ PYEOF
   # thirty seconds, so the pod idles instead and waits to be terminated.
   sleep infinity
 fi
+
+# One unambiguous line per pod, so a watcher cannot mistake an older pod's
+# verdict for this one's. A stale bootstrap.log on the Hub already caused a
+# healthy machine to be terminated once.
+log "CUDA OK on pod ${RUNPOD_POD_ID:-unknown}"
 
 # Publish logs and results every few minutes, so the run can be watched from
 # outside without a shell on this machine.

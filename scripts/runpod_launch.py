@@ -158,14 +158,13 @@ def ensure(args) -> None:
             except Exception as error:
                 print(f"  (waiting: {str(error)[:50]})", flush=True)
                 continue
-            if pod not in text:
-                print("  (log is still from an older pod)", flush=True)
-                continue
-            mine = text[text.index(pod):]
-            if "cannot run CUDA" in mine:
+            # Match on this pod's own id, never on a phrase that an older
+            # pod could have left in the same file. Getting this wrong
+            # terminated a machine that had just reported a working GPU.
+            if f"FATAL pod {pod} cannot run CUDA" in text:
                 verdict = "no CUDA"
                 break
-            if "building datasets" in mine or "starting the long run" in mine:
+            if f"CUDA OK on pod {pod}" in text:
                 print(f"  {pod} has a working GPU and is building. "
                       f"Watch: https://huggingface.co/datasets/{args.results}")
                 return
