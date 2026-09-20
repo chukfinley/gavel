@@ -58,12 +58,20 @@ PUBLISHED = {
 def options_for(item) -> tuple[list[str], list[str]]:
     """The label the gold uses, and the text the model reads for it.
 
-    A criterion is keyed by the label for a choice, and by "true"/"false" for
-    a noul, whose labels are "yes"/"no". Score levels are keyed by the level.
+    Two shapes, and getting this wrong is silent. A choice or a noul carries
+    `criteria` as a mapping, keyed by the label, or by "true"/"false" where
+    the labels are "yes"/"no". A **score carries a list**, one description
+    per level in order, and the labels are the level numbers. Reading the
+    list as a mapping is what hid every level description from the model in
+    the other evaluator.
     """
     question = item["question"]
-    criteria = question.get("criteria") or {}
+    criteria = question.get("criteria")
     labels = [str(label) for label in item["labels"]]
+    if isinstance(criteria, list):
+        return labels, [f"{label}: {criteria[index]}" if index < len(criteria)
+                        else label for index, label in enumerate(labels)]
+    criteria = criteria or {}
     alias = {"yes": "true", "no": "false"}
     texts = []
     for label in labels:
