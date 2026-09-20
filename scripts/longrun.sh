@@ -25,6 +25,7 @@ echo "[$(stamp)] assembling"
 $PY scripts/build_domains.py  >> logs/build.log 2>&1
 $PY scripts/build_games.py    >> logs/build.log 2>&1
 $PY scripts/build_routing.py  >> logs/build.log 2>&1
+$PY scripts/build_grounded.py >> logs/build.log 2>&1
 $PY scripts/build_scales.py   >> logs/build.log 2>&1
 $PY scripts/build_criteria.py >> logs/build.log 2>&1
 $PY scripts/assemble.py | tail -1
