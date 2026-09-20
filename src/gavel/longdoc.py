@@ -50,7 +50,8 @@ def decide(model, tokenizer, decision: Decision, device="cuda",
         encoding = tokenizer([left for left, _ in chunk], [right for _, right in chunk],
                              padding=True, truncation=True, max_length=size + 128,
                              return_tensors="pt").to(device)
-        with torch.autocast("cuda", dtype=torch.bfloat16):
+        with torch.autocast("cuda", dtype=torch.bfloat16,
+                            enabled=str(device).startswith("cuda")):
             logits = model.pair_logits(dict(encoding)).float()
         entail.append(logits[:, ENTAILMENT].cpu())
         contra.append(logits[:, CONTRADICTION].cpu())

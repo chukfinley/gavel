@@ -97,7 +97,12 @@ class Gavel:
         encoding = self.tokenizer([premise] * len(pairs), pairs, padding=True,
                                   truncation=True, max_length=self.max_length,
                                   return_tensors="pt").to(self.device)
-        logits = self.model(**encoding).logits[:, ENTAILMENT].float() / self.temperature
+        # bf16 autocast on a card: the model was trained and calibrated that
+        # way, and flash-attention accepts nothing else. Without this the
+        # pod's benchmark evaluations crashed and published no numbers.
+        with torch.autocast(device_type="cuda", dtype=torch.bfloat16,
+                            enabled=str(self.device).startswith("cuda")):
+            logits = self.model(**encoding).logits[:, ENTAILMENT].float() / self.temperature
         probabilities = F.softmax(logits, dim=-1).cpu().tolist()
         best = max(range(len(choices)), key=probabilities.__getitem__)
         confidence = probabilities[best]
