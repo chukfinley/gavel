@@ -1,0 +1,38 @@
+{
+  "readable": {
+    "accuracy": 0.67,
+    "confidence": 0.69054,
+    "chance": 0.30433333333333334
+  },
+  "empty": {
+    "accuracy": 0.325,
+    "confidence": 0.516025,
+    "chance": 0.30433333333333334
+  },
+  "amharic": {
+    "accuracy": 0.32,
+    "confidence": 0.493784,
+    "chance": 0.30433333333333334
+  },
+  "khmer": {
+    "accuracy": 0.325,
+    "confidence": 0.492097,
+    "chance": 0.30433333333333334
+  },
+  "georgian": {
+    "accuracy": 0.345,
+    "confidence": 0.503092,
+    "chance": 0.30433333333333334
+  },
+  "tamil": {
+    "accuracy": 0.285,
+    "confidence": 0.5282755,
+    "chance": 0.30433333333333334
+  },
+  "devanagari": {
+    "accuracy": 0.32,
+    "confidence": 0.5360465,
+    "chance": 0.30433333333333334
+  },
+  "confidence_drop": 0.15449350000000006
+}

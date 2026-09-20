@@ -101,7 +101,30 @@ that shape; we glue the two together into one option string at inference.
    YaRN extension holds, but LongBench-v2 sits at 0.30 where chance is 0.25.
    Finding one line in a structured document works (0.815); multi-hop
    reasoning over 16 k tokens of prose does not.
-7. **Truncation was not the cause of the weak sectors.** Code defect detection
+7. **The abstain signal does fire on input the model cannot read.** This is
+   the failure Laya published about itself: their English checkpoint fed
+   Khmer scored 0.000 accuracy at 0.952 confidence, so the probability was
+   useless exactly where a caller needs it. Measured on ours, 200 rows,
+   `scripts/test_unreadable.py`:
+
+   | state | accuracy | mean confidence |
+   |---|---:|---:|
+   | readable | 0.670 | 0.691 |
+   | empty | 0.325 | 0.516 |
+   | Amharic | 0.320 | 0.494 |
+   | Khmer | 0.325 | 0.492 |
+   | Georgian | 0.345 | 0.503 |
+   | Tamil | 0.285 | 0.528 |
+   | Devanagari | 0.320 | 0.536 |
+
+   Chance is 0.304. Accuracy lands on chance in every unreadable condition
+   and confidence falls with it, by 0.154 at worst. The gate is worth
+   something, and a threshold at 0.6 would refuse almost all of it while
+   keeping most readable rows. Note the Devanagari row especially: Hindi is
+   held out of our training mix on purpose, so that column is a script the
+   model genuinely never trained on.
+
+8. **Truncation was not the cause of the weak sectors.** Code defect detection
    at 256 vs 1024 tokens: 0.587 vs 0.600. Those tasks are simply hard.
 
 ## What to do next, in order

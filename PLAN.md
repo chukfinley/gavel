@@ -151,10 +151,10 @@ item 1 it is nearly free.
 * **Retrieved evidence.** `build_grounded.py` still stalls on a pure-Python
   BM25; `rank_bm25` fixes it. Retrieval alone lifted MMLU 0.293 → 0.367 on a
   model that had never seen an evidence block.
-* **The unreadable-input test.** Feed a script the model has never seen and
-  check that confidence drops. Laya measured 0.000 accuracy at 0.952
-  confidence on their English checkpoint. If ours does the same, the abstain
-  mechanism is worthless where it matters.
+* ~~**The unreadable-input test.**~~ Done 2026-09-20 and passed: accuracy
+  falls to chance on five unseen scripts and confidence falls with it, by
+  0.154 at worst, where Laya's stayed at 0.952. Numbers in `LEARNINGS.md`
+  item 7, script at `scripts/test_unreadable.py`.
 * **A locked test partition**, kev-style: development selects, the locked
   split is read once per candidate, every number carries a suite hash and a
   commit. We report per stratum already; we do not have the lock.
