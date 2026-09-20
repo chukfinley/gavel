@@ -91,18 +91,43 @@ image ships and the cu124 build the bootstrap installs. The bootstrap now
 detects that, publishes its log and idles rather than exiting, because
 exiting made the container restart every thirty seconds.
 
+## Two traps that cost an afternoon, so they are written down
+
+**A pod can have a working GPU and still be useless.** Eight machines in a
+row showed a card in `nvidia-smi`, with `libcuda.so.1` present and loading,
+and `torch.cuda.is_available()` still False. It is a broken host, not
+something to debug: `runpod_launch.py ensure` rents until one works. The
+request that does work is in `CLAUDE.md`; 120 GB of container disk and one
+entry in `gpuTypeIds` are part of it.
+
+**`Could not import module 'ModernBertForSequenceClassification'` is a lie.**
+The real error underneath is `operator torchvision::nms does not exist`.
+transformers imports `image_utils`, which imports torchvision, and the pod
+image ships a torchvision built against its own torch. The moment a
+different torch lands in the venv, that import raises and transformers
+reports a missing model class. It works on the developer machine because
+torchvision is not installed there at all, and transformers skips it when
+absent. The pod builds a clean venv now — no system packages, torch
+2.6.0+cu124, transformers 5.17.0, no torchvision.
+
+Both failures are now caught before the eight-minute dataset build rather
+than after it.
+
 ## What is half finished
 
 * **No GPU run has completed with the current code.** Everything above was
   built and tested on CPU; the training numbers are from yesterday's
-  architecture.
+  architecture. A run started at 08:38 on 2026-09-20 with the backbone
+  loading correctly for the first time.
 * `scripts/build_grounded.py` still stalls on a pure-Python BM25 and needs
   `rank_bm25`.
 * Bespoke's Nimble suite is not wired up. Its 13 subsets rebuild from
   manifests in `bespokelabsai/nimble`.
 * `src/gavel/longdoc.py` works but has never been trained for or measured at
   scale.
-* The unreadable-input test has still not been run.
+* ~~The unreadable-input test~~ ran and passed: accuracy falls to chance on
+  five unseen scripts and confidence falls by 0.154 with it. `LEARNINGS.md`
+  item 7.
 
 ## The one thing to decide
 
