@@ -114,11 +114,19 @@ class EntailmentScorer(nn.Module):
         return self.scatter_options(flat, option_mask)
 
     def scatter_options(self, flat: torch.Tensor, option_mask: torch.Tensor) -> torch.Tensor:
-        scores = torch.full(option_mask.shape, torch.finfo(flat.dtype).min,
-                            dtype=flat.dtype, device=flat.device)
-        scores[option_mask.to(flat.device).bool()] = flat / self.log_temperature.exp()
-        return scores
+        """Place each real pair's score at its (row, option) slot, in fp32.
 
+        Always fp32: under bf16 autocast the logits arrive in bf16 and the
+        temperature is an fp32 buffer, and an index assignment between the
+        two is an error, which is how the first optimised run died at its
+        first evaluation.
+        """
+        flat = flat.float()
+        scores = torch.full(option_mask.shape, torch.finfo(torch.float32).min,
+                            dtype=torch.float32, device=flat.device)
+        scores[option_mask.to(flat.device).bool()] = (
+            flat / self.log_temperature.exp().to(flat.device))
+        return scores
 
 def build_tokenizer(backbone: str):
     tokenizer = AutoTokenizer.from_pretrained(backbone, trust_remote_code=True)

@@ -241,3 +241,6 @@ print("published", repo)
 PYEOF
 done
 log "done, the pod can be stopped"
+# Exiting restarts the container, which clones and builds and trains all
+# over again on the same rent. Idle instead until terminated.
+sleep infinity
