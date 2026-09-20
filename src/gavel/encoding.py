@@ -29,30 +29,53 @@ def premise(decision: Decision) -> str:
     return decision.state.strip() or decision.question.strip()
 
 
-def encode_options(decisions: list[Decision], tokenizer, max_length: int = 256):
-    """One (premise, hypothesis) pair for every option of every decision."""
+def option_pairs(decisions: list[Decision]):
+    """One (premise, hypothesis) pair per REAL option, and the layout mask.
+
+    The first version padded every decision to the widest one in the batch
+    with empty hypotheses that ran through the encoder and were then masked
+    to minus infinity: 28 percent of the sequences in a typical batch, zero
+    gradient. Only real pairs are built now, in row-major order, and the
+    mask says where each one goes.
+    """
     width = max(len(d.options) for d in decisions)
     premises, hypotheses, mask = [], [], []
     for decision in decisions:
         state = premise(decision)
-        for index in range(width):
+        for index in range(len(decision.options)):
             premises.append(state)
-            hypotheses.append(hypothesis(decision, index) if index < len(decision.options) else "")
+            hypotheses.append(hypothesis(decision, index))
         mask.append([1] * len(decision.options) + [0] * (width - len(decision.options)))
+    return premises, hypotheses, torch.tensor(mask)
+
+
+def encode_options(decisions: list[Decision], tokenizer, max_length: int = 256):
+    """Tokenized pairs for every real option, plus the (rows, width) mask."""
+    premises, hypotheses, mask = option_pairs(decisions)
     encoding = tokenizer(premises, hypotheses, truncation=True, max_length=max_length,
                          padding=True, return_tensors="pt")
     labels = torch.tensor([d.label for d in decisions]) if decisions[0].label is not None else None
-    return encoding, torch.tensor(mask), labels
+    return encoding, mask, labels
+
+
+def anchor_pairs(decisions: list[Decision]):
+    premises = [d.state for d in decisions]
+    hypotheses = [d.question.replace(CLAIM_PREFIX, "").strip() for d in decisions]
+    return premises, hypotheses, torch.tensor([d.label for d in decisions])
 
 
 def encode_anchor(decisions: list[Decision], tokenizer, max_length: int = 256):
     """Natural language inference pairs, used to anchor the three-way head."""
-    premises = [d.state for d in decisions]
-    hypotheses = [d.question.replace(CLAIM_PREFIX, "").strip() for d in decisions]
+    premises, hypotheses, labels = anchor_pairs(decisions)
     encoding = tokenizer(premises, hypotheses, truncation=True, max_length=max_length,
                          padding=True, return_tensors="pt")
-    return encoding, torch.tensor([d.label for d in decisions])
+    return encoding, labels
 
 
 def to_device(encoding, device):
-    return {key: value.to(device) for key, value in encoding.items()}
+    """Pinned, non-blocking copies: a plain .to() from pageable memory is a
+    synchronous call that drains the GPU queue every step."""
+    cuda = str(device).startswith("cuda")
+    return {key: (value.pin_memory().to(device, non_blocking=True) if cuda
+                  else value.to(device))
+            for key, value in encoding.items()}

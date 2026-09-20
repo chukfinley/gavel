@@ -139,8 +139,12 @@ class SpanScorer(nn.Module):
     def __init__(self, backbone: str, tokenizer=None, dropout: float = 0.1,
                  gradient_checkpointing: bool = False):
         super().__init__()
+        from .model import attention_implementation
+
         self.backbone_name = backbone
-        self.model = AutoModel.from_pretrained(backbone, trust_remote_code=True)
+        extra = {"attn_implementation": attention_implementation()}
+        extra = {k: v for k, v in extra.items() if v}
+        self.model = AutoModel.from_pretrained(backbone, trust_remote_code=True, **extra)
         if tokenizer is not None:
             self.model.resize_token_embeddings(len(tokenizer))
         if gradient_checkpointing:

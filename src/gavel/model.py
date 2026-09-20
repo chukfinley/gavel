@@ -26,11 +26,45 @@ Two properties follow:
 
 from __future__ import annotations
 
+import importlib.util
+import os
+
 import torch
 from torch import nn
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 ENTAILMENT, NEUTRAL, CONTRADICTION = 0, 1, 2
+
+
+def attention_implementation() -> str | None:
+    """Flash-attention 2 when it is installed, otherwise the library default.
+
+    With the default (sdpa) every batch that carries a padding mask or a
+    sliding-window mask — which is every batch here — falls back to the
+    memory-efficient kernel, which skips nothing: the fourteen local layers
+    then compute full attention over 8192 tokens. Flash-attention gets the
+    64-token window natively and unpads per layer. `GAVEL_ATTN` overrides.
+    """
+    forced = os.environ.get("GAVEL_ATTN")
+    if forced:
+        return None if forced == "default" else forced
+    return "flash_attention_2" if importlib.util.find_spec("flash_attn") else None
+
+
+def set_layer_checkpointing(module: nn.Module, on: bool) -> int:
+    """Flip gradient checkpointing per layer without re-registering hooks.
+
+    `gradient_checkpointing_enable()` registers input-grad hooks every time
+    it is called; toggled per step they would stack up over a run. The
+    layers check a plain attribute, so that is what is flipped.
+    """
+    count = 0
+    for child in module.modules():
+        if child is not module and hasattr(child, "gradient_checkpointing") \
+                and not hasattr(child, "config"):
+            child.gradient_checkpointing = on
+            count += 1
+    return count
 
 
 class EntailmentScorer(nn.Module):
@@ -44,8 +78,10 @@ class EntailmentScorer(nn.Module):
     def __init__(self, backbone: str, gradient_checkpointing: bool = False):
         super().__init__()
         self.backbone_name = backbone
+        extra = {"attn_implementation": attention_implementation()}
+        extra = {k: v for k, v in extra.items() if v}
         self.model = AutoModelForSequenceClassification.from_pretrained(
-            backbone, num_labels=3, trust_remote_code=True)
+            backbone, num_labels=3, trust_remote_code=True, **extra)
         # Some multimodal configurations keep the text settings in a sub-config
         # and have no pad id at the top level.
         for config in filter(None, [self.model.config,
@@ -57,16 +93,29 @@ class EntailmentScorer(nn.Module):
             self.model.config.use_cache = False
         self.register_buffer("log_temperature", torch.zeros(1))
 
+    def set_checkpointing(self, on: bool) -> None:
+        """Checkpointing only where the memory is needed (the long steps)."""
+        set_layer_checkpointing(self.model, on)
+
     def pair_logits(self, encoding: dict) -> torch.Tensor:
         """Three-way logits for a batch of (premise, hypothesis) pairs."""
         return self.model(**encoding).logits
 
     def option_logits(self, encoding: dict, option_mask: torch.Tensor) -> torch.Tensor:
-        """One score for each option: the entailment logit of its hypothesis."""
-        rows, options = option_mask.shape
-        scores = self.pair_logits(encoding)[:, ENTAILMENT].view(rows, options)
-        scores = scores / self.log_temperature.exp()
-        return scores.masked_fill(option_mask == 0, torch.finfo(scores.dtype).min)
+        """One score for each option: the entailment logit of its hypothesis.
+
+        The encoding holds only the real pairs, in row-major order of the
+        mask; the mask says where each one lands. Empty slots stay at the
+        lowest value, as before, but no longer cost a forward pass.
+        """
+        flat = self.pair_logits(encoding)[:, ENTAILMENT]
+        return self.scatter_options(flat, option_mask)
+
+    def scatter_options(self, flat: torch.Tensor, option_mask: torch.Tensor) -> torch.Tensor:
+        scores = torch.full(option_mask.shape, torch.finfo(flat.dtype).min,
+                            dtype=flat.dtype, device=flat.device)
+        scores[option_mask.to(flat.device).bool()] = flat / self.log_temperature.exp()
+        return scores
 
 
 def build_tokenizer(backbone: str):

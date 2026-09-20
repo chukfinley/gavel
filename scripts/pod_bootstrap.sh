@@ -37,6 +37,17 @@ uv pip install -q torch==2.6.0 --index-url https://download.pytorch.org/whl/cu12
 uv pip install -q "transformers==5.17.0" "datasets>=3.0" scikit-learn scipy \
                   tqdm pandas accelerate bitsandbytes huggingface_hub \
   >> /workspace/bootstrap.log 2>&1
+# Flash-attention 2: the prebuilt wheel for this exact stack (torch 2.6, CUDA
+# 12, Python 3.11, the cxx11abi=FALSE that pip's torch wheels use). Without
+# it every masked batch takes the memory-efficient kernel and the fourteen
+# sliding-window layers compute full attention over 8192 tokens. If the wheel
+# does not fit this machine the run goes on with sdpa; model.py checks.
+FA_WHEEL="https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl"
+uv pip install -q "$FA_WHEEL" >> /workspace/bootstrap.log 2>&1 \
+  && log "flash-attn installed from the prebuilt wheel" \
+  || log "flash-attn wheel did not install; continuing with sdpa"
+$PY -c "import flash_attn, flash_attn_2_cuda" >/dev/null 2>&1 \
+  || { uv pip uninstall -q flash-attn >> /workspace/bootstrap.log 2>&1; log "flash-attn import failed; removed, sdpa it is"; }
 log "torch: $($PY -c 'import torch;print(torch.__version__, torch.cuda.is_available())' 2>&1 | tail -1)"
 # A rented machine regularly comes up with a working `nvidia-smi` and a torch
 # that cannot see the card anyway: the image ships a cu130 build and some

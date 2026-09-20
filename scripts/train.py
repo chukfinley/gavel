@@ -33,8 +33,9 @@ from torch.nn import functional as F
 from gavel.augment import augment
 from gavel.encoding import (
     NLI_SOURCES,
-    encode_anchor,
+    anchor_pairs,
     encode_options,
+    option_pairs,
     to_device,
 )
 from gavel.losses import (
@@ -125,7 +126,10 @@ def main() -> None:
 
     torch.manual_seed(args.seed)
     rng = random.Random(args.seed)
-    device = torch.device("cuda")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    cuda = device.type == "cuda"
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.backends.cudnn.allow_tf32 = True
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -168,8 +172,11 @@ def main() -> None:
         import bitsandbytes as bnb
         optimiser = bnb.optim.AdamW8bit(model.parameters(), lr=args.lr, weight_decay=0.01)
     else:
-        optimiser = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
+        optimiser = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01,
+                                      fused=cuda)
     warmup = int(args.steps * args.warmup)
+    print(f"attention: {getattr(model.model.config, '_attn_implementation', 'default')}  "
+          f"device {device}", flush=True)
 
     def schedule(step: int) -> float:
         if step < warmup:
@@ -180,19 +187,15 @@ def main() -> None:
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimiser, schedule)
 
     best, started, history, skipped = 0.0, time.time(), [], 0
+    window_started, window_step = time.time(), 0
     for step in range(1, args.steps + 1):
         try:
             anchor = rng.sample(anchor_rows, args.anchor_batch)
-            encoding, labels = encode_anchor(anchor, tokenizer, args.max_length)
-            with torch.autocast("cuda", dtype=torch.bfloat16):
-                anchor_loss = F.cross_entropy(
-                    model.pair_logits(to_device(encoding, device)).float(), labels.to(device))
-            anchor_loss.backward()
 
             # Every few steps the batch comes from the long pool, so that the model
             # learns to read states of a few thousand tokens. Training only on short
             # pairs gives a model that cannot use a long state at inference.
-            use_long = long_rows and step % args.long_every == 0
+            use_long = bool(long_rows) and step % args.long_every == 0
             size = args.long_batch if use_long else args.decision_batch
             length = args.long_max_length if use_long else args.max_length
             if replay_rows and not use_long and rng.random() < args.replay_share:
@@ -204,12 +207,40 @@ def main() -> None:
                             rng.choices(names, weights=weights, k=size)]
             if args.augment > 0:
                 decision = [augment(row, rng, args.augment) for row in decision]
-            encoding, mask, labels = encode_options(decision, tokenizer, length)
-            mask, labels = mask.to(device), labels.to(device)
-            with torch.autocast("cuda", dtype=torch.bfloat16):
-                logits = model.option_logits(to_device(encoding, device), mask).float()
+            # Checkpointing only on the long steps, where the memory is needed;
+            # on the 512-token steps it costs a full extra forward for nothing.
+            if args.grad_checkpoint:
+                model.set_checkpointing(use_long)
+
+            a_premises, a_hypotheses, a_labels = anchor_pairs(anchor)
+            d_premises, d_hypotheses, mask = option_pairs(decision)
+            labels = torch.tensor([d.label for d in decision]).to(device)
+            a_labels, mask = a_labels.to(device), mask.to(device)
+            if use_long:
+                # Two passes: the anchors must not be padded to 8192 tokens.
+                encoding = tokenizer(a_premises, a_hypotheses, truncation=True,
+                                     max_length=args.max_length, padding=True,
+                                     return_tensors="pt")
+                with torch.autocast("cuda", dtype=torch.bfloat16, enabled=cuda):
+                    anchor_logits = model.pair_logits(to_device(encoding, device)).float()
+                encoding = tokenizer(d_premises, d_hypotheses, truncation=True,
+                                     max_length=length, padding=True, return_tensors="pt")
+                with torch.autocast("cuda", dtype=torch.bfloat16, enabled=cuda):
+                    flat = model.pair_logits(to_device(encoding, device))[:, 0].float()
+            else:
+                # One pass for anchors and decisions: same head, same length,
+                # and the eight-pair anchor pass on its own was launch-bound.
+                encoding = tokenizer(a_premises + d_premises, a_hypotheses + d_hypotheses,
+                                     truncation=True, max_length=length, padding=True,
+                                     return_tensors="pt")
+                with torch.autocast("cuda", dtype=torch.bfloat16, enabled=cuda):
+                    all_logits = model.pair_logits(to_device(encoding, device)).float()
+                anchor_logits = all_logits[: len(anchor)]
+                flat = all_logits[len(anchor):, 0]
+            anchor_loss = F.cross_entropy(anchor_logits, a_labels)
+            logits = model.scatter_options(flat, mask)
             decision_loss = F.cross_entropy(logits, labels) + args.brier_weight * brier(logits, labels, mask)
-            decision_loss.backward()
+            (anchor_loss + decision_loss).backward()
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimiser.step()
@@ -224,9 +255,12 @@ def main() -> None:
             continue
 
         if step % 100 == 0:
+            rate = (step - window_step) / max(time.time() - window_started, 1e-6)
+            window_started, window_step = time.time(), step
+            peak = torch.cuda.max_memory_allocated() / 2**30 if cuda else 0.0
             print(f"step {step}/{args.steps} anchor {anchor_loss.item():.4f} "
                   f"decision {decision_loss.item():.4f} lr {scheduler.get_last_lr()[0]:.2e} "
-                  f"{step / (time.time() - started):.1f} steps/s", flush=True)
+                  f"{rate:.1f} steps/s  peak {peak:.1f} GB  skipped {skipped}", flush=True)
         if step % args.eval_every == 0 or step == args.steps:
             metrics = evaluate(model, dev_rows, tokenizer, device, 8, args.max_length)
             metrics["step"] = step
@@ -238,7 +272,8 @@ def main() -> None:
                             "args": vars(args)}, out / "best.pt")
             (out / "history.json").write_text(json.dumps(history, indent=2))
 
-    print(f"best mean over strata {best:.4f}  (skipped {skipped} batches)")
+    print(f"best mean over strata {best:.4f}  (skipped {skipped} batches, "
+          f"{(time.time() - started) / 3600:.2f} h)")
 
 
 if __name__ == "__main__":
