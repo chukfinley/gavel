@@ -210,7 +210,7 @@ def main() -> None:
     begin.add_argument("--name", default="gavel-training")
     begin.add_argument("--image", default=IMAGE)
     begin.add_argument("--disk", type=int, default=120)
-    begin.add_argument("--cloud", default="COMMUNITY", choices=["COMMUNITY", "SECURE"])
+    begin.add_argument("--cloud", default="SECURE", choices=["SECURE", "COMMUNITY"])
     begin.add_argument("--spot", action="store_true",
                        help="cheaper, but the pod can be taken away")
     begin.add_argument("--results", default="chukfinley/gavel-runs")
@@ -234,7 +234,7 @@ def main() -> None:
     keep.add_argument("--name", default="gavel-training")
     keep.add_argument("--image", default=IMAGE)
     keep.add_argument("--disk", type=int, default=120)
-    keep.add_argument("--cloud", default="COMMUNITY", choices=["COMMUNITY", "SECURE"])
+    keep.add_argument("--cloud", default="SECURE", choices=["SECURE", "COMMUNITY"])
     keep.add_argument("--spot", action="store_true")
     keep.add_argument("--results", default="chukfinley/gavel-runs")
     keep.add_argument("--repo", default="https://github.com/chukfinley/gavel.git")

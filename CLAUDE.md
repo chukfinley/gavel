@@ -65,11 +65,20 @@ numbers that separate systems.
   that offered three options on a five-level question.
 * `ruff check src scripts tests` and `pytest` before committing.
 
+## Secure cloud only, never Community
+
+Rule from the owner on 2026-09-20, after ten Community machines in one
+morning: eight with a card in `nvidia-smi` and no CUDA device for torch, one
+that trained and one that could not load the backbone. Community is cheaper
+by a few cents an hour and it cost a working day. **`cloudType` is `SECURE`
+and stays `SECURE`.** The extra cost is accepted; the time is not. Do not
+pass `--cloud COMMUNITY`, and do not switch it back to save money.
+
 ## The pod request that works
 
-This exact body produced the machine that trained on 2026-09-20, after seven
-others came up with a working `nvidia-smi` and a torch that saw no device.
-Change one field at a time and only with a reason.
+This body, with `cloudType` now `SECURE` by rule, is the shape that produced
+the machine that trained on 2026-09-20. Change one field at a time and only
+with a reason.
 
 ```json
 POST https://rest.runpod.io/v1/pods
@@ -81,7 +90,7 @@ POST https://rest.runpod.io/v1/pods
   "gpuCount": 1,
   "imageName": "runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04",
   "containerDiskInGb": 120,
-  "cloudType": "COMMUNITY",
+  "cloudType": "SECURE",
   "ports": ["22/tcp"],
   "env": {"HF_TOKEN": "...", "RESULTS_REPO": "chukfinley/gavel-runs",
           "GAVEL_REPO": "https://github.com/chukfinley/gavel.git",
