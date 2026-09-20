@@ -81,6 +81,43 @@ byte-for-byte from manifests in the repository. Jev 1.13.0 and Nimble-9B are
 measured on it, and decider reports 0.706 macro over it. Not wired up here
 yet.
 
+## Two recipes and two heads, 2026-09-20/21
+
+Both pair models trained on the same 1.09 M-row mix. The baseline is the
+original recipe (60000 steps, batch 4 + 8 anchors, lr 1.5e-5, sdpa); the
+fast one is the reviewed recipe (30000 steps, batch 8 + 16, lr 2e-5,
+flash-attention, no filler slots, one pass). Each was then distilled into
+the one-sequence span head on the workstation's 3060 (10000 steps, batch 8,
+teacher = its own pair model).
+
+| model | easy | standard | hard | weighted | cbench v2 | ms/item |
+|---|---:|---:|---:|---:|---:|---:|
+| pair, baseline recipe | 0.979 | **0.694** | **0.369** | **0.597** | **0.619** | 99 (3090) |
+| pair, fast recipe | 0.979 | 0.681 | 0.324 | 0.571 | 0.596 | 74 (3060) |
+| span head from baseline | 0.958 | 0.528 | 0.342 | 0.528 | — | **29** (3060) |
+| span head from fast | 0.979 | 0.472 | 0.342 | 0.515 | — | 30 (3060) |
+| open-jev-deberta (435 M) | 1.000 | 0.431 | 0.378 | 0.524 | — | — |
+
+What it says. **The baseline recipe is the better model**: 2.6 points ahead
+on weighted JevBench, 2.3 on v2, and its hard-tier long_policy at 0.526
+against the fast recipe's 0.211. Halving the steps and doubling the batch
+bought half the pod time and cost that. The fast recipe's dev mean was
+0.694 against 0.703, so the dev set predicted the direction but not the
+size.
+
+**The span head is 3x faster and not yet as good.** From the baseline it
+holds 0.528 weighted at 29 ms per item — still above the only other
+encoder on the board — but loses 17 points on the standard tier to its
+teacher, mostly on extraction (0.92 → 0.58) and routing (0.58 → 0.25). Its
+dev mean was still rising at 10000 steps (0.595 → 0.623 → 0.654), so this
+is under-trained, not a ceiling. The acceptance test in `PLAN.md` — within
+a point of the pair model — is not met; the pair model stays the product,
+the span head ships beside it as `span-head.pt`.
+
+Both pods' own stage two had trained to NaN (a padded-slot bug in the KL
+term, fixed) and their evaluations had crashed on fp32 under
+flash-attention (fixed); every span number above is from the local runs.
+
 ## The benchmark has two suites now
 
 `jabr/classifier-benchmark` is still the only place these systems are scored on

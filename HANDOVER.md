@@ -116,10 +116,9 @@ than after it.
 
 ## What is half finished
 
-* **No GPU run has completed with the current code.** Everything above was
-  built and tested on CPU; the training numbers are from yesterday's
-  architecture. A run started at 08:38 on 2026-09-20 with the backbone
-  loading correctly for the first time.
+* Two GPU runs completed on 2026-09-20; the results table is in `FIELD.md`
+  ("Two recipes and two heads"). The published model is the baseline-recipe
+  pair model with the locally distilled span head beside it.
 * ~~`build_grounded.py` stalls on a pure-Python BM25~~ fixed: the weights are
   precomputed into a sparse matrix, 120000 passages index in 8 s and a search
   takes 0.9 ms, so the full 40000 rows take under a minute.
