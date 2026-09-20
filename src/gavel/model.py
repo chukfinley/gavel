@@ -48,6 +48,8 @@ def attention_implementation() -> str | None:
     forced = os.environ.get("GAVEL_ATTN")
     if forced:
         return None if forced == "default" else forced
+    if not torch.cuda.is_available():
+        return None                        # the kernel needs a card; CPU evals stay on sdpa
     return "flash_attention_2" if importlib.util.find_spec("flash_attn") else None
 
 

@@ -42,11 +42,15 @@ uv pip install -q "transformers==5.17.0" "datasets>=3.0" scikit-learn scipy \
 # it every masked batch takes the memory-efficient kernel and the fourteen
 # sliding-window layers compute full attention over 8192 tokens. If the wheel
 # does not fit this machine the run goes on with sdpa; model.py checks.
-FA_WHEEL="https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl"
+# v2.7.4.post1, not v2.8.3: the 2.8.3 wheels tagged torch2.6 reference a
+# c10::Error constructor this torch does not export (undefined symbol on
+# import, with either ABI tag). 2.7.4.post1 was verified against
+# torch 2.6.0+cu124 on the developer machine.
+FA_WHEEL="https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl"
 uv pip install -q "$FA_WHEEL" >> /workspace/bootstrap.log 2>&1 \
   && log "flash-attn installed from the prebuilt wheel" \
   || log "flash-attn wheel did not install; continuing with sdpa"
-if ! $PY -c "import flash_attn, flash_attn_2_cuda" >> /workspace/bootstrap.log 2>&1; then
+if ! $PY -c "import torch; import flash_attn; from flash_attn import flash_attn_varlen_func" >> /workspace/bootstrap.log 2>&1; then
   log "flash-attn import failed (error above); removed, sdpa it is"
   $PY -c "import torch, sys; print('torch', torch.__version__, 'cxx11abi', torch._C._GLIBCXX_USE_CXX11_ABI, 'python', sys.version.split()[0])" >> /workspace/bootstrap.log 2>&1
   uv pip uninstall -q flash-attn >> /workspace/bootstrap.log 2>&1
