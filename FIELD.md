@@ -151,33 +151,47 @@ Von 49, LightJev 2, kotoba 1.
 * **LightJev** — 3200 training questions converted from NanoJev stage1, CC0,
   every hash recorded. Honest about being a synthetic-domain prototype.
 
-## Size and speed are the pitch, and speed is not true yet
+## Size is ours, speed is a choice between two products
 
-Small is real: 307 M against Von's 395 M, Laya's 421 M, kotoba's 435 M, and
-against 2 B or 8 B in the other class. Cheap follows from it.
+Small is measured and real: 308 M against Von's 395 M, Laya's 421 M,
+kotoba's 435 M, and against 2 B or 8 B in the other class.
 
-Fast does not follow, because of how this model scores. `Gavel.decide` builds
-one premise-hypothesis pair per option and runs `[state] * len(options)`
-through the encoder. Five options mean the state is read five times. The
-published per-case clock, all on Apple MPS over the same 947 cases: Laya
-46 ms, Von 55 ms, GLiNER2 73 ms, hosted Jev about 330 ms. Those three all read
-the state once, with every option in the same sequence.
+Speed was measured on 2026-09-20 with `scripts/bench_latency.py`, on the
+workstation CPU with 8 threads, median of five calls after a warm-up, the
+published `chukfinley/gavel-vela-32k`:
 
-The arithmetic is against us exactly where we are strongest. A five-option
-decision over a 30 000-token document is 150 000 tokens of encoder work for
-us and 30 000 for a single-pass model. Being 22 % smaller than Von does not
-pay for reading the state five times.
+| state | 2 options | 5 options | 8 options |
+|---:|---:|---:|---:|
+| 64 tokens | 109 ms | 240 ms | 377 ms |
+| 256 tokens | 301 ms | 730 ms | 1297 ms |
+| 1024 tokens | 1369 ms | 3097 ms | — |
 
-So the honest pitch today is **smallest model, longest context, and a
-calibrated probability**, not speed. Speed becomes true when the option loop
-disappears, and one project has already shown the way: kotoba's span head over
-`[CLS] [STATE] … [Q] instructions [OPT] a [OPT] b …` trains, where our
-marker-token head did not. Our own note says the same thing — "a fresh
-marker-token head does not learn; the span head does". We stopped at the
-marker head and never built the span head.
+Two things are visible and they point in different directions.
 
-This moves "answer several questions in one pass" from last place on the list
-to the item that decides whether the size advantage is worth money.
+**The option loop is real.** `decide` is a single call to the model, but it
+builds `[state] * len(options)`, so the batch holds the state once per option.
+On a CPU nothing hides that: each extra option costs about 45 ms at 64 tokens
+and about 165 ms at 256. A single-sequence span head, of the kind kotoba got
+to train, removes exactly this factor.
+
+**The option loop is not the binding limit.** 308 M parameters over 1024
+tokens is roughly 0.6 TFLOP per pass, and a desktop CPU delivers 200-400
+GFLOPS in practice. One to three seconds is the floor for a long state no
+matter how the options are arranged. Removing the loop turns 3097 ms into
+about 1400 ms, not into 100 ms.
+
+So "runs beside your application on a CPU, under 100 ms" and "reads a
+30 000-token document" are two different products:
+
+* **Short states on a CPU.** Subject lines, chat messages, commands, tweets —
+  64 to 128 tokens. Under 100 ms is reachable, and since these questions
+  usually carry five to eight categories, the span head is worth building:
+  it is the difference between 377 ms and roughly 120 ms.
+* **Long documents.** This is the position nobody else holds openly, and Jev
+  only holds it as a hosted service. It is a GPU deployment, where the batch
+  runs in parallel and the option count is nearly free.
+
+Claiming both at once does not survive anyone re-measuring it.
 
 ## What is worth taking
 
