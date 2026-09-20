@@ -70,6 +70,25 @@ def recall() -> dict:
         sys.exit("no pod is remembered; start one first")
 
 
+def bootstrap_url() -> str:
+    """The bootstrap pinned to the commit that is pushed, not to `master`.
+
+    raw.githubusercontent.com caches a branch path for minutes. A pod started
+    right after a push ran the previous bootstrap, and four pods in a row
+    trained without publishing a line because the fix they needed had not
+    reached them. A commit URL is immutable, so it is never stale.
+    """
+    import subprocess
+
+    try:
+        sha = subprocess.run(["git", "rev-parse", "origin/master"], capture_output=True,
+                             text=True, check=True,
+                             cwd=os.path.dirname(os.path.abspath(__file__))).stdout.strip()
+        return f"https://raw.githubusercontent.com/chukfinley/gavel/{sha}/scripts/pod_bootstrap.sh"
+    except Exception:
+        return "https://raw.githubusercontent.com/chukfinley/gavel/master/scripts/pod_bootstrap.sh"
+
+
 def start(args, fatal: bool = True) -> dict | None:
     token = os.environ.get("HF_TOKEN")
     if not token:
@@ -215,8 +234,7 @@ def main() -> None:
                        help="cheaper, but the pod can be taken away")
     begin.add_argument("--results", default="chukfinley/gavel-runs")
     begin.add_argument("--repo", default="https://github.com/chukfinley/gavel.git")
-    begin.add_argument("--bootstrap", default="https://raw.githubusercontent.com/"
-                                              "chukfinley/gavel/master/scripts/pod_bootstrap.sh")
+    begin.add_argument("--bootstrap", default=bootstrap_url())
     begin.set_defaults(function=start)
 
     for name, function in [("status", status), ("stop", stop)]:
@@ -238,8 +256,7 @@ def main() -> None:
     keep.add_argument("--spot", action="store_true")
     keep.add_argument("--results", default="chukfinley/gavel-runs")
     keep.add_argument("--repo", default="https://github.com/chukfinley/gavel.git")
-    keep.add_argument("--bootstrap", default="https://raw.githubusercontent.com/"
-                                             "chukfinley/gavel/master/scripts/pod_bootstrap.sh")
+    keep.add_argument("--bootstrap", default=bootstrap_url())
     keep.set_defaults(function=ensure)
 
     follow = sub.add_parser("watch")
