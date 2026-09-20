@@ -54,7 +54,7 @@ echo "[$(stamp)] measuring"
 $PY scripts/eval_cbench.py --checkpoint runs/longrun/best-calibrated.pt \
   --suites all --max-length 512 --out results/longrun_cbench.json 2>&1 | tail -20
 $PY scripts/eval_jevbench.py --checkpoint runs/longrun/best-calibrated.pt \
-  --suite /workspace/jevbench --max-length 4096 \
+  --suite /root/run/jevbench --max-length 4096 \
   --out results/longrun_jevbench.json 2>&1 | tail -16
 for s in general quiz multilingual tools browser moderation more semrouter kotoba domains games routing; do
   [ -f "data/test_${s}.jsonl" ] && $PY scripts/eval_general.py \
@@ -82,7 +82,7 @@ echo "[$(stamp)] span training exit: $?"
 if [ -f runs/span/best.pt ]; then
   echo "[$(stamp)] measuring the one-sequence model"
   $PY scripts/eval_jevbench.py --span-checkpoint runs/span/best.pt \
-    --suite /workspace/jevbench --max-length 4096 \
+    --suite /root/run/jevbench --max-length 4096 \
     --out results/span_jevbench.json 2>&1 | tail -16
   # The trade this has to win: within a point of the pair model on accuracy,
   # and much faster on many options. Both numbers land in results/.

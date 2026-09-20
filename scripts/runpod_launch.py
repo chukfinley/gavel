@@ -75,8 +75,8 @@ def start(args, fatal: bool = True) -> dict | None:
     if not token:
         sys.exit("HF_TOKEN is not set; the pod needs it to publish results")
     command = ("apt-get update -qq && apt-get install -y -qq curl git >/dev/null 2>&1; "
-               f"curl -fsSL {args.bootstrap} -o /workspace/bootstrap.sh && "
-               "bash /workspace/bootstrap.sh")
+               f"mkdir -p /root/run && curl -fsSL {args.bootstrap} -o /root/run/bootstrap.sh && "
+               "bash /root/run/bootstrap.sh")
     body = {
         "name": args.name,
         "computeType": "GPU",

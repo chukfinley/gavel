@@ -82,9 +82,13 @@ safety policies 0.935, SciQ with a passage 0.980, and the 32k context.
 
 ## The four traps that cost hours last round
 
-1. **Do not set `dockerStartCmd`.** It replaces the image entrypoint and with
-   it the ssh daemon: the pod runs, publishes nothing, and cannot be inspected.
-   Create the pod without it, then ssh in and start the work in tmux.
+1. **`dockerStartCmd` replaces the image entrypoint and with it the ssh
+   daemon.** Two ways to run, pick one deliberately. *Without* it: create
+   the pod, ssh in, start the work in tmux, inspect at will. *With* it, as
+   `runpod_launch.py` does: `pod_bootstrap.sh` runs unattended and publishes
+   its logs, results and models to the Hub every two minutes on its own —
+   three pods trained that way on 2026-09-20 — but there is no shell, so a
+   pod that misbehaves can only be read from the Hub and terminated.
 2. **The REST endpoint rejects Python's default user agent** with 403 and
    Cloudflare error 1010. `scripts/runpod_launch.py` sends a curl one; keep it.
 3. **`/workspace` holds 20 GB, the root filesystem 120.** Work under `/root`,
@@ -107,5 +111,15 @@ The configuration that worked:
  "containerDiskInGb": 120, "cloudType": "COMMUNITY", "ports": ["22/tcp"]}
 ```
 
-There is no CUDA problem: torch 2.6.0+cu124 reports `cuda.is_available() ==
-True` on the 3090 with this image.
+On CUDA: torch 2.6.0+cu124 reported `cuda.is_available() == True` on the
+3090 in one session; in another, eight Community hosts in a row showed a card
+in `nvidia-smi` and no device for torch, on the image's own torch and on a
+fresh cu124 install alike. Both happened. `runpod_launch.py ensure` rents
+until a host passes, which is the only fix that covers both cases.
+
+On `--system-site-packages`: it saves the torch download, and it inherits
+the image's torchvision, which is built against the image's torch and breaks
+the transformers import (`operator torchvision::nms does not exist`, reported
+as a missing ModernBert class) the moment a different torch lands in the
+venv. The unattended bootstrap builds a clean venv for that reason; the
+download took about two minutes on these hosts.
