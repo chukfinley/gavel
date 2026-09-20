@@ -97,14 +97,18 @@ def evaluate(model, tokenizer, rows, device, max_length, batch_size, flip_check)
     flips = total = 0
     for prepared, labels, chunk in batches(rows, batch_size, rng, shuffle_options=False):
         batch = encode(tokenizer, prepared, max_length, device)
-        choice = model(batch).argmax(dim=-1).cpu()
+        autocast = torch.autocast(device_type="cuda", dtype=torch.bfloat16,
+                                  enabled=str(device).startswith("cuda"))
+        with autocast:
+            choice = model(batch).argmax(dim=-1).cpu()
         for row, predicted, gold in zip(chunk, choice.tolist(), labels.tolist()):
             per_source[row.source].append(int(predicted == gold))
         if flip_check:
             reversed_rows = [(state, [(q, list(reversed(o)))])
                              for state, [(q, o)] in prepared]
             back = encode(tokenizer, reversed_rows, max_length, device)
-            other = model(back).argmax(dim=-1).cpu()
+            with autocast:
+                other = model(back).argmax(dim=-1).cpu()
         if flip_check:
             for row, first, second in zip(chunk, choice.tolist(), other.tolist()):
                 width = len(row.options)
