@@ -89,6 +89,11 @@ PUB
 chmod +x /workspace/publish.sh
 nohup /workspace/publish.sh >/dev/null 2>&1 &
 
+# The JevBench items are a git clone, fetched once so the evaluation does
+# not depend on the network hours later.
+git clone -q --depth 1 https://github.com/fstandhartinger/jevbench \
+  /workspace/jevbench >/dev/null 2>&1 || log "jevbench clone failed"
+
 log "building datasets from public sources"
 $PY scripts/build_data.py        --per-source 40000 --out data   >> /workspace/build.log 2>&1
 $PY scripts/build_business.py                                    >> /workspace/build.log 2>&1
@@ -123,6 +128,8 @@ export STEPS=${STEPS:-60000}
 export DECISION_BATCH=${DECISION_BATCH:-4}
 export ANCHOR_BATCH=${ANCHOR_BATCH:-8}
 export LONG_BATCH=${LONG_BATCH:-1}
+export SPAN_STEPS=${SPAN_STEPS:-20000}
+export SPAN_BATCH=${SPAN_BATCH:-8}
 log "starting the long run: $STEPS steps on $BACKBONE"
 ./scripts/longrun.sh >> /workspace/bootstrap.log 2>&1
 log "long run exit: $?"

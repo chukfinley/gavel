@@ -16,6 +16,8 @@ STEPS=${STEPS:-60000}
 DB=${DECISION_BATCH:-4}
 AB=${ANCHOR_BATCH:-8}
 LB=${LONG_BATCH:-1}
+SPAN_STEPS=${SPAN_STEPS:-20000}
+SPAN_BATCH=${SPAN_BATCH:-8}
 mkdir -p results logs
 stamp () { date '+%m-%d %H:%M:%S'; }
 
@@ -53,8 +55,33 @@ done
 $PY scripts/eval_router.py --checkpoint runs/longrun/best-calibrated.pt --rows 1500 \
   --out results/longrun_router.json > logs/longrun_router.log 2>&1
 
+# Stage two: the same backbone, taught to answer from one reading of the
+# state instead of one per option. The pair model above is the teacher, so
+# the head learns a relation that is already right rather than discovering it
+# from hard labels, which is what defeated the first attempt at this.
+echo "[$(stamp)] distilling the one-sequence model"
+$PY scripts/train_span.py --backbone "$BACKBONE" --grad-checkpoint --adam8bit \
+  --init-backbone-from runs/longrun/best.pt \
+  --teacher runs/longrun/best-calibrated.pt --teacher-weight 1.0 \
+  --train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl \
+  --out runs/span --steps "$SPAN_STEPS" --batch-size "$SPAN_BATCH" \
+  --max-length 512 --lr 1.5e-5 --head-lr 3e-4 \
+  --eval-every 2000 --eval-rows 2600 > logs/span.log 2>&1
+echo "[$(stamp)] span training exit: $?"
+
+if [ -f runs/span/best.pt ]; then
+  echo "[$(stamp)] measuring the one-sequence model"
+  $PY scripts/eval_jevbench.py --span-checkpoint runs/span/best.pt \
+    --suite /workspace/jevbench --max-length 4096 \
+    --out results/span_jevbench.json 2>&1 | tail -16
+  # The trade this has to win: within a point of the pair model on accuracy,
+  # and much faster on many options. Both numbers land in results/.
+  $PY scripts/bench_latency.py > logs/span_latency.log 2>&1 || true
+fi
+
 echo "[$(stamp)] publishing"
 $PY scripts/export_hf.py --checkpoint runs/longrun/best-calibrated.pt --out export/gavel-vela-32k
+[ -f runs/span/best.pt ] && cp runs/span/best.pt export/gavel-vela-32k/span-head.pt
 $PY - <<'PYEOF'
 import os
 from huggingface_hub import HfApi
