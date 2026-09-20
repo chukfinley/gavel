@@ -42,6 +42,14 @@ cuda_ok () { $PY -c 'import sys, torch; sys.exit(0 if torch.cuda.is_available() 
 if ! cuda_ok; then
   log "torch cannot see the card; trying the cu124 build"
   (nvidia-smi 2>&1 | sed -n '1,10p' || echo "nvidia-smi not present") >> /workspace/bootstrap.log
+  # `nvidia-smi` working while torch sees nothing usually means the driver
+  # library itself was not mapped into the container. This says which it is.
+  {
+    echo "libcuda in the loader cache: $(ldconfig -p 2>/dev/null | grep -c libcuda)"
+    ls -la /usr/lib/x86_64-linux-gnu/libcuda.so* 2>&1 | head -4
+    echo "torch says: $($PY -c "import torch;print(torch.cuda.is_available(), torch.version.cuda)" 2>&1 | tail -1)"
+    $PY -c "import ctypes; ctypes.CDLL('libcuda.so.1'); print('libcuda.so.1 loads')" 2>&1 | tail -1
+  } >> /workspace/bootstrap.log 2>&1
   uv pip install -q --reinstall torch --index-url https://download.pytorch.org/whl/cu124 \
     >> /workspace/bootstrap.log 2>&1
   log "after reinstall: $($PY -c 'import torch;print(torch.__version__, torch.cuda.is_available())' 2>&1 | tail -1)"
