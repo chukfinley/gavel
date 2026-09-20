@@ -9,7 +9,8 @@ order, and do not re-derive what they already record:
 2b. `FIELD.md` — the competition as read from their own repositories on
    2026-09-20: the benchmark's second suite, who publishes training code and
    data, and why Von's 0.923 is not a number to chase.
-3. `README.md` — the model and how it is used.
+3. `PLAN.md` — what to build next, in order, with what it should buy.
+4. `README.md` — the model and how it is used.
 
 ## The one-sentence version
 
