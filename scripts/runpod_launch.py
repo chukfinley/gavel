@@ -230,7 +230,7 @@ def main() -> None:
     keep.add_argument("--interval", type=int, default=40)
     keep.add_argument("--name", default="gavel-training")
     keep.add_argument("--image", default=IMAGE)
-    keep.add_argument("--disk", type=int, default=80)
+    keep.add_argument("--disk", type=int, default=120)
     keep.add_argument("--cloud", default="COMMUNITY", choices=["COMMUNITY", "SECURE"])
     keep.add_argument("--spot", action="store_true")
     keep.add_argument("--results", default="chukfinley/gavel-runs")
