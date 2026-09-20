@@ -31,13 +31,22 @@ $PY -c "import torch" 2>/dev/null || \
 uv pip install -q "transformers>=4.48" "datasets>=3.0" scikit-learn tqdm pandas \
                   accelerate bitsandbytes huggingface_hub
 log "torch: $($PY -c 'import torch;print(torch.__version__, torch.cuda.is_available())' 2>&1 | tail -1)"
-# A rented machine sometimes comes up without a usable GPU. Training would
-# then fall back to the CPU and burn a day of rent for nothing, so the run
-# stops here instead, loudly, while the pod still costs cents.
-if ! $PY -c 'import sys, torch; sys.exit(0 if torch.cuda.is_available() else 1)' 2>/dev/null; then
-  log "FATAL no CUDA device on this pod; nvidia-smi says:"
-  (nvidia-smi 2>&1 | head -12 || echo "nvidia-smi not present") | tee -a /workspace/bootstrap.log
-  log "stopping before training. Start another pod; the pod can be stopped."
+# A rented machine regularly comes up with a working `nvidia-smi` and a torch
+# that cannot see the card anyway: the image ships a cu130 build and some
+# community hosts do not carry the matching runtime. Installing the
+# conservative cu124 build into the virtual environment fixes it, and a newer
+# driver runs an older runtime happily. Without this check the run would fall
+# back to the CPU and spend a day of rent for nothing.
+cuda_ok () { $PY -c 'import sys, torch; sys.exit(0 if torch.cuda.is_available() else 1)' 2>/dev/null; }
+if ! cuda_ok; then
+  log "torch cannot see the card; trying the cu124 build"
+  (nvidia-smi 2>&1 | sed -n '1,10p' || echo "nvidia-smi not present") >> /workspace/bootstrap.log
+  uv pip install -q --reinstall torch --index-url https://download.pytorch.org/whl/cu124 \
+    >> /workspace/bootstrap.log 2>&1
+  log "after reinstall: $($PY -c 'import torch;print(torch.__version__, torch.cuda.is_available())' 2>&1 | tail -1)"
+fi
+if ! cuda_ok; then
+  log "FATAL this pod cannot run CUDA. Terminate it and start another."
   $PY - <<'PYEOF' 2>/dev/null
 import os
 from huggingface_hub import HfApi
@@ -45,9 +54,11 @@ api = HfApi(token=os.environ["HF_TOKEN"])
 repo = os.environ.get("RESULTS_REPO", "chukfinley/gavel-runs")
 api.create_repo(repo, repo_type="dataset", exist_ok=True)
 api.upload_file(path_or_fileobj="/workspace/bootstrap.log", path_in_repo="bootstrap.log",
-                repo_id=repo, repo_type="dataset", commit_message="no GPU on this pod")
+                repo_id=repo, repo_type="dataset", commit_message="this pod cannot run CUDA")
 PYEOF
-  exit 1
+  # Exiting makes the container restart in a loop and clone again every
+  # thirty seconds, so the pod idles instead and waits to be terminated.
+  sleep infinity
 fi
 
 # Publish logs and results every few minutes, so the run can be watched from
