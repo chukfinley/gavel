@@ -25,14 +25,36 @@ accuracy on those public items, from decider's README:
 | decider-2b v10 (1.9 B) | 1.000 | 0.847 | 0.459 |
 | Bespoke Nimble 9B | 1.000 | 0.931 | 0.369 |
 | open-jev-deberta-v3-large (435 M) | 1.000 | **0.431** | 0.378 |
-| **gavel-vela-32k (308 M), cross-encoder** | **0.958** | measuring | measuring |
+| **gavel-vela-32k (308 M), pair scorer** | **0.958** | **0.514** | **0.387** |
 
-Two things stand out. The only encoder of our size on that board collapses on
-the standard tier, 0.431, while 2 B and larger decoders hold 0.85 to 0.99 —
-so there is a lot of room between us and the ceiling for an encoder. And the
-hard tier is long policy text, up to 3746 tokens of state, which Von at 512
-and kotoba at 256 physically cannot read. That is our terrain and nobody in
-our class is on it.
+Weighted over all 231 items: Jev 0.866, decider 0.692, Nimble 0.675,
+**gavel 0.545**, open-jev-deberta 0.524.
+
+Measured here on 2026-09-20 with `scripts/eval_jevbench.py`, on the published
+checkpoint, before any of the new data or the span head.
+
+**We beat the only other encoder on that board**, on both tiers that separate
+anything and overall, at 308 M against its 435 M. On the hard tier we are
+also above Bespoke Nimble, which is 9 B.
+
+**And the long-context claim does not survive contact with that tier.** Our
+own per-family numbers:
+
+    tradeoff 0.667 · judge_hard 0.588 · adversarial 0.500 · probability 0.500 ·
+    temporal_numeric 0.400 · routing_hard 0.400 · multi_hop 0.278 ·
+    long_policy 0.263 · trap 0.125
+
+`long_policy` is the family with 3746-token states — the one this model was
+supposed to own because Von at 512 and kotoba at 256 cannot read it at all.
+We score 5 of 19 there, second worst of any family. That is the same finding
+as `LEARNINGS.md` item 6, arrived at independently: a 32 k window is not
+32 k of reasoning.
+
+So the long context is worth selling as **reading a long document without
+truncating it** — extraction, classification, checking one criterion across
+30 000 tokens, where the alternative is a silently cut input. It is not worth
+selling as multi-step reasoning over a long contract. The first is real and
+measured; the second is not ours.
 
 **Bespoke's public suite** (`bespokelabsai/nimble`, 666 stars) is 13
 human-labelled subsets, 3880 records in Jev's wire format, rebuildable
