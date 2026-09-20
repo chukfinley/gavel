@@ -18,3 +18,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.optional-dependencies]
+serve = ["fastapi>=0.110", "uvicorn>=0.29", "pydantic>=2.6"]
+test = ["pytest>=8.0"]
+
+[project.scripts]
+gavel-serve = "gavel.serve:main"

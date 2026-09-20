@@ -30,11 +30,11 @@ from torch.nn import functional as F
 
 from collections import defaultdict                                                # noqa: E402
 
-from typedec.augment import augment                                               # noqa: E402
-from typedec.encoding import NLI_SOURCES, encode_anchor, encode_options, to_device  # noqa: E402
-from typedec.losses import balanced_accuracy, brier, expected_calibration_error      # noqa: E402
-from typedec.model import EntailmentScorer, build_tokenizer                          # noqa: E402
-from typedec.schema import read_jsonl                                                # noqa: E402
+from gavel.augment import augment                                               # noqa: E402
+from gavel.encoding import NLI_SOURCES, encode_anchor, encode_options, to_device  # noqa: E402
+from gavel.losses import balanced_accuracy, brier, expected_calibration_error      # noqa: E402
+from gavel.model import EntailmentScorer, build_tokenizer                          # noqa: E402
+from gavel.schema import read_jsonl                                                # noqa: E402
 
 
 @torch.no_grad()

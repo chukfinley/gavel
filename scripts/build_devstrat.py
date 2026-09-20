@@ -22,7 +22,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from typedec.schema import Decision, Option, read_jsonl, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, read_jsonl, write_jsonl  # noqa: E402
 
 NLI_OPTIONS = [
     Option("supported", "The evidence establishes the claim"),

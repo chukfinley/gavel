@@ -63,7 +63,7 @@ echo "[$(stamp)] stage 4: specialised branches from the base model"
 $PY - <<'PYEOF' > logs/split.log 2>&1
 import sys, random
 sys.path.insert(0, "src")
-from typedec.schema import read_jsonl, write_jsonl
+from gavel.schema import read_jsonl, write_jsonl
 rows = list(read_jsonl("data/train_v4.jsonl"))
 route = {"router-difficulty", "router-tier", "banking77", "clinc", "ag-news", "dbpedia",
          "tweet-offensive", "tweet-hate", "sms-spam", "synth-routing", "synth-action",

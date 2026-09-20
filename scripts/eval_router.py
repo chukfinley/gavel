@@ -33,9 +33,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import torch
 
-from typedec.encoding import encode_options, to_device                  # noqa: E402
-from typedec.model import EntailmentScorer, build_tokenizer             # noqa: E402
-from typedec.schema import Decision, Option                             # noqa: E402
+from gavel.encoding import encode_options, to_device                  # noqa: E402
+from gavel.model import EntailmentScorer, build_tokenizer             # noqa: E402
+from gavel.schema import Decision, Option                             # noqa: E402
 
 CHEAP = ["mistralai/mistral-7b-chat", "WizardLM/WizardLM-13B-V1.2"]
 MIDDLE = ["mistralai/mixtral-8x7b-chat", "meta/llama-2-70b-chat",
@@ -154,7 +154,7 @@ def main() -> None:
         return result
 
     report = {
-        "typedec": summarise("typedec", predictions),
+        "gavel": summarise("gavel", predictions),
         "always_small": summarise("always small", [0] * len(records)),
         "always_middle": summarise("always middle", [1] * len(records)),
         "always_frontier": summarise("always frontier", [2] * len(records)),

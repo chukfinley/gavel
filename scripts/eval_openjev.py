@@ -18,10 +18,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import torch
 
-from typedec.encoding import encode_options, to_device   # noqa: E402
-from typedec.losses import balanced_accuracy, expected_calibration_error  # noqa: E402
-from typedec.model import EntailmentScorer, build_tokenizer  # noqa: E402
-from typedec.schema import read_jsonl                    # noqa: E402
+from gavel.encoding import encode_options, to_device   # noqa: E402
+from gavel.losses import balanced_accuracy, expected_calibration_error  # noqa: E402
+from gavel.model import EntailmentScorer, build_tokenizer  # noqa: E402
+from gavel.schema import read_jsonl                    # noqa: E402
 
 BASELINE = {                       # OpenJev results/phase1-summary.json
     "authored144": 0.8132381608,

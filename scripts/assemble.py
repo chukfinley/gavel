@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from typedec.schema import read_jsonl, write_jsonl  # noqa: E402
+from gavel.schema import read_jsonl, write_jsonl  # noqa: E402
 
 TRAIN_PARTS = ["train.jsonl", "business.jsonl", "router.jsonl", "abstain_short.jsonl",
                "quiz.jsonl", "knowledge.jsonl", "multilingual.jsonl", "tools.jsonl",

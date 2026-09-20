@@ -64,7 +64,7 @@ def main() -> None:
         authored = fixtures.get("authored144", {}).get("balanced_accuracy")
         wanli = fixtures.get("wanli256", {}).get("balanced_accuracy")
         lines.append(
-            f"| typedec {name} | {authored:.4f} " if authored else f"| typedec {name} | — ")
+            f"| gavel {name} | {authored:.4f} " if authored else f"| gavel {name} | — ")
         lines[-1] += (f"| {wanli:.4f} " if wanli else "| — ")
         lines[-1] += (f"| {typesafe.get('modal_agreement', float('nan')):.4f} "
                       if typesafe else "| — ")
