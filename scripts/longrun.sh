@@ -18,6 +18,8 @@ AB=${ANCHOR_BATCH:-8}
 LB=${LONG_BATCH:-1}
 SPAN_STEPS=${SPAN_STEPS:-20000}
 SPAN_BATCH=${SPAN_BATCH:-8}
+LR=${LR:-1.5e-5}
+SPAN_LR=${SPAN_LR:-1.5e-5}
 mkdir -p results logs
 stamp () { date '+%m-%d %H:%M:%S'; }
 
@@ -41,7 +43,7 @@ $PY scripts/train.py --backbone "$BACKBONE" --grad-checkpoint --adam8bit \
   --train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl \
   --long data/long_v2.jsonl --long-every 4 --long-batch "$LB" --long-max-length 8192 \
   --out runs/longrun --steps "$STEPS" --augment 0.7 --source-alpha 0.4 \
-  --decision-batch "$DB" --anchor-batch "$AB" --max-length 512 --lr 1.5e-5 \
+  --decision-batch "$DB" --anchor-batch "$AB" --max-length 512 --lr "$LR" \
   --eval-every 5000 --eval-rows 2600 > logs/longrun.log 2>&1
 
 echo "[$(stamp)] calibrating"
@@ -73,7 +75,7 @@ $PY scripts/train_span.py --backbone "$BACKBONE" \
   --teacher runs/longrun/best-calibrated.pt --teacher-weight 1.0 \
   --train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl \
   --out runs/span --steps "$SPAN_STEPS" --batch-size "$SPAN_BATCH" \
-  --max-length 512 --lr 1.5e-5 --head-lr 3e-4 \
+  --max-length 512 --lr "$SPAN_LR" --head-lr 3e-4 \
   --eval-every 2000 --eval-rows 2600 > logs/span.log 2>&1
 echo "[$(stamp)] span training exit: $?"
 

@@ -196,12 +196,19 @@ done
 # encoder was trained at before, left overridable so a larger card can be used
 # without editing the job.
 export BACKBONE=${BACKBONE:-llm-semantic-router/Vela-1.0-Encoder-307M}
-export STEPS=${STEPS:-60000}
-export DECISION_BATCH=${DECISION_BATCH:-4}
-export ANCHOR_BATCH=${ANCHOR_BATCH:-8}
+# Measured on 2026-09-20: with every throughput fix in, the step is
+# overhead-bound, not compute-bound (5.8 of 24 GB in use at 3.0 steps/s).
+# So the batch doubles and the steps halve, with the learning rate raised
+# from 1.5e-5 to 2e-5 for the larger batch. The original recipe (4 / 8 /
+# 60000 / 1.5e-5) ran as the baseline the same day for comparison.
+export STEPS=${STEPS:-30000}
+export DECISION_BATCH=${DECISION_BATCH:-8}
+export ANCHOR_BATCH=${ANCHOR_BATCH:-16}
 export LONG_BATCH=${LONG_BATCH:-1}
-export SPAN_STEPS=${SPAN_STEPS:-20000}
-export SPAN_BATCH=${SPAN_BATCH:-8}
+export LR=${LR:-2e-5}
+export SPAN_STEPS=${SPAN_STEPS:-10000}
+export SPAN_BATCH=${SPAN_BATCH:-16}
+export SPAN_LR=${SPAN_LR:-2e-5}
 log "starting the long run: $STEPS steps on $BACKBONE"
 ./scripts/longrun.sh >> /workspace/bootstrap.log 2>&1
 log "long run exit: $?"
