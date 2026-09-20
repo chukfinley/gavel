@@ -13,6 +13,7 @@ WORK=/workspace/gavel
 
 log () { echo "[$(date -u '+%F %T')] $*" | tee -a /workspace/bootstrap.log; }
 
+log "pod ${RUNPOD_POD_ID:-unknown} starting"
 log "installing tools"
 apt-get update -qq && apt-get install -y -qq git curl build-essential >/dev/null 2>&1
 curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null 2>&1

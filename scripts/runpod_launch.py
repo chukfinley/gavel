@@ -112,6 +112,54 @@ def stop(args) -> None:
     print(f"terminated {pod['id']}")
 
 
+def ensure(args) -> None:
+    """Rent machines until one can actually run CUDA.
+
+    Community hosts regularly come up with a working `nvidia-smi` and a torch
+    that sees no device; three in a row did on 2026-09-20. The bootstrap
+    detects that, publishes its log and idles, so this loop reads the log,
+    terminates the broken machine and rents the next one.
+    """
+    from huggingface_hub import HfApi
+
+    api = HfApi(token=os.environ.get("HF_TOKEN"))
+    wanted = [g.strip() for g in args.gpus.split(",") if g.strip()]
+    for attempt in range(1, args.tries + 1):
+        gpu = wanted[(attempt - 1) % len(wanted)]
+        body_args = argparse.Namespace(**vars(args))
+        body_args.gpu = gpu
+        start(body_args)
+        pod = recall()["id"]
+        print(f"[{attempt}/{args.tries}] {pod} on {gpu}, waiting for its log",
+              flush=True)
+        deadline = time.time() + args.wait
+        verdict = "no log"
+        while time.time() < deadline:
+            time.sleep(args.interval)
+            try:
+                path = api.hf_hub_download(args.results, "bootstrap.log",
+                                           repo_type="dataset", force_download=True)
+                text = open(path).read()
+            except Exception as error:                           # noqa: BLE001
+                print(f"  (waiting: {str(error)[:50]})", flush=True)
+                continue
+            if pod not in text:
+                print("  (log is still from an older pod)", flush=True)
+                continue
+            mine = text[text.index(pod):]
+            if "cannot run CUDA" in mine:
+                verdict = "no CUDA"
+                break
+            if "building datasets" in mine or "starting the long run" in mine:
+                print(f"  {pod} has a working GPU and is building. "
+                      f"Watch: https://huggingface.co/datasets/{args.results}")
+                return
+            print("  (still starting)", flush=True)
+        print(f"  {pod}: {verdict}, terminating", flush=True)
+        call("DELETE", f"/pods/{pod}")
+    sys.exit(f"no machine out of {args.tries} could run CUDA")
+
+
 def watch(args) -> None:
     """Poll the results dataset until the pod reports that it is finished."""
     from huggingface_hub import HfApi
@@ -156,6 +204,25 @@ def main() -> None:
     for name, function in [("status", status), ("stop", stop)]:
         parser_ = sub.add_parser(name)
         parser_.set_defaults(function=function)
+
+    keep = sub.add_parser("ensure", help="rent until one machine can run CUDA")
+    keep.add_argument("--gpus", default="NVIDIA GeForce RTX 4090,"
+                                        "NVIDIA GeForce RTX 3090,"
+                                        "NVIDIA GeForce RTX 3090 Ti")
+    keep.add_argument("--tries", type=int, default=6)
+    keep.add_argument("--wait", type=int, default=420,
+                      help="seconds to give one machine before giving up on it")
+    keep.add_argument("--interval", type=int, default=40)
+    keep.add_argument("--name", default="gavel-training")
+    keep.add_argument("--image", default=IMAGE)
+    keep.add_argument("--disk", type=int, default=80)
+    keep.add_argument("--cloud", default="COMMUNITY", choices=["COMMUNITY", "SECURE"])
+    keep.add_argument("--spot", action="store_true")
+    keep.add_argument("--results", default="chukfinley/gavel-runs")
+    keep.add_argument("--repo", default="https://github.com/chukfinley/gavel.git")
+    keep.add_argument("--bootstrap", default="https://raw.githubusercontent.com/"
+                                             "chukfinley/gavel/master/scripts/pod_bootstrap.sh")
+    keep.set_defaults(function=ensure)
 
     follow = sub.add_parser("watch")
     follow.add_argument("--results", default="chukfinley/gavel-runs")
