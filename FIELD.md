@@ -5,6 +5,41 @@ published result file on 2026-09-20. Where a number is someone else's claim it
 says so. This file replaces guessing about the competition; update it, do not
 re-derive it.
 
+## There are three external suites, not one
+
+`jabr/classifier-benchmark` is where Von, GLiNER2 and Laya report. It is not
+where the rest of the field reports.
+
+**JevBench** (<https://benchmarkheaven.com/jev-models>, harness at
+`fstandhartinger/jevbench`) ranks Jev-class systems over 534 decisions in
+four tiers; 231 items are public — easy 48, standard 72, hard 111. Published
+accuracy on those public items, from decider's README:
+
+| system | easy | standard | hard |
+|---|---:|---:|---:|
+| GPT-5.6 Luna, low reasoning | 1.000 | 0.972 | **0.964** |
+| Jev 1.13.0 (closed) | 1.000 | 0.986 | 0.730 |
+| djev (Maisa) | 1.000 | 0.986 | 0.676 |
+| OpenJev (DiffusionGemma 26B-A4B) | 1.000 | 0.972 | 0.640 |
+| SemIf (Qwen3.5-4B) | 1.000 | 0.986 | 0.613 |
+| decider-2b v10 (1.9 B) | 1.000 | 0.847 | 0.459 |
+| Bespoke Nimble 9B | 1.000 | 0.931 | 0.369 |
+| open-jev-deberta-v3-large (435 M) | 1.000 | **0.431** | 0.378 |
+| **gavel-vela-32k (308 M), cross-encoder** | **0.958** | measuring | measuring |
+
+Two things stand out. The only encoder of our size on that board collapses on
+the standard tier, 0.431, while 2 B and larger decoders hold 0.85 to 0.99 —
+so there is a lot of room between us and the ceiling for an encoder. And the
+hard tier is long policy text, up to 3746 tokens of state, which Von at 512
+and kotoba at 256 physically cannot read. That is our terrain and nobody in
+our class is on it.
+
+**Bespoke's public suite** (`bespokelabsai/nimble`, 666 stars) is 13
+human-labelled subsets, 3880 records in Jev's wire format, rebuildable
+byte-for-byte from manifests in the repository. Jev 1.13.0 and Nimble-9B are
+measured on it, and decider reports 0.706 macro over it. Not wired up here
+yet.
+
 ## The benchmark has two suites now
 
 `jabr/classifier-benchmark` is still the only place these systems are scored on
