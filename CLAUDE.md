@@ -65,19 +65,19 @@ numbers that separate systems.
   that offered three options on a five-level question.
 * `ruff check src scripts tests` and `pytest` before committing.
 
-## Secure cloud only, never Community
+## Community cloud, with `ensure` doing the sorting
 
-Rule from the owner on 2026-09-20, after ten Community machines in one
-morning: eight with a card in `nvidia-smi` and no CUDA device for torch, one
-that trained and one that could not load the backbone. Community is cheaper
-by a few cents an hour and it cost a working day. **`cloudType` is `SECURE`
-and stays `SECURE`.** The extra cost is accepted; the time is not. Do not
-pass `--cloud COMMUNITY`, and do not switch it back to save money.
+Community hosts are unreliable — ten in one morning, eight with a card in
+`nvidia-smi` and no CUDA device for torch — but they are half the price of
+Secure and the owner's call on 2026-09-20 is to stay on them. What makes that
+workable is that nothing is done by hand: `runpod_launch.py ensure` rents,
+reads each pod's own verdict line, terminates the broken ones and stops at
+the first that reports `CUDA OK` and loads the backbone. Budget for two to
+five failed starts at a few cents each before a run begins.
 
 ## The pod request that works
 
-This body, with `cloudType` now `SECURE` by rule, is the shape that produced
-the machine that trained on 2026-09-20. Change one field at a time and only
+This exact body produced the machine that trained on 2026-09-20. Change one field at a time and only
 with a reason.
 
 ```json
@@ -90,7 +90,7 @@ POST https://rest.runpod.io/v1/pods
   "gpuCount": 1,
   "imageName": "runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04",
   "containerDiskInGb": 120,
-  "cloudType": "SECURE",
+  "cloudType": "COMMUNITY",
   "ports": ["22/tcp"],
   "env": {"HF_TOKEN": "...", "RESULTS_REPO": "chukfinley/gavel-runs",
           "GAVEL_REPO": "https://github.com/chukfinley/gavel.git",
