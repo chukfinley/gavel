@@ -22,15 +22,21 @@ export PATH="$HOME/.local/bin:$PATH"
 log "cloning $REPO"
 git clone --depth 1 "$REPO" "$WORK" >/dev/null 2>&1
 cd "$WORK" || exit 1
-# The rented image already ships a working torch against the installed driver.
-# Downloading another 2.5 GB copy is the slowest step of the whole start, so the
-# environment is built on top of what is there.
-uv venv --system-site-packages >/dev/null 2>&1
+# A clean environment, not the image's. Inheriting system packages was
+# faster by two minutes and cost an afternoon: the image ships a torchvision
+# built against its own torch, so as soon as anything pulled a different
+# torch into the venv, importing transformers died on
+# "operator torchvision::nms does not exist" and reported it as a missing
+# ModernBert class. torchvision is not installed here at all, which is also
+# how the developer machine is set up, and transformers skips it when it is
+# absent. These versions are the ones the project is measured against.
+uv venv >/dev/null 2>&1
 PY=.venv/bin/python
-$PY -c "import torch" 2>/dev/null || \
-  uv pip install -q torch --index-url https://download.pytorch.org/whl/cu124
-uv pip install -q "transformers>=4.48" "datasets>=3.0" scikit-learn tqdm pandas \
-                  accelerate bitsandbytes huggingface_hub
+uv pip install -q torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124 \
+  >> /workspace/bootstrap.log 2>&1
+uv pip install -q "transformers==5.17.0" "datasets>=3.0" scikit-learn scipy \
+                  tqdm pandas accelerate bitsandbytes huggingface_hub \
+  >> /workspace/bootstrap.log 2>&1
 log "torch: $($PY -c 'import torch;print(torch.__version__, torch.cuda.is_available())' 2>&1 | tail -1)"
 # A rented machine regularly comes up with a working `nvidia-smi` and a torch
 # that cannot see the card anyway: the image ships a cu130 build and some
@@ -40,7 +46,7 @@ log "torch: $($PY -c 'import torch;print(torch.__version__, torch.cuda.is_availa
 # back to the CPU and spend a day of rent for nothing.
 cuda_ok () { $PY -c 'import sys, torch; sys.exit(0 if torch.cuda.is_available() else 1)' 2>/dev/null; }
 if ! cuda_ok; then
-  log "torch cannot see the card; trying the cu124 build"
+  log "torch cannot see the card; reinstalling the cu124 build"
   (nvidia-smi 2>&1 | sed -n '1,10p' || echo "nvidia-smi not present") >> /workspace/bootstrap.log
   # `nvidia-smi` working while torch sees nothing usually means the driver
   # library itself was not mapped into the container. This says which it is.
@@ -115,14 +121,10 @@ AutoModelForSequenceClassification.from_pretrained(
     num_labels=3, trust_remote_code=True)" >/dev/null 2>&1
 }
 if ! backbone_ok; then
-  log "backbone will not load; pinning transformers to the version used locally"
-  uv pip install -q "transformers==5.17.0" >> /workspace/bootstrap.log 2>&1
-fi
-if ! backbone_ok; then
-  log "still failing; pinning torch to 2.6.0+cu124 as well"
-  uv pip install -q --reinstall torch==2.6.0 \
-    --index-url https://download.pytorch.org/whl/cu124 >> /workspace/bootstrap.log 2>&1
-  uv pip install -q "transformers==5.17.0" >> /workspace/bootstrap.log 2>&1
+  # The usual cause is a stray torchvision that does not match torch. It is
+  # not needed here, so it goes rather than being matched.
+  log "backbone will not load; removing torchvision and retrying"
+  uv pip uninstall -q torchvision >> /workspace/bootstrap.log 2>&1
 fi
 if ! backbone_ok; then
   log "FATAL pod ${RUNPOD_POD_ID:-unknown} cannot load the backbone. Terminate it."
