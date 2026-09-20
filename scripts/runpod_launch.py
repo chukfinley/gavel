@@ -32,7 +32,8 @@ DEFAULT_GPUS = ["NVIDIA GeForce RTX 4090", "NVIDIA GeForce RTX 5090",
 IMAGE = "runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04"
 
 
-def call(method: str, path: str, body: dict | None = None) -> dict:
+def call(method: str, path: str, body: dict | None = None,
+         fatal: bool = True) -> dict | None:
     key = os.environ.get("RUNPOD_API_KEY")
     if not key:
         sys.exit("RUNPOD_API_KEY is not set")
@@ -48,7 +49,11 @@ def call(method: str, path: str, body: dict | None = None) -> dict:
             text = response.read().decode()
             return json.loads(text) if text else {}
     except urllib.error.HTTPError as error:
-        sys.exit(f"{error.code} {error.reason}: {error.read().decode()[:400]}")
+        detail = f"{error.code} {error.reason}: {error.read().decode()[:400]}"
+        if fatal:
+            sys.exit(detail)
+        print(detail, flush=True)
+        return None
 
 
 def remember(pod: dict) -> None:
@@ -65,7 +70,7 @@ def recall() -> dict:
         sys.exit("no pod is remembered; start one first")
 
 
-def start(args) -> None:
+def start(args, fatal: bool = True) -> dict | None:
     token = os.environ.get("HF_TOKEN")
     if not token:
         sys.exit("HF_TOKEN is not set; the pod needs it to publish results")
@@ -89,11 +94,14 @@ def start(args) -> None:
                 "HF_HUB_ENABLE_HF_TRANSFER": "1"},
         "dockerStartCmd": ["bash", "-lc", command],
     }
-    pod = call("POST", "/pods", body)
+    pod = call("POST", "/pods", body, fatal=fatal)
+    if not pod:
+        return None
     remember(pod)
     print(f"started {pod.get('id')}  {args.gpu or 'any consumer card'}  "
           f"{'spot' if args.spot else 'on demand'}")
     print(f"watch: https://huggingface.co/datasets/{args.results}")
+    return pod
 
 
 def status(args) -> None:
@@ -128,8 +136,15 @@ def ensure(args) -> None:
         gpu = wanted[(attempt - 1) % len(wanted)]
         body_args = argparse.Namespace(**vars(args))
         body_args.gpu = gpu
-        start(body_args)
-        pod = recall()["id"]
+        started = start(body_args, fatal=False)
+        if not started:
+            # Usually "no instances currently available" for that card. Try
+            # the next one in the list rather than giving up on the run.
+            print(f"[{attempt}/{args.tries}] {gpu} unavailable, next card",
+                  flush=True)
+            time.sleep(args.interval)
+            continue
+        pod = started["id"]
         print(f"[{attempt}/{args.tries}] {pod} on {gpu}, waiting for its log",
               flush=True)
         deadline = time.time() + args.wait
