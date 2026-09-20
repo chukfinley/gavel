@@ -119,10 +119,11 @@ $PY scripts/build_semrouter.py                                   >> /workspace/b
 $PY scripts/build_kotoba.py                                      >> /workspace/build.log 2>&1
 $PY scripts/build_domains.py                                     >> /workspace/build.log 2>&1
 $PY scripts/build_games.py                                       >> /workspace/build.log 2>&1
+$PY scripts/build_routing.py                                     >> /workspace/build.log 2>&1
 $PY scripts/build_testset.py --per-source 400                    >> /workspace/build.log 2>&1
 $PY scripts/build_devstrat.py                                    >> /workspace/build.log 2>&1
 for name in train business router abstain_short quiz knowledge multilingual tools \
-            browser moderation more semrouter kotoba domains games; do
+            browser moderation more semrouter kotoba domains games routing; do
   [ -s "data/${name}.jsonl" ] || log "WARNING data/${name}.jsonl is missing or empty"
 done
 
