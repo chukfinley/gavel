@@ -11,6 +11,11 @@ export MEMGUARD_ALLOW_MB=22000 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export HF_HUB_DISABLE_PROGRESS_BARS=1 HF_HUB_DISABLE_XET=1
 BACKBONE=${BACKBONE:-llm-semantic-router/Vela-1.0-Encoder-307M}
 STEPS=${STEPS:-60000}
+# The values the 32k encoder was trained at before. A larger card can raise
+# them from the environment instead of editing this job.
+DB=${DECISION_BATCH:-4}
+AB=${ANCHOR_BATCH:-8}
+LB=${LONG_BATCH:-1}
 mkdir -p results logs
 stamp () { date '+%m-%d %H:%M:%S'; }
 
@@ -22,9 +27,9 @@ echo "[$(stamp)] training $STEPS steps on $BACKBONE"
 $PY scripts/train.py --backbone "$BACKBONE" --grad-checkpoint --adam8bit \
   ${INIT:+--init-from "$INIT"} \
   --train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl \
-  --long data/long_v2.jsonl --long-every 4 --long-batch 1 --long-max-length 8192 \
+  --long data/long_v2.jsonl --long-every 4 --long-batch "$LB" --long-max-length 8192 \
   --out runs/longrun --steps "$STEPS" --augment 0.7 --source-alpha 0.4 \
-  --decision-batch 4 --anchor-batch 8 --max-length 512 --lr 1.5e-5 \
+  --decision-batch "$DB" --anchor-batch "$AB" --max-length 512 --lr 1.5e-5 \
   --eval-every 5000 --eval-rows 2600 > logs/longrun.log 2>&1
 
 echo "[$(stamp)] calibrating"

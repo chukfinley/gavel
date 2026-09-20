@@ -71,29 +71,38 @@ $PY scripts/build_multilingual.py                                >> /workspace/b
 $PY scripts/build_tools.py --limit 30000                         >> /workspace/build.log 2>&1
 $PY scripts/build_browser.py                                     >> /workspace/build.log 2>&1
 $PY scripts/build_moderation.py                                  >> /workspace/build.log 2>&1
+$PY scripts/build_more.py                                        >> /workspace/build.log 2>&1
+$PY scripts/build_semrouter.py                                   >> /workspace/build.log 2>&1
+$PY scripts/build_kotoba.py                                      >> /workspace/build.log 2>&1
 $PY scripts/build_testset.py --per-source 400                    >> /workspace/build.log 2>&1
 $PY scripts/build_devstrat.py                                    >> /workspace/build.log 2>&1
+for name in train business router abstain_short quiz knowledge multilingual tools \
+            browser moderation more semrouter kotoba; do
+  [ -s "data/${name}.jsonl" ] || log "WARNING data/${name}.jsonl is missing or empty"
+done
 
-log "assembling the training mixes"
-$PY scripts/assemble.py >> /root/run/build.log 2>&1
 
-log "training rows: $(wc -l < data/train_v6.jsonl)"
+# The long run assembles its own mixes (it builds the ordered scales first),
+# trains, calibrates, measures against nine test sets plus the independent
+# benchmark, and publishes on its own. The batch sizes are the ones the 32k
+# encoder was trained at before, left overridable so a larger card can be used
+# without editing the job.
+export BACKBONE=${BACKBONE:-llm-semantic-router/Vela-1.0-Encoder-307M}
+export STEPS=${STEPS:-60000}
+export DECISION_BATCH=${DECISION_BATCH:-4}
+export ANCHOR_BATCH=${ANCHOR_BATCH:-8}
+export LONG_BATCH=${LONG_BATCH:-1}
+log "starting the long run: $STEPS steps on $BACKBONE"
+./scripts/longrun.sh >> /workspace/bootstrap.log 2>&1
+log "long run exit: $?"
 
-
-# A 24 GB card takes roughly three times the batch of the 12 GB card this was
-# written on, which is where the rented time is saved.
-export DECISION_BATCH=${DECISION_BATCH:-16}
-export ANCHOR_BATCH=${ANCHOR_BATCH:-32}
-export LONG_BATCH=${LONG_BATCH:-2}
-export EVAL_BATCH=${EVAL_BATCH:-16}
-export LONG_CTX=${LONG_CTX:-2048}
-log "starting the marathon"
-./scripts/marathon.sh >> /workspace/bootstrap.log 2>&1
-
-log "publishing the finished models"
+# The long run publishes its own model, results and logs. Anything else that
+# produced a checkpoint is published here, so nothing is lost with the pod.
+log "publishing any other finished models"
 for run in runs/*/best-calibrated.pt; do
   [ -f "$run" ] || continue
   name=$(basename "$(dirname "$run")")
+  [ "$name" = "longrun" ] && continue
   $PY scripts/export_hf.py --checkpoint "$run" --out "export/$name" >> /workspace/bootstrap.log 2>&1
   $PY - "$name" <<'PYEOF' >> /workspace/bootstrap.log 2>&1
 import os, sys
