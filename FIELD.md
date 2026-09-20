@@ -76,21 +76,43 @@ description was hidden from the model, which saw "0", "1", "2". The 0.333 on
 frustration and 0.444 on incident severity measured our reader, not the model.
 Fixed 2026-09-20; all 947 gold labels are now offered.
 
-## Everyone who has shipped something
+## Two weight classes, and only one of them is ours
 
-| project | base | size | context | benchmark | weights | training code | training data |
-|---|---|---:|---:|---|---|---|---|
-| **Jev** (TypeSafe) | undisclosed | — | 32768 | 0.965 combined | hosted only | no | no |
-| **Von 1.0.1** (wfzyx) | ModernBERT | 395 M | 512 | 0.687 combined | yes | **yes** | sources named, generator in repo |
-| **GLiNER2** (fastino) | DeBERTa-ish | 300 M | — | 0.697 combined | yes | no | no |
-| **Laya** (convaiinnovations) | own | 421 M | 512 / 1024 | 0.587 combined | yes | no | no |
-| **kev** (jaredpalmer) | Qwen3-8B-Base + LoRA | 8 B | — | not run | adapter | **yes** | **yes, suites as JSONL in repo** |
-| **decider** (Mapika) | Qwen3.5-2B-Base | 2 B | **32768** | not run | yes | **yes** | **yes, ~95 public sets + registry** |
-| **NanoJev** (C-Tianyu) | Qwen3-0.6B | 0.6 B | — | not run | yes | **yes** | **yes, on the Hub** |
-| **LightJev** (rongxinzy) | Qwen3-0.6B | 0.6 B | 256 | not run | yes | **yes** | **yes, CC0, hashed** |
+Everyone in this field scores options in a single forward pass and decodes
+nothing: kev uses a pointer head, decider reads the letter logits, NanoJev
+calls it "zero output-token decoding", LightJev takes a candidate softmax.
+Not generating is the price of entry, not a difference.
+
+What separates them is the backbone. An encoder of 300-435 M runs on a CPU and
+costs milliseconds; a 2 B or 8 B decoder needs a GPU and 17 GB in bf16 to hold
+the weights. Comparing across that line says nothing useful, so the table is
+split.
+
+### Our class: encoders, 300-435 M
+
+| project | base | size | context | combined | weights | training code | training data |
+|---|---|---:|---:|---:|---|---|---|
+| **Jev** (TypeSafe) | undisclosed, encoder-style | — | 32768 | **0.965** | hosted only | no | no |
+| **GLiNER2** (fastino) | DeBERTa-ish | 300 M | — | 0.697 | yes | no | no |
+| **Von 1.0.1** (wfzyx) | ModernBERT | 395 M | 512 | 0.687 | yes | **yes** | sources named, generator in repo |
+| **Laya** (convaiinnovations) | own | 421 M | 512 / 1024 | 0.587 | yes | no | no |
 | **open-jev-deberta** (kotoba) | DeBERTa-v3-large | 435 M | 512 (state 256) | not run | yes | **yes** | **yes, 3 public sets** |
-| **cua-s1-forms** (trycua) | — | small | — | not run | yes | partly | no |
-| **gavel** (us) | Vela-1.0-Encoder | 307 M | **32768** | to be re-measured | yes | yes | yes, rebuilt from public sources |
+| **gavel** (us) | Vela-1.0-Encoder | **307 M** | **32768** | to be measured | yes | yes | yes, rebuilt from public sources |
+
+This is the table that matters. We are the smallest model in it and the only
+one above 1024 tokens of context apart from the closed one.
+
+### The other class: a decoder LLM underneath
+
+Useful to read, not to be measured against. Their numbers come from their own
+suites, not from `jabr/classifier-benchmark`.
+
+| project | base | size | their claim | training code | training data |
+|---|---|---:|---|---|---|
+| **kev** (jaredpalmer) | Qwen3-8B-Base + LoRA r=16 | 8 B | 0.863 in-distribution against Jev 0.845; 0.796 out-of-domain against 0.857 | **yes** | **yes, suites as JSONL in repo** |
+| **decider** (Mapika) | Qwen3.5-2B-Base | 2 B | 32768 context, ~95 public sets | **yes** | **yes, registry in repo** |
+| **NanoJev** (C-Tianyu) | Qwen3-0.6B | 0.6 B | games and navigation, not business rows | **yes** | **yes, on the Hub** |
+| **LightJev** (rongxinzy) | Qwen3-0.6B | 0.6 B | synthetic domain, 3200 training questions | **yes** | **yes, CC0, hashed** |
 
 Stars, for a sense of attention: NanoJev 1108, Laya 1803, kev 634, decider 102,
 Von 49, LightJev 2, kotoba 1.
@@ -151,11 +173,13 @@ Von 49, LightJev 2, kotoba 1.
 
 ## What this means for our position
 
-The 32 k context is no longer unique: `Mapika/decider-2b` accepts 32768 tokens
-of state and questions. It does so with a 2 B decoder. We do it with a 307 M
-encoder, so the claim narrows from "the only one" to "the smallest one, by
-6.5x, and the only encoder" — still worth having, and still true against Von
-(512), Laya (1024) and kotoba (512, state cut to 256).
+The 32 k context is still unique in our class. `Mapika/decider-2b` also takes
+32768 tokens, but it needs a 2 B decoder to do it, which is a different
+product: a GPU service, not something that runs beside an application on a
+CPU. Against the models a buyer would actually compare us with — Von at 512,
+Laya at 1024, kotoba at 512 with the state cut to 256, GLiNER2 with no long
+context at all — we are the only open model that reads a 30 k-token document,
+and the smallest model in the class while doing it.
 
 The open ground is v2. Von collapses there because it trained the v1 tasks;
 GLiNER2 drops 10.7 points because it is keyword-driven; Laya is low
