@@ -49,7 +49,9 @@ class SpanGavel:
         """One reading of the state, one verdict per question."""
         rows = [(state, [(q, list(o)) for q, o in questions])]
         batch = encode(self.tokenizer, rows, self.max_length, self.device)
-        scores = self.model(batch)
+        with torch.autocast(device_type="cuda", dtype=torch.bfloat16,
+                            enabled=str(self.device).startswith("cuda")):
+            scores = self.model(batch)
         log_probabilities = self.model.group_log_softmax(scores, batch.group)
         probabilities = log_probabilities.exp()[0]
         group = batch.group[0]
