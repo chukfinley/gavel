@@ -20,7 +20,8 @@ from gavel.schema import read_jsonl, write_jsonl  # noqa: E402
 
 TRAIN_PARTS = ["train.jsonl", "business.jsonl", "router.jsonl", "abstain_short.jsonl",
                "quiz.jsonl", "knowledge.jsonl", "multilingual.jsonl", "tools.jsonl",
-               "browser.jsonl", "moderation.jsonl", "more.jsonl", "semrouter.jsonl", "kotoba.jsonl", "grounded.jsonl", "scales.jsonl"]
+               "browser.jsonl", "moderation.jsonl", "more.jsonl", "semrouter.jsonl", "kotoba.jsonl", "grounded.jsonl", "scales.jsonl",
+               "criteria.jsonl", "claims.jsonl"]
 LONG_PARTS = ["long.jsonl", "abstain_long.jsonl", "more_long.jsonl"]
 AGENT_PARTS = ["tools.jsonl", "browser.jsonl"]
 ROUTE = {"router-difficulty", "router-tier", "banking77", "ag-news", "dbpedia",
@@ -61,7 +62,11 @@ def main() -> None:
     print("training mix")
     rows = load(folder, TRAIN_PARTS)
     rng.shuffle(rows)
-    write_jsonl(folder / "train_v6.jsonl", rows)
+    # The development strata are cut out of the mix further down and the rows
+    # that go there are removed from training, so that checkpoint selection
+    # reads held-out material. Before this, the "-held" strata were sampled
+    # from files that stayed in the mix, which made those strata look better
+    # than they were and pulled selection towards them.
 
     print("long mix")
     long_rows = load(folder, LONG_PARTS)
@@ -73,13 +78,10 @@ def main() -> None:
     rng.shuffle(agent)
     write_jsonl(folder / "agent.jsonl", agent)
 
-    write_jsonl(folder / "train_route.jsonl", [r for r in rows if r.source in ROUTE])
-    write_jsonl(folder / "train_doc.jsonl",
-                [r for r in rows if r.source in DOC or r.source.startswith("abstain")])
-
     # The selection set: equal strata from held-out material. Two language
     # strata move over from the multilingual test file so that checkpoint
     # selection can see whether the skill crosses a language.
+    held: set[str] = set()
     dev = list(read_jsonl(folder / "dev_strat.jsonl"))
     # The language slice is kept in its own file. Moving rows out of the test
     # file was destructive: a second assembly found nothing left to move and
@@ -99,19 +101,33 @@ def main() -> None:
             dev += extra
     except Exception as error:                                   # noqa: BLE001
         print("  multilingual dev slice missing:", error)
-    for name, tag in [("knowledge.jsonl", "knowledge-held"), ("moderation.jsonl", "moderation-held")]:
+    for name, tag in [("knowledge.jsonl", "knowledge-held"),
+                      ("moderation.jsonl", "moderation-held"),
+                      ("criteria.jsonl", "criteria-held"),
+                      ("claims.jsonl", "claims-held"),
+                      ("scales.jsonl", "scales-held")]:
         try:
             pool = list(read_jsonl(folder / name))
             rng.shuffle(pool)
-            for row in pool[: args.dev_per_stratum]:
+            taken = pool[: args.dev_per_stratum]
+            for row in taken:
+                held.add(row.id)
                 row.source = tag
-            dev += pool[: args.dev_per_stratum]
+            dev += taken
         except Exception as error:                               # noqa: BLE001
             print(f"  {tag} missing:", error)
     rng.shuffle(dev)
     write_jsonl(folder / "dev_strat_v2.jsonl", dev)
 
-    print(f"\ntrain_v6 {len(rows)}  long_v2 {len(long_rows)}  agent {len(agent)}  "
+    before = len(rows)
+    rows = [r for r in rows if r.id not in held]
+    print(f"\nheld out of training: {before - len(rows)} rows")
+    write_jsonl(folder / "train_v6.jsonl", rows)
+    write_jsonl(folder / "train_route.jsonl", [r for r in rows if r.source in ROUTE])
+    write_jsonl(folder / "train_doc.jsonl",
+                [r for r in rows if r.source in DOC or r.source.startswith("abstain")])
+
+    print(f"train_v6 {len(rows)}  long_v2 {len(long_rows)}  agent {len(agent)}  "
           f"dev_strat_v2 {len(dev)} in {len(Counter(r.source for r in dev))} strata")
 
 

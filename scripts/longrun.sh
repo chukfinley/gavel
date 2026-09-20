@@ -20,7 +20,8 @@ mkdir -p results logs
 stamp () { date '+%m-%d %H:%M:%S'; }
 
 echo "[$(stamp)] assembling"
-$PY scripts/build_scales.py >> logs/build.log 2>&1
+$PY scripts/build_scales.py   >> logs/build.log 2>&1
+$PY scripts/build_criteria.py >> logs/build.log 2>&1
 $PY scripts/assemble.py | tail -1
 
 echo "[$(stamp)] training $STEPS steps on $BACKBONE"
@@ -38,7 +39,7 @@ $PY scripts/calibrate.py --checkpoint runs/longrun/best.pt --dev data/dev_strat_
 
 echo "[$(stamp)] measuring"
 $PY scripts/eval_cbench.py --checkpoint runs/longrun/best-calibrated.pt \
-  --max-length 512 --out results/longrun_cbench.json 2>&1 | tail -12
+  --suites all --max-length 512 --out results/longrun_cbench.json 2>&1 | tail -20
 for s in general quiz multilingual tools browser moderation more semrouter kotoba; do
   [ -f "data/test_${s}.jsonl" ] && $PY scripts/eval_general.py \
     --checkpoint runs/longrun/best-calibrated.pt --test "data/test_${s}.jsonl" \
