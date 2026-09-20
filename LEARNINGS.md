@@ -1,5 +1,11 @@
 # What the field has already worked out, and what it cost us to relearn
 
+> Read `FIELD.md` first for the current state of the competition. The table
+> below is the v1 suite only, and the benchmark now has a v2 suite of 49 tasks
+> and 869 cases on which the other projects also report. Our 0.654 in that
+> table was produced by a reader that mis-parsed ordered scales; it is not a
+> valid number.
+
 Everything here was measured, or read from a source that measured it. Where a
 number comes from someone else it is marked.
 
