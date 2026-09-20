@@ -46,8 +46,11 @@ FA_WHEEL="https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/
 uv pip install -q "$FA_WHEEL" >> /workspace/bootstrap.log 2>&1 \
   && log "flash-attn installed from the prebuilt wheel" \
   || log "flash-attn wheel did not install; continuing with sdpa"
-$PY -c "import flash_attn, flash_attn_2_cuda" >/dev/null 2>&1 \
-  || { uv pip uninstall -q flash-attn >> /workspace/bootstrap.log 2>&1; log "flash-attn import failed; removed, sdpa it is"; }
+if ! $PY -c "import flash_attn, flash_attn_2_cuda" >> /workspace/bootstrap.log 2>&1; then
+  log "flash-attn import failed (error above); removed, sdpa it is"
+  $PY -c "import torch, sys; print('torch', torch.__version__, 'cxx11abi', torch._C._GLIBCXX_USE_CXX11_ABI, 'python', sys.version.split()[0])" >> /workspace/bootstrap.log 2>&1
+  uv pip uninstall -q flash-attn >> /workspace/bootstrap.log 2>&1
+fi
 log "torch: $($PY -c 'import torch;print(torch.__version__, torch.cuda.is_available())' 2>&1 | tail -1)"
 # A rented machine regularly comes up with a working `nvidia-smi` and a torch
 # that cannot see the card anyway: the image ships a cu130 build and some
