@@ -102,6 +102,43 @@ PUB
 chmod +x /workspace/publish.sh
 nohup /workspace/publish.sh >/dev/null 2>&1 &
 
+# Before spending eight minutes building datasets, check that the backbone
+# actually loads. A pod once built everything and then died instantly on
+# "Could not import module 'ModernBertForSequenceClassification'", because
+# the image's torch pulled a transformers that cannot load it. The versions
+# below are the ones this project is developed and measured against.
+backbone_ok () {
+  $PY -c "import os
+from transformers import AutoModelForSequenceClassification
+AutoModelForSequenceClassification.from_pretrained(
+    os.environ.get('BACKBONE', 'llm-semantic-router/Vela-1.0-Encoder-307M'),
+    num_labels=3, trust_remote_code=True)" >/dev/null 2>&1
+}
+if ! backbone_ok; then
+  log "backbone will not load; pinning transformers to the version used locally"
+  uv pip install -q "transformers==5.17.0" >> /workspace/bootstrap.log 2>&1
+fi
+if ! backbone_ok; then
+  log "still failing; pinning torch to 2.6.0+cu124 as well"
+  uv pip install -q --reinstall torch==2.6.0 \
+    --index-url https://download.pytorch.org/whl/cu124 >> /workspace/bootstrap.log 2>&1
+  uv pip install -q "transformers==5.17.0" >> /workspace/bootstrap.log 2>&1
+fi
+if ! backbone_ok; then
+  log "FATAL pod ${RUNPOD_POD_ID:-unknown} cannot load the backbone. Terminate it."
+  $PY -c "from transformers import AutoModelForSequenceClassification as M
+M.from_pretrained('llm-semantic-router/Vela-1.0-Encoder-307M', num_labels=3,
+                  trust_remote_code=True)" >> /workspace/bootstrap.log 2>&1
+  $PY -c "import os
+from huggingface_hub import HfApi
+api = HfApi(token=os.environ['HF_TOKEN'])
+api.upload_file(path_or_fileobj='/workspace/bootstrap.log', path_in_repo='bootstrap.log',
+                repo_id=os.environ.get('RESULTS_REPO', 'chukfinley/gavel-runs'),
+                repo_type='dataset', commit_message='backbone will not load')" 2>/dev/null
+  sleep infinity
+fi
+log "backbone loads: $($PY -c "import transformers,torch;print('transformers',transformers.__version__,'torch',torch.__version__,torch.cuda.is_available())" 2>&1 | tail -1)"
+
 # The JevBench items are a git clone, fetched once so the evaluation does
 # not depend on the network hours later.
 git clone -q --depth 1 https://github.com/fstandhartinger/jevbench \
@@ -125,7 +162,6 @@ $PY scripts/build_kotoba.py                                      >> /workspace/b
 $PY scripts/build_domains.py                                     >> /workspace/build.log 2>&1
 $PY scripts/build_games.py                                       >> /workspace/build.log 2>&1
 $PY scripts/build_routing.py                                     >> /workspace/build.log 2>&1
-$PY scripts/build_grounded.py                                    >> /workspace/build.log 2>&1
 $PY scripts/build_testset.py --per-source 400                    >> /workspace/build.log 2>&1
 $PY scripts/build_devstrat.py                                    >> /workspace/build.log 2>&1
 for name in train business router abstain_short quiz knowledge multilingual tools \

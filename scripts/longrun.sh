@@ -25,9 +25,14 @@ echo "[$(stamp)] assembling"
 $PY scripts/build_domains.py  >> logs/build.log 2>&1
 $PY scripts/build_games.py    >> logs/build.log 2>&1
 $PY scripts/build_routing.py  >> logs/build.log 2>&1
-$PY scripts/build_grounded.py >> logs/build.log 2>&1
 $PY scripts/build_scales.py   >> logs/build.log 2>&1
 $PY scripts/build_criteria.py >> logs/build.log 2>&1
+$PY scripts/assemble.py | tail -1
+# The grounded rows are built from the assembled mix, so assembly runs
+# twice: once so build_grounded.py has something to read, once to fold
+# its output back in. The first pod to run this died here because
+# train_v6.jsonl did not exist yet.
+$PY scripts/build_grounded.py >> logs/build.log 2>&1
 $PY scripts/assemble.py | tail -1
 
 echo "[$(stamp)] training $STEPS steps on $BACKBONE"
