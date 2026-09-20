@@ -25,3 +25,20 @@ test = ["pytest>=8.0"]
 
 [project.scripts]
 gavel-serve = "gavel.serve:main"
+
+[tool.pytest.ini_options]
+# `_scratch` holds cloned foreign repositories (benchmark harnesses); their
+# tests are not ours and do not import.
+testpaths = ["tests"]
+norecursedirs = ["_scratch", ".venv", "runs", "export", "data"]
+
+[tool.ruff]
+extend-exclude = ["_scratch"]
+
+[tool.ruff.lint]
+# What is deliberate here, so that `ruff check` only reports real findings:
+# a dataset builder must survive a source that will not download (BLE001,
+# S110, S112), the scripts are run with `python scripts/x.py` rather than
+# executed directly (EXE001), and a script that exits right after writing a
+# file does not need a context manager (SIM115).
+ignore = ["BLE001", "EXE001", "SIM115", "S110", "S112"]

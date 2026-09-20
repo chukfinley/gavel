@@ -56,7 +56,7 @@ def main() -> None:
         for index, row in enumerate(data):
             if len(out) >= args.per_source:
                 break
-            item = row["train"] if "train" in row else row
+            item = row.get("train", row)
             choices = item.get("choices")
             if not choices:
                 continue

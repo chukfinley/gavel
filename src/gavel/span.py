@@ -68,9 +68,7 @@ def build_tokenizer(backbone: str):
     tokenizer = AutoTokenizer.from_pretrained(backbone, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    added = tokenizer.add_special_tokens({"additional_special_tokens": MARKERS})
-    if added:
-        pass                              # the model resizes its embeddings
+    tokenizer.add_special_tokens({"additional_special_tokens": MARKERS})
     return tokenizer
 
 

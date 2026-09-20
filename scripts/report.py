@@ -104,7 +104,7 @@ def main() -> None:
                   "Quality is the share of routed items the chosen tier answers.",
                   "Spend is relative, one unit is the small tier.", "",
                   "| strategy | tier accuracy | quality | relative spend |", "|---|---:|---:|---:|"]
-        first = routers[sorted(routers)[0]]
+        first = routers[min(routers)]
         for strategy, values in first.items():
             lines.append(f"| {strategy} | {values['tier_accuracy']:.4f} | "
                          f"{values['quality']:.4f} | {values['relative_spend']:.2f} |")

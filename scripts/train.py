@@ -193,7 +193,6 @@ def main() -> None:
             # learns to read states of a few thousand tokens. Training only on short
             # pairs gives a model that cannot use a long state at inference.
             use_long = long_rows and step % args.long_every == 0
-            source_rows = long_rows if use_long else rows
             size = args.long_batch if use_long else args.decision_batch
             length = args.long_max_length if use_long else args.max_length
             if replay_rows and not use_long and rng.random() < args.replay_share:
