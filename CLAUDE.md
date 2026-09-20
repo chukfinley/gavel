@@ -65,6 +65,42 @@ numbers that separate systems.
   that offered three options on a five-level question.
 * `ruff check src scripts tests` and `pytest` before committing.
 
+## The pod request that works
+
+This exact body produced the machine that trained on 2026-09-20, after seven
+others came up with a working `nvidia-smi` and a torch that saw no device.
+Change one field at a time and only with a reason.
+
+```json
+POST https://rest.runpod.io/v1/pods
+{
+  "name": "gavel-training",
+  "computeType": "GPU",
+  "gpuTypeIds": ["NVIDIA GeForce RTX 3090"],
+  "gpuTypePriority": "availability",
+  "gpuCount": 1,
+  "imageName": "runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04",
+  "containerDiskInGb": 120,
+  "cloudType": "COMMUNITY",
+  "ports": ["22/tcp"],
+  "env": {"HF_TOKEN": "...", "RESULTS_REPO": "chukfinley/gavel-runs",
+          "GAVEL_REPO": "https://github.com/chukfinley/gavel.git",
+          "HF_HUB_ENABLE_HF_TRANSFER": "1"},
+  "dockerStartCmd": ["bash", "-lc", "<fetch and run scripts/pod_bootstrap.sh>"]
+}
+```
+
+Two fields are load-bearing and were learned the hard way:
+
+* **`containerDiskInGb` 120.** Every machine that worked used 120. A probe
+  run with 80 was followed by six machines in a row that could not run CUDA.
+  That may be coincidence, but it is the only variable that changed, so it
+  stays at 120.
+* **One entry in `gpuTypeIds`.** Naming all four card types in one request
+  was tried and reverted. The request that produced a working machine named
+  exactly one, and the failure we retry against is a broken host, which a
+  longer card list does not avoid.
+
 ## Rented machines
 
 * `python scripts/runpod_launch.py ensure` rents until one machine can

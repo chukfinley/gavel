@@ -80,11 +80,11 @@ def start(args, fatal: bool = True) -> dict | None:
     body = {
         "name": args.name,
         "computeType": "GPU",
-        # Several card types in one request with priority "availability":
-        # RunPod picks whichever is free instead of us failing on one and
-        # retrying with the next. `args.gpu` may be a comma-separated list.
-        "gpuTypeIds": ([g.strip() for g in args.gpu.split(",") if g.strip()]
-                       if args.gpu else DEFAULT_GPUS),
+        # One card type per request. Asking for several at once was tried
+        # and reverted: the request that actually produced a working machine
+        # named exactly one, and the failure mode we retry against is a host
+        # with broken CUDA, which a longer card list does not avoid.
+        "gpuTypeIds": [args.gpu] if args.gpu else DEFAULT_GPUS,
         "gpuTypePriority": "availability",
         "gpuCount": 1,
         "imageName": args.image,
@@ -135,11 +135,9 @@ def ensure(args) -> None:
     from huggingface_hub import HfApi
 
     api = HfApi(token=os.environ.get("HF_TOKEN"))
-    # One request naming every acceptable card, so the scheduler does the
-    # choosing. Retrying is then only about a host whose CUDA is broken, not
-    # about which model of card happens to be free.
-    gpu = args.gpus
+    wanted = [g.strip() for g in args.gpus.split(",") if g.strip()]
     for attempt in range(1, args.tries + 1):
+        gpu = wanted[(attempt - 1) % len(wanted)]
         body_args = argparse.Namespace(**vars(args))
         body_args.gpu = gpu
         started = start(body_args, fatal=False)
