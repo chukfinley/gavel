@@ -156,6 +156,29 @@ def reuse_encoder(encoder, checkpoint: str) -> tuple[int, int]:
     return len(loaded), total
 
 
+def distillation_loss(log_probabilities, labels, valid, soft, brier_weight,
+                      teacher_weight):
+    """Cross entropy, Brier and the teacher's KL, over real option slots only.
+
+    A row with fewer options than the widest in its batch has padded slots
+    at minus infinity, and the teacher has zero there. Feeding that to
+    `F.kl_div` gives 0 * (-inf) = NaN, and the baseline's distillation ran
+    to `loss nan` by step 6300 exactly this way. Padded slots are zeroed
+    before any product is formed.
+    """
+    valid = valid.float()
+    loss = F.nll_loss(log_probabilities, labels)
+    safe_log = log_probabilities.masked_fill(valid == 0, 0.0)
+    probabilities = safe_log.exp() * valid
+    target = F.one_hot(labels, num_classes=probabilities.size(-1)).float()
+    loss = loss + brier_weight * (((probabilities - target) ** 2) * valid).sum(-1).mean()
+    if soft is not None and soft.size(-1) == probabilities.size(-1):
+        soft = soft * valid
+        kl = soft * (soft.clamp_min(1e-8).log() - safe_log) * valid
+        loss = loss + teacher_weight * kl.sum(-1).mean()
+    return loss
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--backbone", default="llm-semantic-router/Vela-1.0-Encoder-307M")
@@ -251,17 +274,10 @@ def main() -> None:
             scores = model(batch)
         log_probabilities = model.group_log_softmax(scores, batch.group)
 
-        loss = F.nll_loss(log_probabilities, labels)
-        probabilities = log_probabilities.exp()
-        target = F.one_hot(labels, num_classes=probabilities.size(-1)).float()
-        valid = (batch.group >= 0).float()
-        loss = loss + args.brier_weight * (((probabilities - target) ** 2)
-                                           * valid).sum(-1).mean()
-        if teacher is not None:
-            soft = teacher_distribution(teacher, prepared, device, args.max_length)
-            if soft.size(-1) == probabilities.size(-1):
-                loss = loss + args.teacher_weight * F.kl_div(
-                    log_probabilities, soft, reduction="batchmean")
+        soft = (teacher_distribution(teacher, prepared, device, args.max_length)
+                if teacher is not None else None)
+        loss = distillation_loss(log_probabilities, labels, batch.group >= 0, soft,
+                                 args.brier_weight, args.teacher_weight)
 
         optimiser.zero_grad(set_to_none=True)
         loss.backward()

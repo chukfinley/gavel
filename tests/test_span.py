@@ -142,3 +142,22 @@ def test_reuse_encoder_actually_copies_the_weights(tokenizer, tmp_path):
     assert span.model.embeddings.word_embeddings.weight.shape[0] == rows + 3
     assert torch.equal(span.model.embeddings.word_embeddings.weight[:rows],
                        source.embeddings.word_embeddings.weight)
+
+
+def test_distillation_loss_is_finite_with_padded_slots():
+    """The baseline's distillation went to NaN at padded option slots."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "train_span", Path(__file__).resolve().parents[1] / "scripts" / "train_span.py")
+    train_span = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(train_span)
+
+    scores = torch.tensor([[0.2, -0.4, float("-inf")], [0.1, 0.3, -0.2]])
+    log_probabilities = torch.log_softmax(scores, dim=-1)       # -inf at the pad
+    labels = torch.tensor([0, 1])
+    valid = torch.tensor([[True, True, False], [True, True, True]])
+    soft = torch.tensor([[0.7, 0.3, 0.0], [0.2, 0.5, 0.3]])
+    loss = train_span.distillation_loss(log_probabilities, labels, valid, soft, 0.5, 1.0)
+    assert torch.isfinite(loss), loss
+    assert loss.item() > 0
