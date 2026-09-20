@@ -16,14 +16,13 @@ probabilities are temperature-corrected with the value fitted at training time.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Iterable, Sequence
 
 import torch
 from torch.nn import functional as F
 
 from .encoding import CLAIM_PREFIX
-from .schema import Decision, Option
 
 ENTAILMENT = 0
 
@@ -54,8 +53,12 @@ class Gavel:
     # ------------------------------------------------------------------ load
     @classmethod
     def from_pretrained(cls, name: str, device: str | None = None,
-                        max_length: int = 1024) -> "Gavel":
-        from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer
+                        max_length: int = 1024) -> Gavel:
+        from transformers import (
+            AutoConfig,
+            AutoModelForSequenceClassification,
+            AutoTokenizer,
+        )
 
         tokenizer = AutoTokenizer.from_pretrained(name)
         model = AutoModelForSequenceClassification.from_pretrained(name)
@@ -66,7 +69,7 @@ class Gavel:
 
     @classmethod
     def from_checkpoint(cls, path: str, device: str | None = None,
-                        max_length: int = 1024) -> "Gavel":
+                        max_length: int = 1024) -> Gavel:
         """Load a training checkpoint produced by scripts/train.py."""
         from .model import EntailmentScorer, build_tokenizer
 

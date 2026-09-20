@@ -3,9 +3,14 @@
 
 No opinion, just the clock. Runs on whatever device is there.
 """
-import sys, time, statistics, json
+import json
+import statistics
+import sys
+import time
+
 sys.path.insert(0, "src")
 import torch
+
 from gavel import Gavel
 
 MODEL = "chukfinley/gavel-vela-32k"

@@ -25,16 +25,24 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from collections import defaultdict
+
 import torch
 from torch.nn import functional as F
 
-from collections import defaultdict                                                # noqa: E402
-
-from gavel.augment import augment                                               # noqa: E402
-from gavel.encoding import NLI_SOURCES, encode_anchor, encode_options, to_device  # noqa: E402
-from gavel.losses import balanced_accuracy, brier, expected_calibration_error      # noqa: E402
-from gavel.model import EntailmentScorer, build_tokenizer                          # noqa: E402
-from gavel.schema import read_jsonl                                                # noqa: E402
+from gavel.augment import augment
+from gavel.encoding import (
+    NLI_SOURCES,
+    encode_anchor,
+    encode_options,
+    to_device,
+)
+from gavel.losses import (
+    brier,
+    expected_calibration_error,
+)
+from gavel.model import EntailmentScorer, build_tokenizer
+from gavel.schema import read_jsonl
 
 
 @torch.no_grad()

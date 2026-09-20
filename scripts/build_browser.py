@@ -27,7 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import Decision, Option, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, write_jsonl
 
 STOP = Option("done", "The goal is reached, stop here")
 STUCK = Option("stuck", "None of these elements leads to the goal")
@@ -42,7 +42,7 @@ def describe(candidate) -> str:
     if isinstance(candidate, str):
         try:
             candidate = json.loads(candidate)
-        except Exception:                                        # noqa: BLE001
+        except Exception:
             return re.sub(r"\s+", " ", candidate)[:160]
     if not isinstance(candidate, dict):
         return str(candidate)[:160]
@@ -50,7 +50,7 @@ def describe(candidate) -> str:
     if isinstance(attributes, str):
         try:
             attributes = json.loads(attributes)
-        except Exception:                                        # noqa: BLE001
+        except Exception:
             attributes = {}
     attributes = attributes or {}
     tag = candidate.get("tag") or attributes.get("role") or "element"

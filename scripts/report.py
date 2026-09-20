@@ -29,7 +29,7 @@ REFERENCE = {
 def load(path: Path):
     try:
         return json.loads(path.read_text())
-    except Exception:                                            # noqa: BLE001
+    except Exception:
         return None
 
 

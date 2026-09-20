@@ -20,12 +20,11 @@ import hashlib
 import json
 import random
 import sys
-import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import Decision, Option, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, write_jsonl
 
 BASE = "https://raw.githubusercontent.com/kotoba-lang/typed-decisions/main"
 FILES = [("data-multi/train.jsonl", "train"), ("data-fam/train.jsonl", "train"),
@@ -101,7 +100,7 @@ def main() -> None:
             rows = convert(fetch(path), path, args.keep_known)
             (train if kind == "train" else test).extend(rows)
             print(f"  {path}: {len(rows)}", flush=True)
-        except Exception as error:                               # noqa: BLE001
+        except Exception as error:
             print(f"  {path} failed: {str(error)[:90]}", flush=True)
 
     rng.shuffle(train)

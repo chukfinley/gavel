@@ -66,7 +66,7 @@ def recall() -> dict:
     try:
         with open(STATE) as handle:
             return json.load(handle)
-    except Exception:                                            # noqa: BLE001
+    except Exception:
         sys.exit("no pod is remembered; start one first")
 
 
@@ -155,7 +155,7 @@ def ensure(args) -> None:
                 path = api.hf_hub_download(args.results, "bootstrap.log",
                                            repo_type="dataset", force_download=True)
                 text = open(path).read()
-            except Exception as error:                           # noqa: BLE001
+            except Exception as error:
                 print(f"  (waiting: {str(error)[:50]})", flush=True)
                 continue
             if pod not in text:
@@ -193,7 +193,7 @@ def watch(args) -> None:
             if "the pod can be stopped" in text:
                 print("\nrun finished")
                 return
-        except Exception as error:                               # noqa: BLE001
+        except Exception as error:
             print(f"(waiting: {str(error)[:60]})", flush=True)
         time.sleep(args.interval)
 

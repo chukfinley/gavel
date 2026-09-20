@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import Decision, Option, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, write_jsonl
 
 NLI_OPTIONS = [
     Option("supported", "The evidence establishes the claim"),
@@ -89,7 +89,7 @@ def main() -> None:
                              source=f"xnli-test-{language}", task="choice")
                     for i, r in enumerate(held) if r["label"] in (0, 1, 2)][: args.test_per_language]
             note(f"xnli-test-{language}", rows, test)
-        except Exception as error:                               # noqa: BLE001
+        except Exception as error:
             print(f"  xnli-{language} failed: {error}", flush=True)
 
     for language in PAWSX_LANGUAGES:
@@ -107,7 +107,7 @@ def main() -> None:
                     options=list(SAME), label=0 if int(row["label"]) == 1 else 1,
                     source=f"pawsx-{language}", task="noul"))
             note(f"pawsx-{language}", rows, train)
-        except Exception as error:                               # noqa: BLE001
+        except Exception as error:
             print(f"  pawsx-{language} failed: {error}", flush=True)
 
     for language in MASSIVE_LANGUAGES:
@@ -129,7 +129,7 @@ def main() -> None:
                     options=[Option(f"c{i}", names[i].replace("_", " ")) for i in picked],
                     label=picked.index(truth), source=f"massive-{language}", task="choice"))
             note(f"massive-{language}", rows, train)
-        except Exception as error:                               # noqa: BLE001
+        except Exception as error:
             print(f"  massive-{language} failed: {error}", flush=True)
 
     for code, language in BELEBELE.items():
@@ -150,7 +150,7 @@ def main() -> None:
             note(f"belebele-test-{language}", rows[: args.test_per_language], test)
             if code not in HELD_OUT:
                 note(f"belebele-{language}", rows[args.test_per_language :], train)
-        except Exception as error:                               # noqa: BLE001
+        except Exception as error:
             print(f"  belebele-{code} failed: {error}", flush=True)
 
     rng.shuffle(train)

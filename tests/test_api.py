@@ -8,11 +8,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import pytest
-import torch
 from transformers import AutoConfig, AutoModelForSequenceClassification, AutoTokenizer
 
 from gavel import Gavel
-from gavel.schema import Decision, Option, from_json
+from gavel.schema import from_json
 
 
 def test_record_round_trip():
@@ -40,7 +39,7 @@ def tiny(tmp_path_factory):
         tokenizer = AutoTokenizer.from_pretrained(name)
         config = AutoConfig.from_pretrained(name, num_labels=3)
         model = AutoModelForSequenceClassification.from_config(config)
-    except Exception:                                            # noqa: BLE001
+    except Exception:
         pytest.skip("no local copy of the tiny test model")
     return Gavel(model, tokenizer, temperature=1.0, device="cpu", max_length=64)
 

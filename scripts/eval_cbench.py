@@ -71,7 +71,7 @@ def load_suites(folder: Path) -> dict:
         from bench.suites import SUITES
 
         return {name: list(tasks) for name, tasks in SUITES.items()}
-    except Exception as error:                                   # noqa: BLE001
+    except Exception as error:
         print(f"suite registry unavailable ({error}); scanning bench.cases")
     from bench import cases
 
@@ -83,7 +83,7 @@ def load_suites(folder: Path) -> dict:
                 task = member()
                 if hasattr(task, "cases"):
                     tasks.append(task)
-            except Exception:                                    # noqa: BLE001
+            except Exception:
                 continue
     return {"v1": tasks}
 

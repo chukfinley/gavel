@@ -58,7 +58,7 @@ class Encoded:
     group: torch.Tensor              # (batch, options) question index, -1 = padding
     counts: list[list[int]]          # options per question, per row
 
-    def to(self, device) -> "Encoded":
+    def to(self, device) -> Encoded:
         return Encoded(self.input_ids.to(device), self.attention_mask.to(device),
                        self.option_mask.to(device), self.question_mask.to(device),
                        self.group.to(device), self.counts)

@@ -28,7 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import Decision, Option, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, write_jsonl
 
 
 def rid(*parts: str) -> str:
@@ -185,7 +185,7 @@ def main() -> None:
                 options=[Option(f"o{i}", str(t).strip()) for i, t in enumerate(options)],
                 label=answer, source="quality", task="choice"))
         report("quality", produced)
-    except Exception as error:                                   # noqa: BLE001
+    except Exception as error:
         print("  quality failed:", error, flush=True)
 
     try:
@@ -203,7 +203,7 @@ def main() -> None:
                 options=[Option(f"o{i}", str(t).strip()) for i, t in enumerate(row["options"])],
                 label=letters.index(row["answer"]), source="race", task="choice"))
         report("race", produced)
-    except Exception as error:                                   # noqa: BLE001
+    except Exception as error:
         print("  race failed:", error, flush=True)
 
     # A mixture of lengths: short packets teach the task, long ones teach the

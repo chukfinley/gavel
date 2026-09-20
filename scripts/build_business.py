@@ -27,7 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import Decision, Option, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, write_jsonl
 
 
 def rid(*parts: str) -> str:
@@ -208,7 +208,7 @@ def public_rows(per_source: int, rng: random.Random) -> list[Decision]:
         report("ag_news", topic("ag_news", data, "text",
                                 ["World news", "Sports", "Business", "Science and technology"],
                                 "label", "Which topic does this article belong to?", "ag-news"))
-    except Exception as error:                                   # noqa: BLE001
+    except Exception as error:
         print("  ag_news failed:", error, flush=True)
 
     try:
@@ -218,7 +218,7 @@ def public_rows(per_source: int, rng: random.Random) -> list[Decision]:
                  "Plant", "Album", "Film", "Written work"]
         report("dbpedia", topic("dbpedia", data, "content", names, "label",
                                 "Which category does this description belong to?", "dbpedia"))
-    except Exception as error:                                   # noqa: BLE001
+    except Exception as error:
         print("  dbpedia failed:", error, flush=True)
 
     for config, question, positive, negative in [
@@ -238,7 +238,7 @@ def public_rows(per_source: int, rng: random.Random) -> list[Decision]:
                     label=0 if int(row["label"]) == 1 else 1,
                     source=f"tweet-{config}", task="noul"))
             report(f"tweet-{config}", rows)
-        except Exception as error:                               # noqa: BLE001
+        except Exception as error:
             print(f"  tweet-{config} failed:", error, flush=True)
 
     try:
@@ -254,7 +254,7 @@ def public_rows(per_source: int, rng: random.Random) -> list[Decision]:
                 label=0 if int(row["label"]) == 1 else 1,
                 source="sms-spam", task="noul"))
         report("sms-spam", rows)
-    except Exception as error:                                   # noqa: BLE001
+    except Exception as error:
         print("  sms_spam failed:", error, flush=True)
 
     return out

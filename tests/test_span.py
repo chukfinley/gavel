@@ -15,7 +15,7 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.span import Encoded, SpanScorer, build_tokenizer, encode  # noqa: E402
+from gavel.span import SpanScorer, build_tokenizer, encode
 
 TINY = "google/bert_uncased_L-2_H-128_A-2"
 

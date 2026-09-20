@@ -23,8 +23,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from gavel.losses import balanced_accuracy, expected_calibration_error  # noqa: E402
-from gavel.schema import read_jsonl                                    # noqa: E402
+from gavel.losses import balanced_accuracy, expected_calibration_error
+from gavel.schema import read_jsonl
 
 LETTERS = [chr(ord("A") + i) for i in range(26)]
 

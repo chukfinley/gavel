@@ -23,7 +23,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import Decision, Option, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, write_jsonl
 
 NO_TOOL = Option("no_tool", "No tool is needed, answer directly")
 
@@ -52,7 +52,7 @@ def hermes_rows(limit: int, rng: random.Random) -> list[Decision]:
         try:
             parts.append(load_dataset("NousResearch/hermes-function-calling-v1",
                                       config, split="train"))
-        except Exception:                                        # noqa: BLE001
+        except Exception:
             continue
     if not parts:
         parts = [load_dataset("NousResearch/hermes-function-calling-v1", split="train")]
@@ -64,7 +64,7 @@ def hermes_rows(limit: int, rng: random.Random) -> list[Decision]:
         try:
             tools = row["tools"]
             tools = json.loads(tools) if isinstance(tools, str) else tools
-        except Exception:                                        # noqa: BLE001
+        except Exception:
             continue
         if not isinstance(tools, list) or len(tools) < 2:
             continue
@@ -119,7 +119,7 @@ def json_objects(text: str) -> list[dict]:
             if depth == 0 and start is not None:
                 try:
                     found.append(json.loads(text[start : position + 1]))
-                except Exception:                                # noqa: BLE001
+                except Exception:
                     pass
                 start = None
     return found
@@ -136,7 +136,7 @@ def glaive_rows(limit: int, rng: random.Random) -> list[Decision]:
         system = str(row.get("system", ""))
         chat = str(row.get("chat", ""))
         tools = [t for t in json_objects(system) if "name" in t]
-        user = re.search(r"USER:\s*(.+?)(?:ASSISTANT:|$)", chat, re.S)
+        user = re.search(r"USER:\s*(.+?)(?:ASSISTANT:|$)", chat, re.DOTALL)
         called = re.search(r"<functioncall>\s*\{\s*\"name\"\s*:\s*\"([^\"]+)\"", chat)
         if not user or not tools:
             continue
@@ -185,7 +185,7 @@ def main() -> None:
             produced = builder(args.limit, rng)
             rows.extend(produced)
             print(f"  {name}: {len(produced)}", flush=True)
-        except Exception as error:                               # noqa: BLE001
+        except Exception as error:
             print(f"  {name} failed: {error}", flush=True)
 
     rng.shuffle(rows)

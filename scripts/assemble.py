@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import read_jsonl, write_jsonl  # noqa: E402
+from gavel.schema import read_jsonl, write_jsonl
 
 TRAIN_PARTS = ["train.jsonl", "business.jsonl", "router.jsonl", "abstain_short.jsonl",
                "quiz.jsonl", "knowledge.jsonl", "multilingual.jsonl", "tools.jsonl",
@@ -44,7 +44,7 @@ def load(folder: Path, names: list[str]) -> list:
             part = [r for r in read_jsonl(path) if not r.source.endswith(SKIP_SUFFIX)]
             rows += part
             print(f"  {name}: {len(part)}")
-        except Exception as error:                               # noqa: BLE001
+        except Exception as error:
             print(f"  {name}: missing ({error})")
     return rows
 
@@ -99,7 +99,7 @@ def main() -> None:
             write_jsonl(folder / "test_multilingual.jsonl",
                         [r for r in test if r.source not in move])
             dev += extra
-    except Exception as error:                                   # noqa: BLE001
+    except Exception as error:
         print("  multilingual dev slice missing:", error)
     for name, tag in [("knowledge.jsonl", "knowledge-held"),
                       ("moderation.jsonl", "moderation-held"),
@@ -114,7 +114,7 @@ def main() -> None:
                 held.add(row.id)
                 row.source = tag
             dev += taken
-        except Exception as error:                               # noqa: BLE001
+        except Exception as error:
             print(f"  {tag} missing:", error)
     rng.shuffle(dev)
     write_jsonl(folder / "dev_strat_v2.jsonl", dev)

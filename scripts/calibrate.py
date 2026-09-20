@@ -12,7 +12,6 @@ therefore accuracy stays exactly the same and only the probabilities improve.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -21,10 +20,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import torch
 from torch.nn import functional as F
 
-from gavel.encoding import encode_options, to_device                  # noqa: E402
-from gavel.losses import expected_calibration_error                   # noqa: E402
-from gavel.model import EntailmentScorer, build_tokenizer             # noqa: E402
-from gavel.schema import read_jsonl                                   # noqa: E402
+from gavel.encoding import encode_options, to_device
+from gavel.losses import expected_calibration_error
+from gavel.model import EntailmentScorer, build_tokenizer
+from gavel.schema import read_jsonl
 
 
 @torch.no_grad()

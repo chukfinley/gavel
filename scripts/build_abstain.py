@@ -28,7 +28,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import Decision, Option, read_jsonl, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, read_jsonl, write_jsonl
 
 ABSTAIN = Option("not_determinable", "The information given does not decide this")
 
@@ -54,7 +54,7 @@ def strip_packet(decision: Decision, rng: random.Random) -> Decision | None:
     try:
         packet = json.loads(decision.state)
         lines = packet["invoice"]["lines"]
-    except Exception:                                            # noqa: BLE001
+    except Exception:
         return None
     number = None
     for token in decision.question.split():
@@ -82,7 +82,7 @@ def strip_incident(decision: Decision, rng: random.Random) -> Decision | None:
     """Remove the facts block that decides the severity."""
     try:
         packet = json.loads(decision.state)
-    except Exception:                                            # noqa: BLE001
+    except Exception:
         return None
     if "facts" not in packet:
         return None

@@ -19,7 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import Decision, Option, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, write_jsonl
 
 NLI_OPTIONS = [
     Option("supported", "The evidence establishes the claim"),
@@ -182,40 +182,40 @@ def main() -> None:
     try:
         mnli = load_dataset("nyu-mll/multi_nli", split="train")
         take("mnli", nli("mnli", mnli, "hypothesis", args.per_source, "mnli"))
-    except Exception as error:                                  # noqa: BLE001
+    except Exception as error:
         print("  mnli failed:", error, flush=True)
 
     try:
         wanli = load_dataset("alisawuffles/WANLI", split="train")
         take("wanli-train", nli("wanli", wanli, "hypothesis", args.per_source, "wanli-train"))
-    except Exception as error:                                  # noqa: BLE001
+    except Exception as error:
         print("  wanli failed:", error, flush=True)
 
     for config in ("plain_text",):
         try:
             anli = load_dataset("facebook/anli", split="train_r3")
             take("anli-r3", nli("anli", anli, "hypothesis", args.per_source, "anli-r3"))
-        except Exception as error:                              # noqa: BLE001
+        except Exception as error:
             print("  anli failed:", error, flush=True)
 
     try:
         bq = load_dataset("google/boolq", split="train")
         take("boolq", boolq(bq, args.per_source))
-    except Exception as error:                                  # noqa: BLE001
+    except Exception as error:
         print("  boolq failed:", error, flush=True)
 
     try:
         arc = load_dataset("allenai/ai2_arc", "ARC-Challenge", split="train")
         take("arc", multiple_choice(arc, args.per_source, "arc", "", "question",
                                     "choices", "answerKey"))
-    except Exception as error:                                  # noqa: BLE001
+    except Exception as error:
         print("  arc failed:", error, flush=True)
 
     try:
         csqa = load_dataset("tau/commonsense_qa", split="train")
         take("commonsenseqa", multiple_choice(csqa, args.per_source, "commonsenseqa", "",
                                               "question", "choices", "answerKey"))
-    except Exception as error:                                  # noqa: BLE001
+    except Exception as error:
         print("  commonsenseqa failed:", error, flush=True)
 
     try:
@@ -225,13 +225,13 @@ def main() -> None:
         banking = banking.map(lambda r: {"label": index_of[r["label_text"]]})
         take("banking77", intent(banking, args.per_source, "banking77", names,
                                  "text", "label", 6, rng))
-    except Exception as error:                                  # noqa: BLE001
+    except Exception as error:
         print("  banking77 failed:", error, flush=True)
 
     try:
         yelp = load_dataset("Yelp/yelp_review_full", split="train")
         take("yelp", stars(yelp, args.per_source // 2, "yelp", "text", "label"))
-    except Exception as error:                                  # noqa: BLE001
+    except Exception as error:
         print("  yelp failed:", error, flush=True)
 
     rng.shuffle(train)

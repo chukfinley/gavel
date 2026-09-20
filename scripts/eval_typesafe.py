@@ -26,9 +26,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import torch
 
-from gavel.encoding import encode_options, to_device                   # noqa: E402
-from gavel.model import EntailmentScorer, build_tokenizer              # noqa: E402
-from gavel.schema import from_json                                     # noqa: E402
+from gavel.encoding import encode_options, to_device
+from gavel.model import EntailmentScorer, build_tokenizer
+from gavel.schema import from_json
 
 PUBLISHED = {"jev": (0.8831410256, 0.1268250717), "openjev_direct": (0.8453205128, 0.1770346368)}
 

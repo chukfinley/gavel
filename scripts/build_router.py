@@ -29,7 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import Decision, Option, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, write_jsonl
 
 CHEAP = ["mistralai/mistral-7b-chat", "WizardLM/WizardLM-13B-V1.2"]
 MIDDLE = ["mistralai/mixtral-8x7b-chat", "meta/llama-2-70b-chat",

@@ -35,7 +35,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import Decision, Option, read_jsonl, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, read_jsonl, write_jsonl
 
 PARTS = ["train.jsonl", "business.jsonl", "moderation.jsonl", "router.jsonl",
          "more.jsonl", "semrouter.jsonl", "tools.jsonl", "browser.jsonl",
@@ -151,7 +151,7 @@ def main() -> None:
                 elif row.task == "noul" and row.source in CLAIMS \
                         and len(row.options) == 2:
                     nouls.append(row)
-        except Exception as error:                               # noqa: BLE001
+        except Exception as error:
             print(f"  {name}: missing ({error})")
     rng.shuffle(choices)
     rng.shuffle(nouls)

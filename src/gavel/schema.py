@@ -15,9 +15,9 @@ not baked into the model.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterator
 
 
 @dataclass(slots=True)
@@ -77,5 +77,4 @@ def read_jsonl(path: str | Path) -> Iterator[Decision]:
 def write_jsonl(path: str | Path, rows: list[Decision]) -> None:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row.to_json(), ensure_ascii=False) + "\n")
+        handle.writelines(json.dumps(row.to_json(), ensure_ascii=False) + "\n" for row in rows)

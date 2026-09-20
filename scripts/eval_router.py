@@ -33,9 +33,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import torch
 
-from gavel.encoding import encode_options, to_device                  # noqa: E402
-from gavel.model import EntailmentScorer, build_tokenizer             # noqa: E402
-from gavel.schema import Decision, Option                             # noqa: E402
+from gavel.encoding import encode_options, to_device
+from gavel.model import EntailmentScorer, build_tokenizer
+from gavel.schema import Decision, Option
 
 CHEAP = ["mistralai/mistral-7b-chat", "WizardLM/WizardLM-13B-V1.2"]
 MIDDLE = ["mistralai/mixtral-8x7b-chat", "meta/llama-2-70b-chat",
@@ -87,8 +87,9 @@ def main() -> None:
     parser.add_argument("--out", default="")
     args = parser.parse_args()
 
-    import pandas as pd
     from collections import defaultdict
+
+    import pandas as pd
     from huggingface_hub import hf_hub_download
 
     frame = pd.read_pickle(hf_hub_download(

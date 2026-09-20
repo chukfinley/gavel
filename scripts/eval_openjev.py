@@ -11,17 +11,16 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import torch
 
-from gavel.encoding import encode_options, to_device   # noqa: E402
-from gavel.losses import balanced_accuracy, expected_calibration_error  # noqa: E402
-from gavel.model import EntailmentScorer, build_tokenizer  # noqa: E402
-from gavel.schema import read_jsonl                    # noqa: E402
+from gavel.encoding import encode_options, to_device
+from gavel.losses import balanced_accuracy, expected_calibration_error
+from gavel.model import EntailmentScorer, build_tokenizer
+from gavel.schema import read_jsonl
 
 BASELINE = {                       # OpenJev results/phase1-summary.json
     "authored144": 0.8132381608,

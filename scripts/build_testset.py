@@ -24,7 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from gavel.schema import Decision, Option, write_jsonl  # noqa: E402
+from gavel.schema import Decision, Option, write_jsonl
 
 NLI_OPTIONS = [
     Option("supported", "The evidence establishes the claim"),
@@ -57,7 +57,7 @@ def main() -> None:
     def guard(name: str, function) -> None:
         try:
             add(name, function())
-        except Exception as error:                              # noqa: BLE001
+        except Exception as error:
             print(f"  {name} failed: {error}", flush=True)
 
     def nli_rows(source: str, dataset, limit: int) -> list[Decision]:
