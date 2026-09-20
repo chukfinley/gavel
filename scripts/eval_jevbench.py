@@ -80,6 +80,12 @@ def options_for(item) -> tuple[list[str], list[str]]:
     return labels, texts
 
 
+def state_text(item) -> str:
+    """The hard tier sends JSON states, not only strings."""
+    state = item["state"]
+    return state if isinstance(state, str) else json.dumps(state, indent=1)
+
+
 def load(folder: Path, tiers: list[str]) -> dict:
     if not folder.exists():
         subprocess.run(["git", "clone", "-q", "--depth", "1", REPO, str(folder)],
@@ -127,8 +133,8 @@ def main() -> None:
         for item in items:
             labels, texts = options_for(item)
             started = time.perf_counter()
-            verdict = judge.decide(item["state"], item["question"]["instructions"],
-                                   texts)
+            verdict = judge.decide(state_text(item),
+                                   item["question"]["instructions"], texts)
             latencies.append((time.perf_counter() - started) * 1000)
             chosen = labels[texts.index(verdict.option)]
             correct = int(chosen == str(item["expected"]))
