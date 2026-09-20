@@ -31,6 +31,24 @@ $PY -c "import torch" 2>/dev/null || \
 uv pip install -q "transformers>=4.48" "datasets>=3.0" scikit-learn tqdm pandas \
                   accelerate bitsandbytes huggingface_hub
 log "torch: $($PY -c 'import torch;print(torch.__version__, torch.cuda.is_available())' 2>&1 | tail -1)"
+# A rented machine sometimes comes up without a usable GPU. Training would
+# then fall back to the CPU and burn a day of rent for nothing, so the run
+# stops here instead, loudly, while the pod still costs cents.
+if ! $PY -c 'import sys, torch; sys.exit(0 if torch.cuda.is_available() else 1)' 2>/dev/null; then
+  log "FATAL no CUDA device on this pod; nvidia-smi says:"
+  (nvidia-smi 2>&1 | head -12 || echo "nvidia-smi not present") | tee -a /workspace/bootstrap.log
+  log "stopping before training. Start another pod; the pod can be stopped."
+  $PY - <<'PYEOF' 2>/dev/null
+import os
+from huggingface_hub import HfApi
+api = HfApi(token=os.environ["HF_TOKEN"])
+repo = os.environ.get("RESULTS_REPO", "chukfinley/gavel-runs")
+api.create_repo(repo, repo_type="dataset", exist_ok=True)
+api.upload_file(path_or_fileobj="/workspace/bootstrap.log", path_in_repo="bootstrap.log",
+                repo_id=repo, repo_type="dataset", commit_message="no GPU on this pod")
+PYEOF
+  exit 1
+fi
 
 # Publish logs and results every few minutes, so the run can be watched from
 # outside without a shell on this machine.
