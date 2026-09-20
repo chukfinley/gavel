@@ -25,10 +25,29 @@ accuracy on those public items, from decider's README:
 | decider-2b v10 (1.9 B) | 1.000 | 0.847 | 0.459 |
 | Bespoke Nimble 9B | 1.000 | 0.931 | 0.369 |
 | open-jev-deberta-v3-large (435 M) | 1.000 | **0.431** | 0.378 |
-| **gavel-vela-32k (308 M), pair scorer** | **0.958** | **0.514** | **0.387** |
+| gavel-vela-32k (308 M), pair scorer, old data | 0.958 | 0.514 | 0.387 |
+| **gavel, pair scorer, 2026-09-20 mix (1.09 M rows)** | **0.979** | **0.694** | 0.369 |
 
 Weighted over all 231 items: Jev 0.866, decider 0.692, Nimble 0.675,
-**gavel 0.545**, open-jev-deberta 0.524.
+**gavel new 0.597**, gavel old 0.545, open-jev-deberta 0.524.
+
+The 2026-09-20 run — same recipe, the mix grown from 566 k to 1.09 M rows
+with ordered scales, named criteria, claims, thirteen domains, games,
+specialist routing and retrieved evidence — moved the standard tier by 18
+points. Per family: ordinal 0.750 → **1.000**, extraction 0.417 → **0.917**,
+routing 0.167 → **0.583** (the routing builder did what it was written for),
+intent 0.667 and adequacy 0.500 unchanged, policy 0.583 → 0.500. On the
+hard tier, long_policy 0.263 → **0.526** — the long-document families
+doubled — while the small reasoning families (tradeoff, judge_hard,
+probability, 5-17 items each) fell, for 0.387 → 0.369 overall. Latency
+99 ms per item on the 3090. Dev mean over 20 strata 0.703, calibrated ECE
+0.034.
+
+On the classifier benchmark, measured for the first time with a correct
+reader: **v1 0.744, v2 0.619, combined 0.629** (micro). That puts us above
+Laya (0.585 / 0.587) and below Von (0.666 / 0.687) and GLiNER2 (0.688 /
+0.697) on v2 and combined. Seven points to the two of them is the gap that
+remains.
 
 Measured here on 2026-09-20 with `scripts/eval_jevbench.py`, on the published
 checkpoint, before any of the new data or the span head.

@@ -39,7 +39,9 @@ JevBench public items, pair scorer, `chukfinley/gavel-vela-32k`:
 |---|---:|---:|---:|---:|
 | easy (48) | 0.958 | 1.000 | 1.000 | 1.000 |
 | standard (72) | **0.514** | 0.431 | 0.847 | 0.986 |
-| hard (111) | running | 0.378 | 0.459 | 0.730 |
+| hard (111) | 0.387 → 0.369 (new mix) | 0.378 | 0.459 | 0.730 |
+
+After the 2026-09-20 mix: standard 0.694, routing family 0.583, cbench v2 0.619 — details in `FIELD.md`.
 
 We already beat the only other encoder on that board on the standard tier,
 at 308 M against its 435 M. Per family, standard tier:
