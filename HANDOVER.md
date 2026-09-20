@@ -49,8 +49,9 @@ subsets. Only the first two are wired up.
 
 | | |
 |---|---|
-| JevBench easy, pair scorer | **0.958** (46/48); everyone else on the board is 1.000 |
-| JevBench standard, hard | running |
+| JevBench easy / standard / hard | **0.958 / 0.514 / 0.387**, weighted 0.545 |
+| the only other encoder there, open-jev-deberta 435 M | 1.000 / 0.431 / 0.378, weighted 0.524 |
+| unreadable input: confidence drop | 0.691 to 0.536 at worst, accuracy at chance |
 | latency, 64 tokens, 2 / 5 / 8 options | 109 / 240 / 377 ms, CPU, 8 threads |
 | latency, 256 tokens | 301 / 730 / 1297 ms |
 | latency, 1024 tokens, 2 options | 1369 ms |
@@ -119,8 +120,9 @@ than after it.
   built and tested on CPU; the training numbers are from yesterday's
   architecture. A run started at 08:38 on 2026-09-20 with the backbone
   loading correctly for the first time.
-* `scripts/build_grounded.py` still stalls on a pure-Python BM25 and needs
-  `rank_bm25`.
+* ~~`build_grounded.py` stalls on a pure-Python BM25~~ fixed: the weights are
+  precomputed into a sparse matrix, 120000 passages index in 8 s and a search
+  takes 0.9 ms, so the full 40000 rows take under a minute.
 * Bespoke's Nimble suite is not wired up. Its 13 subsets rebuild from
   manifests in `bespokelabsai/nimble`.
 * `src/gavel/longdoc.py` works but has never been trained for or measured at
