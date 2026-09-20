@@ -79,3 +79,33 @@ safety policies 0.935, SciQ with a passage 0.980, and the 32k context.
 4. Distil from `MoritzLaurer/bge-m3-zeroshot-v2.0` as a teacher.
 5. Answer several questions in one pass — the throughput argument, and the one
    piece of the competing designs not yet taken.
+
+## The four traps that cost hours last round
+
+1. **Do not set `dockerStartCmd`.** It replaces the image entrypoint and with
+   it the ssh daemon: the pod runs, publishes nothing, and cannot be inspected.
+   Create the pod without it, then ssh in and start the work in tmux.
+2. **The REST endpoint rejects Python's default user agent** with 403 and
+   Cloudflare error 1010. `scripts/runpod_launch.py` sends a curl one; keep it.
+3. **`/workspace` holds 20 GB, the root filesystem 120.** Work under `/root`,
+   or the dataset build runs out of space. `pod_bootstrap.sh` is rewritten with
+   `sed 's|/workspace|/root/run|g'` for exactly this.
+4. **Set `HF_HUB_DISABLE_XET=1`.** The xet backend stalls on these machines and
+   leaves zero-byte `.incomplete` files.
+
+Also: the image already ships a working torch. `uv venv --system-site-packages`
+saves downloading another 2.5 GB copy, about ten minutes per pod start.
+
+The configuration that worked:
+
+```json
+{"computeType": "GPU",
+ "gpuTypeIds": ["NVIDIA GeForce RTX 3090", "NVIDIA GeForce RTX 4090",
+                "NVIDIA GeForce RTX 3090 Ti", "NVIDIA GeForce RTX 5090"],
+ "gpuTypePriority": "availability", "gpuCount": 1,
+ "imageName": "runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04",
+ "containerDiskInGb": 120, "cloudType": "COMMUNITY", "ports": ["22/tcp"]}
+```
+
+There is no CUDA problem: torch 2.6.0+cu124 reports `cuda.is_available() ==
+True` on the 3090 with this image.
