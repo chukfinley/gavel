@@ -109,3 +109,36 @@ def test_group_softmax_normalises_per_question(tokenizer):
     probabilities = log_probabilities.exp()
     assert probabilities[0, :2].sum().item() == pytest.approx(1.0, abs=1e-4)
     assert probabilities[0, 2:].sum().item() == pytest.approx(1.0, abs=1e-4)
+
+
+def test_reuse_encoder_actually_copies_the_weights(tokenizer, tmp_path):
+    """Zero of thirty-nine tensors matched in the first version, silently.
+
+    The pair checkpoint keys are `model.<base>.<layer>`, the span model's
+    start at `<layer>`, and the token embedding differs by three marker rows.
+    This pins that every layer arrives and the embedding rows are merged.
+    """
+    import importlib.util
+
+    from gavel.model import EntailmentScorer
+
+    spec = importlib.util.spec_from_file_location(
+        "train_span", Path(__file__).resolve().parents[1] / "scripts" / "train_span.py")
+    train_span = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(train_span)
+
+    pair = EntailmentScorer(TINY)
+    checkpoint = tmp_path / "pair.pt"
+    torch.save({"model": pair.state_dict(), "backbone": TINY}, checkpoint)
+
+    span = SpanScorer(TINY, tokenizer)
+    reused, total = train_span.reuse_encoder(span.model, str(checkpoint))
+    assert reused == total > 0
+
+    source = pair.model.bert
+    assert torch.equal(span.model.encoder.layer[0].attention.self.query.weight,
+                       source.encoder.layer[0].attention.self.query.weight)
+    rows = source.embeddings.word_embeddings.weight.shape[0]
+    assert span.model.embeddings.word_embeddings.weight.shape[0] == rows + 3
+    assert torch.equal(span.model.embeddings.word_embeddings.weight[:rows],
+                       source.embeddings.word_embeddings.weight)

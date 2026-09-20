@@ -99,6 +99,46 @@ def evaluate(model, tokenizer, rows, device, max_length, batch_size, flip_check)
     return overall, means, (flips / total if total else 0.0)
 
 
+def reuse_encoder(encoder, checkpoint: str) -> tuple[int, int]:
+    """Copy the trained encoder out of a pair checkpoint into the span model.
+
+    The pair scorer wraps `AutoModelForSequenceClassification`, whose keys
+    are `model.<base>.<layer>` with `<base>` being `model` for ModernBERT and
+    `bert` for BERT. The span scorer wraps the bare `AutoModel`, whose keys
+    start at `<layer>`. The first version stripped one prefix and matched
+    nothing at all — zero of thirty-nine tensors — and would have distilled
+    into an untrained backbone without saying so.
+
+    Two things have to hold: strip as many leading components as it takes
+    for a key to exist in the target, and merge the token embedding row by
+    row, because the span tokenizer added three marker tokens and the
+    matrices differ by three rows.
+    """
+    state = torch.load(checkpoint, map_location="cpu", weights_only=False)["model"]
+    target = encoder.state_dict()
+    loaded, total = {}, 0
+    for key, value in state.items():
+        if "classifier" in key or key == "log_temperature":
+            continue
+        total += 1
+        parts = key.split(".")
+        for depth in range(1, min(4, len(parts))):
+            candidate = ".".join(parts[depth:])
+            if candidate not in target:
+                continue
+            have = target[candidate]
+            if have.shape == value.shape:
+                loaded[candidate] = value
+            elif (have.dim() == value.dim() == 2 and have.shape[1] == value.shape[1]):
+                merged = have.clone()
+                rows = min(have.shape[0], value.shape[0])
+                merged[:rows] = value[:rows]
+                loaded[candidate] = merged
+            break
+    encoder.load_state_dict(loaded, strict=False)
+    return len(loaded), total
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--backbone", default="llm-semantic-router/Vela-1.0-Encoder-307M")
@@ -145,14 +185,11 @@ def main() -> None:
                        gradient_checkpointing=args.grad_checkpoint).to(device)
 
     if args.init_backbone_from:
-        # The pair checkpoint holds the same encoder under `model.model.*`.
-        state = torch.load(args.init_backbone_from, map_location="cpu",
-                           weights_only=False)["model"]
-        encoder = {k[len("model."):]: v for k, v in state.items()
-                   if k.startswith("model.") and "classifier" not in k}
-        missing, unexpected = model.model.load_state_dict(encoder, strict=False)
-        print(f"reused encoder weights: {len(encoder) - len(unexpected)} tensors, "
-              f"{len(missing)} left at their initial value", flush=True)
+        reused, total = reuse_encoder(model.model, args.init_backbone_from)
+        print(f"reused encoder weights: {reused} of {total} tensors", flush=True)
+        if reused == 0:
+            sys.exit("no encoder weight matched; the checkpoint layout is not "
+                     "what this expects, refusing to train from a cold backbone")
 
     teacher = None
     if args.teacher:
