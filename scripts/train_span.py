@@ -60,17 +60,33 @@ def batches(rows, size, rng, shuffle_options=True):
 
 @torch.no_grad()
 def teacher_distribution(teacher, rows, device, max_length):
-    """The pair model's probabilities for the same rows, in the same order."""
-    out = []
+    """The pair model's probabilities for the same rows, in the same order.
+
+    One tokenizer call and one forward for the whole batch. The first version
+    called `teacher.decide()` once per row — eight tokenizations, eight
+    forwards and eight device syncs per step, which was 40-50 percent of the
+    step — and looked the result up by option text, so two options with the
+    same text collapsed into one entry. Scores are indexed by position now.
+    """
+    premises, hypotheses, widths = [], [], []
     for state, questions in rows:
         question, options = questions[0]
-        verdict = teacher.decide(state, question, options)
-        out.append([verdict.probabilities[str(o)] for o in options])
-    width = max(len(p) for p in out)
-    padded = torch.zeros(len(out), width)
-    for i, probabilities in enumerate(out):
-        padded[i, : len(probabilities)] = torch.tensor(probabilities)
-    return padded.to(device)
+        premise = (state or question).strip()
+        for option in options:
+            premises.append(premise)
+            hypotheses.append(teacher._hypothesis(question, option))
+        widths.append(len(options))
+    encoding = teacher.tokenizer(premises, hypotheses, padding=True, truncation=True,
+                                 max_length=max_length, return_tensors="pt").to(device)
+    with torch.autocast(device_type="cuda", dtype=torch.bfloat16,
+                        enabled=device.startswith("cuda")):
+        logits = teacher.model(**encoding).logits[:, 0].float() / teacher.temperature
+    padded = torch.zeros(len(widths), max(widths), device=device)
+    start = 0
+    for row, width in enumerate(widths):
+        padded[row, :width] = F.softmax(logits[start : start + width], dim=-1)
+        start += width
+    return padded
 
 
 @torch.no_grad()
@@ -89,6 +105,7 @@ def evaluate(model, tokenizer, rows, device, max_length, batch_size, flip_check)
                              for state, [(q, o)] in prepared]
             back = encode(tokenizer, reversed_rows, max_length, device)
             other = model(back).argmax(dim=-1).cpu()
+        if flip_check:
             for row, first, second in zip(chunk, choice.tolist(), other.tolist()):
                 width = len(row.options)
                 flips += int(first != width - 1 - second)
@@ -170,6 +187,8 @@ def main() -> None:
     torch.manual_seed(args.seed)
     rng = random.Random(args.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.backends.cudnn.allow_tf32 = True
     Path(args.out).mkdir(parents=True, exist_ok=True)
 
     rows = [r for r in read_jsonl(args.train)
@@ -206,7 +225,8 @@ def main() -> None:
 
         optimiser = bnb.optim.AdamW8bit(groups, weight_decay=0.01)
     else:
-        optimiser = torch.optim.AdamW(groups, weight_decay=0.01)
+        optimiser = torch.optim.AdamW(groups, weight_decay=0.01,
+                                      fused=device.startswith("cuda"))
     schedule = torch.optim.lr_scheduler.OneCycleLR(
         optimiser, max_lr=[args.lr, args.head_lr], total_steps=args.steps,
         pct_start=args.warmup)
@@ -223,7 +243,12 @@ def main() -> None:
         step += 1
         batch = encode(tokenizer, prepared, args.max_length, device)
         labels = labels.to(device)
-        scores = model(batch)
+        # bf16 autocast, as the pair model was trained, calibrated and
+        # measured. The first version ran everything in fp32, which on a
+        # 3090 is half the tensor-core rate for nothing.
+        with torch.autocast(device_type="cuda", dtype=torch.bfloat16,
+                            enabled=device.startswith("cuda")):
+            scores = model(batch)
         log_probabilities = model.group_log_softmax(scores, batch.group)
 
         loss = F.nll_loss(log_probabilities, labels)
@@ -238,7 +263,7 @@ def main() -> None:
                 loss = loss + args.teacher_weight * F.kl_div(
                     log_probabilities, soft, reduction="batchmean")
 
-        optimiser.zero_grad()
+        optimiser.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimiser.step()

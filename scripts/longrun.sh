@@ -68,7 +68,7 @@ $PY scripts/eval_router.py --checkpoint runs/longrun/best-calibrated.pt --rows 1
 # the head learns a relation that is already right rather than discovering it
 # from hard labels, which is what defeated the first attempt at this.
 echo "[$(stamp)] distilling the one-sequence model"
-$PY scripts/train_span.py --backbone "$BACKBONE" --grad-checkpoint --adam8bit \
+$PY scripts/train_span.py --backbone "$BACKBONE" \
   --init-backbone-from runs/longrun/best.pt \
   --teacher runs/longrun/best-calibrated.pt --teacher-weight 1.0 \
   --train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl \
