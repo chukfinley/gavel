@@ -93,7 +93,7 @@ from huggingface_hub import HfApi
 api = HfApi(token=os.environ["HF_TOKEN"])
 repo = os.environ.get("RESULTS_REPO", "chukfinley/gavel-runs")
 api.create_repo(repo, repo_type="dataset", exist_ok=True)
-api.upload_file(path_or_fileobj="$RUN/bootstrap.log", path_in_repo="bootstrap.log",
+api.upload_file(path_or_fileobj="/root/run/bootstrap.log", path_in_repo="bootstrap.log",
                 repo_id=repo, repo_type="dataset", commit_message="this pod cannot run CUDA")
 PYEOF
   # Exiting makes the container restart in a loop and clone again every
@@ -108,9 +108,9 @@ log "CUDA OK on pod ${RUNPOD_POD_ID:-unknown}"
 
 # Publish logs and results every few minutes, so the run can be watched from
 # outside without a shell on this machine.
-cat > $RUN/publish.sh <<'PUB'
+cat > /root/run/publish.sh <<'PUB'
 #!/usr/bin/env bash
-cd $RUN/gavel || exit 0
+cd /root/run/gavel || exit 0
 while true; do
   .venv/bin/python - <<'PYEOF' >/dev/null 2>&1
 import os
@@ -122,7 +122,7 @@ for folder, prefix in [("results", "results"), ("logs", "logs")]:
     if os.path.isdir(folder):
         api.upload_folder(folder_path=folder, path_in_repo=prefix, repo_id=repo,
                           repo_type="dataset", commit_message="progress")
-for name in ("COMPARISON.md", "$RUN/bootstrap.log", "$RUN/build.log"):
+for name in ("COMPARISON.md", "/root/run/bootstrap.log", "/root/run/build.log"):
     if os.path.isfile(name):
         api.upload_file(path_or_fileobj=name, path_in_repo=os.path.basename(name),
                         repo_id=repo, repo_type="dataset", commit_message="progress")
