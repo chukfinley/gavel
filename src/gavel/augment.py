@@ -50,6 +50,11 @@ def drop_distractors(decision: Decision, rng: random.Random) -> Decision:
     chosen = sorted(wrong[: keep - 1] + [decision.label])
     decision.options = [decision.options[i] for i in chosen]
     decision.label = chosen.index(decision.label)
+    teacher = decision.meta.get("teacher")
+    if teacher:
+        kept = [float(teacher[i]) for i in chosen]
+        total = sum(kept) or 1.0
+        decision.meta["teacher"] = [v / total for v in kept]
     return decision
 
 
@@ -60,6 +65,9 @@ def negate(decision: Decision, rng: random.Random) -> Decision:
         return decision
     decision.question = f"It is not the case that: {decision.question.rstrip('?')}?"
     decision.label = 1 - decision.label
+    teacher = decision.meta.get("teacher")
+    if teacher and len(teacher) == 2:
+        decision.meta["teacher"] = [teacher[1], teacher[0]]
     return decision
 
 

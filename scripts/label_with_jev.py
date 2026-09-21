@@ -34,7 +34,7 @@ sys.path.insert(0, "src")
 from curl_cffi import requests
 
 PRICE_PER_TOKEN = 0.042 / 1_000_000
-ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
+ENDPOINT = "https://openrouter.ai/api/alpha/decisions"
 MODEL = "typesafe/jev-1.13"
 
 
@@ -198,6 +198,7 @@ def main() -> None:
                 answers = parse_answers(payload, members)
                 usage = payload.get("usage") or {}
                 tokens = int(usage.get("input_tokens") or usage.get("prompt_tokens") or 0)
+                cost = float(usage.get("cost") or tokens * PRICE_PER_TOKEN)
                 break
             except Exception as error:
                 if response is None:
@@ -218,7 +219,7 @@ def main() -> None:
                     spent["rows"] += 1
             handle.flush()
             spent["tokens"] += tokens
-            spent["usd"] += tokens * PRICE_PER_TOKEN
+            spent["usd"] += cost
             if spent["usd"] >= args.budget_usd:
                 stop.set()
             if spent["rows"] % 500 < len(members):

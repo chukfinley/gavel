@@ -37,16 +37,19 @@ from torch.nn import functional as F
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from gavel import teacher as teaching
 from gavel.schema import read_jsonl
 from gavel.span import SpanScorer, build_tokenizer, encode
 
 
 def batches(rows, size, rng, shuffle_options=True):
+    """Yields (prepared, labels, chunk, permutations); permutations[i][slot]
+    is the original option index that sits in that slot."""
     order = list(range(len(rows)))
     rng.shuffle(order)
     for start in range(0, len(order) - size + 1, size):
         chunk = [rows[i] for i in order[start : start + size]]
-        prepared, labels = [], []
+        prepared, labels, permutations = [], [], []
         for row in chunk:
             options = list(row.options)
             index = list(range(len(options)))
@@ -55,7 +58,8 @@ def batches(rows, size, rng, shuffle_options=True):
             texts = [options[i].description for i in index]
             labels.append(index.index(row.label))
             prepared.append((row.state, [(row.question, texts)]))
-        yield prepared, torch.tensor(labels), chunk
+            permutations.append(index)
+        yield prepared, torch.tensor(labels), chunk, permutations
 
 
 @torch.no_grad()
@@ -95,7 +99,7 @@ def evaluate(model, tokenizer, rows, device, max_length, batch_size, flip_check)
     rng = random.Random(7)
     per_source: dict[str, list[int]] = defaultdict(list)
     flips = total = 0
-    for prepared, labels, chunk in batches(rows, batch_size, rng, shuffle_options=False):
+    for prepared, labels, chunk, _ in batches(rows, batch_size, rng, shuffle_options=False):
         batch = encode(tokenizer, prepared, max_length, device)
         autocast = torch.autocast(device_type="cuda", dtype=torch.bfloat16,
                                   enabled=str(device).startswith("cuda"))
@@ -192,6 +196,9 @@ def main() -> None:
                         help="a pair checkpoint that supplies soft targets")
     parser.add_argument("--teacher-weight", type=float, default=1.0)
     parser.add_argument("--teacher-temperature", type=float, default=1.0)
+    parser.add_argument("--teacher-file", default="",
+                        help="soft labels per row id from scripts/label_with_jev.py; "
+                             "rows it covers use these instead of the pair model")
     parser.add_argument("--train", default="data/train_v6.jsonl")
     parser.add_argument("--dev", default="data/dev_strat_v2.jsonl")
     parser.add_argument("--out", default="runs/span")
@@ -224,6 +231,10 @@ def main() -> None:
            if r.label is not None and 2 <= len(r.options) <= args.max_options]
     rng.shuffle(dev)
     dev = dev[: args.eval_rows]
+    teacher_table = teaching.load(args.teacher_file) if args.teacher_file else {}
+    if teacher_table:
+        labelled = teaching.attach(rows, teacher_table)
+        print(f"teacher labels on {len(labelled)} of {len(rows)} rows", flush=True)
     print(f"train {len(rows)}  dev {len(dev)}  device {device}", flush=True)
 
     tokenizer = build_tokenizer(args.backbone)
@@ -263,7 +274,7 @@ def main() -> None:
     model.train()
     while step < args.steps:
         try:
-            prepared, labels, _ = next(stream)
+            prepared, labels, chunk, permutations = next(stream)
         except StopIteration:
             stream = batches(rows, args.batch_size, rng)
             continue
@@ -280,6 +291,17 @@ def main() -> None:
 
         soft = (teacher_distribution(teacher, prepared, device, args.max_length)
                 if teacher is not None else None)
+        if teacher_table:
+            # Rows that Jev labelled take Jev's distribution; the others keep
+            # the pair model's, if there is one.
+            file_soft, has = teaching.soft_targets(chunk, log_probabilities.size(-1), permutations)
+            file_soft, has = file_soft.to(device), has.to(device)
+            if soft is None:
+                soft = torch.where(has[:, None], file_soft, torch.zeros_like(file_soft))
+                if not has.any():
+                    soft = None
+            else:
+                soft = torch.where(has[:, None], file_soft, soft)
         loss = distillation_loss(log_probabilities, labels, batch.group >= 0, soft,
                                  args.brier_weight, args.teacher_weight)
 

@@ -30,6 +30,7 @@ from collections import defaultdict
 import torch
 from torch.nn import functional as F
 
+from gavel import teacher as teaching
 from gavel.augment import augment
 from gavel.encoding import (
     NLI_SOURCES,
@@ -103,6 +104,11 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=3e-5)
     parser.add_argument("--max-length", type=int, default=192)
     parser.add_argument("--brier-weight", type=float, default=0.5)
+    parser.add_argument("--teacher-file", default=None,
+                        help="soft labels per row id from scripts/label_with_jev.py")
+    parser.add_argument("--teacher-weight", type=float, default=1.0)
+    parser.add_argument("--teacher-share", type=float, default=0.5,
+                        help="share of short steps drawn from the teacher-labelled rows")
     parser.add_argument("--warmup", type=float, default=0.06)
     parser.add_argument("--eval-every", type=int, default=1000)
     parser.add_argument("--eval-rows", type=int, default=768)
@@ -160,6 +166,13 @@ def main() -> None:
     names = sorted(pools)
     weights = [len(pools[name]) ** args.source_alpha for name in names]
     long_rows = list(read_jsonl(args.long)) if args.long else []
+    # Rows with a teacher distribution (Jev's probabilities from
+    # label_with_jev.py). They keep their place in the source pools and are
+    # also drawn directly, so the KL term sees them often enough to matter.
+    teacher_rows = []
+    if args.teacher_file:
+        teacher_rows = teaching.attach(rows, teaching.load(args.teacher_file))
+        print(f"teacher labels on {len(teacher_rows)} of {len(rows)} rows", flush=True)
     # Training only on the new sector makes the model forget the old ones.
     # A share of old rows in every draw keeps them.
     dev_rows = list(read_jsonl(args.dev))[: args.eval_rows]
@@ -200,6 +213,8 @@ def main() -> None:
             length = args.long_max_length if use_long else args.max_length
             if replay_rows and not use_long and rng.random() < args.replay_share:
                 decision = rng.sample(replay_rows, size)
+            elif teacher_rows and not use_long and rng.random() < args.teacher_share:
+                decision = rng.sample(teacher_rows, size)
             elif use_long:
                 decision = rng.sample(long_rows, size)
             else:
@@ -240,6 +255,11 @@ def main() -> None:
             anchor_loss = F.cross_entropy(anchor_logits, a_labels)
             logits = model.scatter_options(flat, mask)
             decision_loss = F.cross_entropy(logits, labels) + args.brier_weight * brier(logits, labels, mask)
+            if teacher_rows:
+                soft, has = teaching.soft_targets(decision, logits.size(-1))
+                if has.any():
+                    decision_loss = decision_loss + args.teacher_weight * teaching.kl_to_teacher(
+                        F.log_softmax(logits, dim=-1), soft.to(device), mask.bool(), has.to(device))
             (anchor_loss + decision_loss).backward()
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)

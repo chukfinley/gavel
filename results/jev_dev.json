@@ -1,0 +1,80 @@
+{
+ "strata": {
+  "abstain-held": {
+   "rows": 198,
+   "accuracy": 0.803
+  },
+  "anli-r1-dev": {
+   "rows": 193,
+   "accuracy": 0.8187
+  },
+  "anli-r3-dev": {
+   "rows": 194,
+   "accuracy": 0.7732
+  },
+  "arc-easy-dev": {
+   "rows": 200,
+   "accuracy": 0.995
+  },
+  "boolq-held": {
+   "rows": 190,
+   "accuracy": 0.8684
+  },
+  "claims-held": {
+   "rows": 195,
+   "accuracy": 0.7641
+  },
+  "clinc-dev": {
+   "rows": 193,
+   "accuracy": 0.9948
+  },
+  "criteria-held": {
+   "rows": 194,
+   "accuracy": 0.7629
+  },
+  "domains-held": {
+   "rows": 193,
+   "accuracy": 0.8135
+  },
+  "knowledge-held": {
+   "rows": 193,
+   "accuracy": 0.9067
+  },
+  "mmlu-dev": {
+   "rows": 200,
+   "accuracy": 0.91
+  },
+  "moderation-held": {
+   "rows": 191,
+   "accuracy": 0.8429
+  },
+  "openbookqa-dev": {
+   "rows": 200,
+   "accuracy": 0.94
+  },
+  "packet-held": {
+   "rows": 194,
+   "accuracy": 0.7732
+  },
+  "router-held": {
+   "rows": 191,
+   "accuracy": 0.5602
+  },
+  "scales-held": {
+   "rows": 194,
+   "accuracy": 0.3299
+  },
+  "snli-dev": {
+   "rows": 200,
+   "accuracy": 0.855
+  },
+  "wanli-held": {
+   "rows": 194,
+   "accuracy": 0.6701
+  }
+ },
+ "mean": 0.799,
+ "rows": 3507,
+ "model": "typesafe/jev-1.13 via OpenRouter",
+ "when": 1789992150.962486
+}

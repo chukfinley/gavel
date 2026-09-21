@@ -162,6 +162,31 @@ than after it.
 * **Web navigation** works: span head 6/8 sites at 34 ms per page, pair
   4/8 at 771 ms (40 links each pass through the pair model one by one).
 
+* **Jev as a teacher, 2026-09-21.** OpenRouter serves `typesafe/jev-1.13`
+  on `POST /api/alpha/decisions` with TypeSafe's native body (`state`,
+  `questions{type,instructions,criteria}`), 0.042 $ per million input
+  tokens, output free, `usage.cost` in every reply. `scripts/label_with_jev.py`
+  sends our rows (several questions per state in one request), logs every
+  request and raw reply to `logs/jev_requests.jsonl`, and writes
+  `data/jev/<name>.jsonl` with Jev's probability per option. The whole dev
+  set cost 0.064 $. Both trainers take `--teacher-file` and add
+  KL(Jev || student) on the rows it covers; the augmentations carry the
+  distribution through `drop_distractors` and `negate` (`src/gavel/teacher.py`,
+  `tests/test_teacher.py`). Key lives in the gitignored `.env`.
+* **Jev on our dev set** (`results/jev_dev.json`, 18 strata): 0.799 mean
+  against 0.690 for the baseline pair model (`results/base-pair_dev.json`).
+  Jev wins every knowledge stratum by 30–50 points (mmlu 0.91 vs 0.39,
+  arc-easy 0.995 vs 0.52, openbookqa 0.94 vs 0.43): it knows facts, a 307M
+  encoder does not. We win abstain, claims, criteria, domains, moderation,
+  packet, router and scales. Distilling Jev's probabilities helps where
+  the task is reading the state; it cannot give the encoder world knowledge.
+* **Scales rows are half unreadable by design.** `build_scales.py` line 104
+  writes a bare level number as the option for half the options, so a
+  0–3 scale reads "0: calm and factual", "1", "2", "3". Jev scores 0.33
+  there, our model 0.615 by memorising the generator. Either always write
+  the level text, or define the scale in the question. Decide before the
+  next mix.
+
 ## The one thing to decide
 
 Whether the product is short states on a CPU or long documents on a GPU.
