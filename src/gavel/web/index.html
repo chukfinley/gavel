@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gavel</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect x=%274%27 y=%274%27 width=%278%27 height=%278%27 rx=%272%27 transform=%27rotate(45 8 8)%27 fill=%27%23f5b642%27/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0d1017;--panel:#141922;--panel2:#1a2130;--line:#232b3a;--text:#e6e9ef;--muted:#8b95a7;--accent:#f5b642;--accent2:#5ac8fa;--good:#4cd48b;--bad:#ff6b6b;--warn:#f5b642;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45;display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+nav{background:var(--panel);border-right:1px solid var(--line);padding:22px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px}
+nav .brand{font-weight:700;font-size:20px;letter-spacing:.5px;margin:0 8px 18px;display:flex;align-items:center;gap:10px}
+nav .brand i{width:12px;height:12px;background:var(--accent);border-radius:3px;display:inline-block;transform:rotate(45deg)}
+nav a{color:var(--muted);text-decoration:none;padding:9px 12px;border-radius:8px;font-weight:500;cursor:pointer}
+nav a.active,nav a:hover{background:var(--panel2);color:var(--text)}
+nav .foot{margin-top:auto;font-size:12px;color:var(--muted);padding:0 8px}
+nav .gpu{margin-top:auto;padding:12px;background:var(--panel2);border-radius:10px;font-size:12px;color:var(--muted)}
+nav .gpu b{color:var(--text);display:block;margin-bottom:6px;font-size:12px}
+.bar{height:6px;background:#0b0e14;border-radius:4px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--accent2)}
+main{padding:28px 34px;max-width:1400px;width:100%}
+section{display:none}section.active{display:block}
+h1{font-size:22px;margin:0 0 4px;font-weight:650}h2{font-size:15px;margin:26px 0 10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.sub{color:var(--muted);margin:0 0 20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:1000px){.grid2{grid-template-columns:1fr}body{grid-template-columns:1fr}nav{position:static;height:auto;flex-direction:row;flex-wrap:wrap}nav .gpu{display:none}}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td.num,th.num{text-align:right}tr.ours td:first-child{font-weight:600}tr.pub td{color:var(--muted)}tr.pub td:first-child{font-style:italic}
+td .best{color:var(--good);font-weight:600}td .top{color:var(--accent)}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;font-weight:600}
+input,textarea,select{width:100%;background:#0b0e14;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:14px}
+textarea{min-height:120px;resize:vertical;font-family:var(--mono);font-size:13px}
+select{appearance:none}
+button{background:var(--accent);color:#1a1200;border:0;border-radius:8px;padding:9px 16px;font-weight:650;cursor:pointer;font-size:14px}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}button.small{padding:5px 10px;font-size:12px}
+button:disabled{opacity:.5;cursor:default}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;background:var(--panel2);color:var(--muted)}
+.pill.running{color:var(--accent);animation:pulse 1.4s infinite}.pill.done{color:var(--good)}.pill.failed,.pill.lost{color:var(--bad)}
+@keyframes pulse{50%{opacity:.5}}
+pre{background:#0b0e14;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-family:var(--mono);font-size:12px;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto;margin:0;color:#c7cedb}
+.prob{display:grid;grid-template-columns:220px 1fr 60px;gap:10px;align-items:center;margin:4px 0}
+.prob .bar{margin:0}.prob .bar i{background:var(--accent)}.prob.win{color:var(--good)}.prob.win .bar i{background:var(--good)}
+.q{border:1px dashed var(--line);border-radius:10px;padding:10px 14px;margin-bottom:10px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi div{background:var(--panel2);border-radius:10px;padding:12px 14px}.kpi b{display:block;font-size:22px;font-weight:650}.kpi span{color:var(--muted);font-size:12px}
+.muted{color:var(--muted)}.good{color:var(--good)}.bad{color:var(--bad)}.mono{font-family:var(--mono);font-size:12px}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--panel2);border:1px solid var(--line);padding:12px 16px;border-radius:10px;max-width:420px;display:none}
+details summary{cursor:pointer;color:var(--muted)}
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand"><i></i>gavel</div>
+  <a data-tab="board" class="active">Scoreboard</a>
+  <a data-tab="play">Playground</a>
+  <a data-tab="bench">Benchmarks</a>
+  <a data-tab="demos">Demos</a>
+  <a data-tab="train">Training</a>
+  <div class="gpu" id="gpu"><b>GPU</b><span class="muted">…</span></div>
+</nav>
+<main>
+
+<section id="board" class="active">
+  <h1>Scoreboard</h1>
+  <p class="sub">Every number is read from <span class="mono">results/</span>. Published rows are what the field reports for itself.</p>
+  <div class="card">
+    <h2 style="margin-top:0">JevBench <span class="muted" style="text-transform:none;letter-spacing:0">(231 public items; weighted = by item count)</span></h2>
+    <table id="t-jev"></table>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">classifier-benchmark <span class="muted" style="text-transform:none;letter-spacing:0">(jabr, v1 78 cases, v2 869 cases; micro accuracy)</span></h2>
+    <table id="t-cb"></table>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Held-out sets <span class="muted" style="text-transform:none;letter-spacing:0">(accuracy per set, mean over strata)</span></h2>
+    <table id="t-gen"></table>
+  </div>
+  <div class="grid2">
+    <div class="card"><h2 style="margin-top:0">Latency on this GPU</h2><table id="t-lat"></table></div>
+    <div class="card"><h2 style="margin-top:0">Demos</h2><table id="t-demo"></table></div>
+  </div>
+</section>
+
+<section id="play">
+  <h1>Playground</h1>
+  <p class="sub">One state, one or many typed questions, a distribution back. No token is generated.</p>
+  <div class="grid2">
+    <div class="card">
+      <label>Model</label><select id="p-model"></select>
+      <label>State</label><textarea id="p-state">Customer message: "I was charged twice for the March invoice, and the second charge overdrew my account. I have already sent the bank statement last week and nobody replied."</textarea>
+      <div id="p-questions"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="ghost small" onclick="addQuestion()">+ question</button>
+        <label style="margin:0;display:flex;gap:6px;align-items:center;font-weight:500"><input type="checkbox" id="p-bundled" style="width:auto"> bundle questions into one sequence (span head)</label>
+      </div>
+      <div class="row" style="margin-top:16px"><button onclick="decide()" id="p-go">Decide</button><span class="muted" id="p-time"></span></div>
+    </div>
+    <div class="card"><h2 style="margin-top:0">Verdicts</h2><div id="p-out" class="muted">Nothing yet.</div></div>
+  </div>
+</section>
+
+<section id="bench">
+  <h1>Benchmarks</h1>
+  <p class="sub">Each run is a subprocess of the same script the pods use. Results land in <span class="mono">results/</span> and the scoreboard refreshes.</p>
+  <div class="card">
+    <div class="row">
+      <div style="flex:2;min-width:260px"><label>Model</label><select id="b-model"></select></div>
+      <div style="flex:1;min-width:160px"><label>Suite</label><select id="b-kind">
+        <option value="jevbench">JevBench (easy · standard · hard)</option>
+        <option value="cbench">classifier-benchmark v1 + v2</option>
+        <option value="general">held-out set …</option>
+        <option value="latency">latency (pair vs span)</option>
+      </select></div>
+      <div style="flex:1;min-width:140px" id="b-setwrap"><label>Set</label><select id="b-set"></select></div>
+      <div style="align-self:flex-end"><button onclick="startJob()">Run</button></div>
+    </div>
+  </div>
+  <div class="card"><h2 style="margin-top:0">Jobs</h2><table id="t-jobs"></table></div>
+  <div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0" id="log-title">Log</h2><button class="ghost small" onclick="followLog=null">stop following</button></div><pre id="log" style="margin-top:10px">Pick a job.</pre></div>
+</section>
+
+<section id="demos">
+  <h1>Demos</h1>
+  <p class="sub">The field's demos, in our contract: structured state as text in, one option out. Snake asks a safety question per legal move; web navigation reads the page HTML and picks a link.</p>
+  <div class="card">
+    <div class="row">
+      <div style="flex:2;min-width:260px"><label>Model</label><select id="d-model"></select></div>
+      <div style="flex:1;min-width:160px"><label>Demo</label><select id="d-kind"><option value="snake">Snake, 20 boards</option><option value="webnav">Web navigation, 8 sites</option></select></div>
+      <div style="align-self:flex-end"><button onclick="startDemo()">Run</button></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="card"><h2 style="margin-top:0">Snake</h2><div id="d-snake" class="muted">No result yet.</div></div>
+    <div class="card"><h2 style="margin-top:0">Web navigation</h2><div id="d-web" class="muted">No result yet.</div></div>
+  </div>
+</section>
+
+<section id="train">
+  <h1>Training</h1>
+  <p class="sub">What the card is doing, and the local distillation of the one-sequence head.</p>
+  <div class="card">
+    <div class="row">
+      <div><label>Steps</label><input id="tr-steps" value="40000" style="width:120px"></div>
+      <div><label>Batch</label><input id="tr-batch" value="8" style="width:80px"></div>
+      <div><label>Run name</label><input id="tr-name" value="base-span-40k" style="width:200px"></div>
+      <div style="align-self:flex-end"><button onclick="startDistil()">Distil span head from Hub main</button></div>
+    </div>
+    <p class="muted" style="margin:12px 0 0">Needs about 10 GB of the card. Loaded playground models are dropped first.</p>
+  </div>
+  <div class="grid2">
+    <div class="card"><h2 style="margin-top:0">Active processes</h2><pre id="tr-active">—</pre></div>
+    <div class="card"><h2 style="margin-top:0">Dev accuracy per run</h2><div id="tr-hist"></div></div>
+  </div>
+  <div class="card"><h2 style="margin-top:0">Logs</h2><div id="tr-logs"></div></div>
+</section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const fmt = (x, d=3) => (x==null||isNaN(x)) ? '<span class="muted">—</span>' : Number(x).toFixed(d);
+const pct = x => x==null ? '<span class="muted">—</span>' : (100*x).toFixed(1);
+let followLog = null, models = [], results = null;
+
+function toast(msg, bad){const t=$('#toast');t.textContent=msg;t.style.display='block';t.style.borderColor=bad?'var(--bad)':'var(--line)';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',5000)}
+async function api(path, body){const r=await fetch(path,body?{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}:{});const j=await r.json();if(!r.ok)throw new Error(j.detail||r.statusText);return j}
+
+document.querySelectorAll('nav a').forEach(a=>a.onclick=()=>{document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));$('#'+a.dataset.tab).classList.add('active');location.hash=a.dataset.tab});
+if(location.hash){const a=document.querySelector(`nav a[data-tab="${location.hash.slice(1)}"]`);if(a)a.click()}
+
+// ---------------------------------------------------------------- models
+async function loadModels(){
+  models = await api('/api/models');
+  for(const id of ['#p-model','#b-model','#d-model']){
+    const sel=$(id), cur=sel.value;
+    sel.innerHTML = models.map(m=>`<option value="${m.id}">${m.label}${m.loaded?' · loaded':''}</option>`).join('');
+    if(cur && models.some(m=>m.id===cur)) sel.value=cur;
+  }
+}
+
+// ---------------------------------------------------------------- scoreboard
+function bestMark(rows, key, cls='best'){ // mark the best of our rows
+  let best=-1; rows.forEach(r=>{if(r[key]!=null&&r[key]>best)best=r[key]});
+  return v => (v!=null && v===best) ? `<span class="${cls}">${pct(v)}</span>` : pct(v);
+}
+function renderScoreboard(){
+  const R=results, items=R.jevbench_items;
+  // JevBench
+  const jev=[];
+  for(const [run,suites] of Object.entries(R.runs)){
+    const d=suites.jevbench?.data; if(!d) continue;
+    const e=d.easy?.accuracy, s=d.standard?.accuracy, h=d.hard?.accuracy;
+    const w=(e*items.easy+s*items.standard+h*items.hard)/(items.easy+items.standard+items.hard);
+    jev.push({run, easy:e, standard:s, hard:h, weighted:w, when:suites.jevbench.mtime, ours:true});
+  }
+  jev.sort((a,b)=>b.weighted-a.weighted);
+  const mk={easy:bestMark(jev,'easy'),standard:bestMark(jev,'standard'),hard:bestMark(jev,'hard'),weighted:bestMark(jev,'weighted')};
+  let html='<tr><th>run</th><th class="num">easy</th><th class="num">standard</th><th class="num">hard</th><th class="num">weighted</th><th>measured</th></tr>';
+  for(const r of jev) html+=`<tr class="ours"><td>${r.run}</td><td class="num">${mk.easy(r.easy)}</td><td class="num">${mk.standard(r.standard)}</td><td class="num">${mk.hard(r.hard)}</td><td class="num">${mk.weighted(r.weighted)}</td><td class="muted">${new Date(r.when*1000).toLocaleString()}</td></tr>`;
+  for(const [name,v] of Object.entries(R.published.jevbench)){const w=(v.easy*items.easy+v.standard*items.standard+v.hard*items.hard)/231;html+=`<tr class="pub"><td>${name}</td><td class="num">${pct(v.easy)}</td><td class="num">${pct(v.standard)}</td><td class="num">${pct(v.hard)}</td><td class="num">${pct(w)}</td><td>published</td></tr>`}
+  $('#t-jev').innerHTML=html;
+  // cbench
+  const cb=[];
+  for(const [run,suites] of Object.entries(R.runs)){const d=suites.cbench?.data;if(!d)continue;cb.push({run,v1:d.v1?.micro,v2:d.v2?.micro,combined:d.combined?.micro,when:suites.cbench.mtime})}
+  cb.sort((a,b)=>b.combined-a.combined);
+  const mc={v1:bestMark(cb,'v1'),v2:bestMark(cb,'v2'),combined:bestMark(cb,'combined')};
+  html='<tr><th>run</th><th class="num">v1</th><th class="num">v2</th><th class="num">combined</th><th>measured</th></tr>';
+  for(const r of cb) html+=`<tr class="ours"><td>${r.run}</td><td class="num">${mc.v1(r.v1)}</td><td class="num">${mc.v2(r.v2)}</td><td class="num">${mc.combined(r.combined)}</td><td class="muted">${new Date(r.when*1000).toLocaleString()}</td></tr>`;
+  for(const [name,v] of Object.entries(R.published.cbench)) html+=`<tr class="pub"><td>${name}</td><td class="num">${pct(v.v1)}</td><td class="num">${pct(v.v2)}</td><td class="num">${pct(v.combined)}</td><td>published</td></tr>`;
+  $('#t-cb').innerHTML=html;
+  // held-out sets: any suite whose data has "strata"
+  const sets=new Set(), rows=[];
+  for(const [run,suites] of Object.entries(R.runs)){
+    const row={run};let any=false;
+    for(const [suite,{data}] of Object.entries(suites)){
+      if(data&&data.strata){const acc=Object.values(data.strata).map(s=>s.accuracy).filter(x=>x!=null);if(acc.length){row[suite]=acc.reduce((a,b)=>a+b,0)/acc.length;sets.add(suite);any=true}}
+    }
+    if(any) rows.push(row);
+  }
+  const cols=[...sets].sort();
+  html='<tr><th>run</th>'+cols.map(c=>`<th class="num">${c}</th>`).join('')+'</tr>';
+  const marks=Object.fromEntries(cols.map(c=>[c,bestMark(rows,c)]));
+  rows.sort((a,b)=>cols.filter(c=>b[c]!=null).length-cols.filter(c=>a[c]!=null).length);
+  for(const r of rows) html+=`<tr class="ours"><td>${r.run}</td>`+cols.map(c=>`<td class="num">${marks[c](r[c])}</td>`).join('')+'</tr>';
+  $('#t-gen').innerHTML=html;
+  // latency
+  const lat=R.misc.latency_cuda||R.misc.latency_cpu;
+  html='<tr><th class="num">state tokens</th><th class="num">options</th><th class="num">pair ms</th><th class="num">span ms</th><th class="num">span 4 q</th></tr>';
+  if(lat) for(const r of lat) html+=`<tr><td class="num">${r.state_tokens}</td><td class="num">${r.options}</td><td class="num">${fmt(r.pair_ms,1)}</td><td class="num">${fmt(r.span_ms,1)}</td><td class="num">${fmt(r.span_4q_ms,1)}</td></tr>`;
+  $('#t-lat').innerHTML=html;
+  // demos
+  html='<tr><th>demo</th><th>model</th><th class="num">score</th><th class="num">ms / decision</th></tr>';
+  for(const [name,d] of Object.entries(R.misc)){
+    if(name.startsWith('demo_snake')&&d.judge) html+=`<tr><td>snake</td><td class="mono">${short(d.judge)}${d.bundled?' · bundled':''}</td><td class="num">${fmt(d.model?.eaten,1)} eaten <span class="muted">(random ${fmt(d.random?.eaten,1)}, oracle ${fmt(d.oracle?.eaten,1)})</span><br><span class="muted">safety ${pct(d.model?.safety_accuracy)} %</span></td><td class="num">${fmt(d.model?.ms_per_turn,1)}</td></tr>`;
+    if(name.startsWith('demo_webnav')&&d.of) html+=`<tr><td>web navigation</td><td class="mono">${short(d.model)}</td><td class="num">${d.solved} / ${d.of}</td><td class="num">${fmt(d.median_ms,1)}</td></tr>`;
+  }
+  $('#t-demo').innerHTML=html;
+  renderDemos();
+}
+const short = s => (s||'').replace(/^.*\//,'').replace('chukfinley/','');
+
+function renderDemos(){
+  const R=results; let s='',w='';
+  for(const [name,d] of Object.entries(R.misc)){
+    if(name.startsWith('demo_snake')&&d.judge){
+      s+=`<div class="card" style="margin:0 0 10px;background:var(--panel2)"><div class="mono muted">${short(d.judge)}${d.bundled?' · bundled questions':''}</div><div class="kpi" style="margin-top:8px">`;
+      for(const k of ['random','model','oracle']){const r=d[k]||{};s+=`<div><b>${fmt(r.eaten,1)}</b><span>${k}: food eaten, ${fmt(r.steps,0)} steps</span></div>`}
+      s+=`<div><b>${pct(d.model?.safety_accuracy)} %</b><span>safety verdicts right</span></div><div><b>${pct(d.model?.yes_rate)} %</b><span>answered yes (safe share ${pct(1-(d.model?.unsafe_share??0))} %)</span></div><div><b>${fmt(d.model?.ms_per_turn,1)} ms</b><span>per turn (3 questions)</span></div></div></div>`;
+    }
+    if(name.startsWith('demo_webnav')&&d.tasks){
+      w+=`<div class="card" style="margin:0 0 10px;background:var(--panel2)"><div class="mono muted">${short(d.model)} · ${d.solved}/${d.of} solved · ${fmt(d.median_ms,1)} ms per page</div><table style="margin-top:6px">`;
+      for(const t of d.tasks) w+=`<tr><td>${t.found?'<span class="good">ok</span>':'<span class="bad">no</span>'}</td><td class="mono">${t.start.replace('https://','')}</td><td>${t.goal}</td><td class="muted">${t.path.map(p=>`${p[0]} <span class="mono">${p[1]}</span>`).join(' → ')}</td></tr>`;
+      w+='</table></div>';
+    }
+  }
+  $('#d-snake').innerHTML=s||'<span class="muted">No result yet.</span>';
+  $('#d-web').innerHTML=w||'<span class="muted">No result yet.</span>';
+}
+
+async function loadResults(){results=await api('/api/results');renderScoreboard()}
+
+// ---------------------------------------------------------------- playground
+const defaults=[{q:'Which team should handle this?',o:'billing: refunds, payments, invoices, unexpected charges|tech: bugs, errors, crashes, downtime|sales: pricing, quotes, upgrades|account: login, password, profile'},{q:'Is the customer angry?',o:'Yes|No'},{q:'Does this need a reply today?',o:'Yes|No'}];
+function addQuestion(q='',o=''){const d=document.createElement('div');d.className='q';d.innerHTML=`<label>Question</label><input class="pq" value="${q.replace(/"/g,'&quot;')}"><label>Options, separated by |</label><input class="po" value="${o.replace(/"/g,'&quot;')}"><div style="text-align:right;margin-top:6px"><button class="ghost small" onclick="this.closest('.q').remove()">remove</button></div>`;$('#p-questions').appendChild(d)}
+defaults.forEach(d=>addQuestion(d.q,d.o));
+async function decide(){
+  const qs=[...document.querySelectorAll('.q')].map(d=>({question:d.querySelector('.pq').value,options:d.querySelector('.po').value.split('|').map(s=>s.trim()).filter(Boolean)})).filter(q=>q.question&&q.options.length>1);
+  if(!qs.length) return toast('Give at least one question with two options',true);
+  $('#p-go').disabled=true;$('#p-time').textContent='loading…';
+  try{
+    const r=await api('/api/decide',{model:$('#p-model').value,state:$('#p-state').value,questions:qs,bundled:$('#p-bundled').checked});
+    $('#p-time').textContent=`${r.milliseconds} ms on ${r.device}`;
+    $('#p-out').innerHTML=r.verdicts.map((v,i)=>{const e=Object.entries(v.probabilities).sort((a,b)=>b[1]-a[1]);return `<div style="margin-bottom:16px"><div style="font-weight:600;margin-bottom:6px">${qs[i].question} <span class="pill">${v.option.split(':')[0]} · ${(100*v.confidence).toFixed(0)} %</span></div>`+e.map(([o,p])=>`<div class="prob ${o===v.option?'win':''}"><span title="${o}">${o.length>34?o.slice(0,32)+'…':o}</span><div class="bar"><i style="width:${(100*p).toFixed(1)}%"></i></div><span class="num">${(100*p).toFixed(1)} %</span></div>`).join('')+'</div>'}).join('');
+    loadModels();
+  }catch(e){toast(e.message,true);$('#p-time').textContent=''}
+  $('#p-go').disabled=false;
+}
+
+// ---------------------------------------------------------------- jobs
+const GENERAL=['general','quiz','multilingual','tools','browser','moderation','more','semrouter','kotoba','domains','games','routing'];
+$('#b-set').innerHTML=GENERAL.map(s=>`<option>${s}</option>`).join('');
+$('#b-kind').onchange=()=>$('#b-setwrap').style.display=$('#b-kind').value==='general'?'':'none';$('#b-kind').onchange();
+async function startJob(){try{const kind=$('#b-kind').value;const j=await api('/api/jobs',{kind,model:kind==='latency'?null:$('#b-model').value,extra:{set:$('#b-set').value}});toast('started: '+j.label);followLog=j;refreshJobs()}catch(e){toast(e.message,true)}}
+async function startDemo(){try{const j=await api('/api/jobs',{kind:$('#d-kind').value,model:$('#d-model').value,extra:{}});toast('started: '+j.label);followLog=j;document.querySelector('nav a[data-tab="bench"]').click();refreshJobs()}catch(e){toast(e.message,true)}}
+async function startDistil(){try{await api('/api/models/unload');const j=await api('/api/jobs',{kind:'distil',extra:{steps:+$('#tr-steps').value,batch:+$('#tr-batch').value,name:$('#tr-name').value}});toast('started: '+j.label);followLog=j;document.querySelector('nav a[data-tab="bench"]').click();refreshJobs()}catch(e){toast(e.message,true)}}
+async function stopJob(id){await api(`/api/jobs/${id}/stop`,{});refreshJobs()}
+let lastJobs='';
+async function refreshJobs(){
+  const jobs=await api('/api/jobs');
+  const key=JSON.stringify(jobs.map(j=>j.id+j.status));
+  if(key!==lastJobs){lastJobs=key;
+    let html='<tr><th>status</th><th>job</th><th>started</th><th>took</th><th></th></tr>';
+    for(const j of jobs.slice(0,30)){const took=((j.ended||Date.now()/1000)-j.started);html+=`<tr><td><span class="pill ${j.status}">${j.status}</span></td><td><a style="cursor:pointer;color:var(--accent2)" onclick='showLog(${JSON.stringify(j)})'>${j.label}</a><div class="mono muted">${j.out||''}</div></td><td class="muted">${new Date(j.started*1000).toLocaleString()}</td><td class="muted">${took<90?took.toFixed(0)+' s':(took/60).toFixed(1)+' min'}</td><td>${j.status==='running'?`<button class="ghost small" onclick="stopJob('${j.id}')">stop</button>`:''}</td></tr>`}
+    $('#t-jobs').innerHTML=html;
+    if(results) loadResults();
+  }
+  if(followLog){const cur=jobs.find(j=>j.id===followLog.id);if(cur){showLog(cur);if(cur.status!=='running'){followLog=null;loadResults()}}}
+}
+async function showLog(j){$('#log-title').textContent=j.label;const r=await api(`/api/log?path=${encodeURIComponent(j.log)}&lines=200`);$('#log').textContent=r.text||'(empty)';$('#log').scrollTop=1e9}
+
+// ---------------------------------------------------------------- status
+async function refreshStatus(){
+  const s=await api('/api/status'), g=s.gpu;
+  if(g.error) $('#gpu').innerHTML=`<b>GPU</b><span class="muted">${g.error}</span>`;
+  else $('#gpu').innerHTML=`<b>${g.name}</b>${(g.used_mb/1024).toFixed(1)} / ${(g.total_mb/1024).toFixed(0)} GB<div class="bar"><i style="width:${(100*g.used_mb/g.total_mb).toFixed(0)}%"></i></div>${g.util} % busy · ${g.temperature} °C${g.apps.length?'<br>'+g.apps.map(a=>`<span class="mono">${a.name.replace(/^.*\//,'')} ${a.mb} MB</span>`).join('<br>'):''}`;
+  const t=s.training;
+  $('#tr-active').textContent=t.active.length?t.active.join('\n'):'nothing training';
+  let h='';for(const [run,hist] of Object.entries(t.histories)){const pts=(Array.isArray(hist)?hist:hist.evals||hist.history||[]).filter(p=>p&&(p.dev_accuracy!=null||p.accuracy!=null||p.mean!=null));if(!pts.length)continue;const val=p=>p.dev_accuracy??p.accuracy??p.mean;const best=Math.max(...pts.map(val));h+=`<div class="row" style="margin-bottom:6px"><span style="width:160px" class="mono">${run}</span><span>${pts.map(p=>`<span class="pill ${val(p)===best?'done':''}" title="step ${p.step}">${(100*val(p)).toFixed(1)}</span>`).join(' ')}</span></div>`}
+  $('#tr-hist').innerHTML=h||'<span class="muted">no history.json yet</span>';
+  $('#tr-logs').innerHTML=Object.entries(t.logs).map(([n,txt])=>`<div class="mono muted" style="margin:8px 0 4px">${n}</div><pre>${txt.replace(/</g,'&lt;')||'(empty)'}</pre>`).join('')||'<span class="muted">no training log</span>';
+}
+
+(async()=>{await loadModels();await loadResults();refreshJobs();refreshStatus();setInterval(refreshJobs,4000);setInterval(refreshStatus,5000);})();
+</script>
+</body>
+</html>

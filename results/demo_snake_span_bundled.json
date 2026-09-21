@@ -1,0 +1,20 @@
+{
+  "model": {
+    "steps": 44.2,
+    "eaten": 2.8,
+    "ms_per_turn": 17.1,
+    "safety_accuracy": 0.065,
+    "turns": 226
+  },
+  "size": 16,
+  "bundled": true,
+  "random": {
+    "steps": 77,
+    "eaten": 0.2
+  },
+  "oracle": {
+    "steps": 200,
+    "eaten": 18
+  },
+  "judge": "export/restore-base/span-head.pt"
+}

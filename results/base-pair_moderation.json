@@ -1,0 +1,17 @@
+{
+  "strata": {
+    "mod-hatecheck-test": {
+      "rows": 600,
+      "accuracy": 0.4333333373069763,
+      "balanced_accuracy": 0.4196246787905693,
+      "ece": 0.18586792066693306
+    },
+    "mod-openai": {
+      "rows": 200,
+      "accuracy": 0.7549999952316284,
+      "balanced_accuracy": 0.7142922530571619,
+      "ece": 0.05735904410481453
+    }
+  },
+  "mean": 0.5669584659238656
+}

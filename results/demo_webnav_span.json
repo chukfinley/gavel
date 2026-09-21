@@ -1,0 +1,132 @@
+{
+  "model": "export/restore-base/span-head.pt",
+  "solved": 6,
+  "of": 8,
+  "median_ms": 34.3,
+  "tasks": [
+    {
+      "start": "https://github.com",
+      "goal": "the pricing page",
+      "found": false,
+      "path": [
+        [
+          "View all solutions",
+          0.101
+        ],
+        [
+          "AI",
+          0.101
+        ],
+        [
+          "View all topics",
+          0.138
+        ],
+        [
+          "View all use cases",
+          0.098
+        ]
+      ]
+    },
+    {
+      "start": "https://www.python.org",
+      "goal": "the download page for Python",
+      "found": true,
+      "path": [
+        [
+          "Downloads",
+          0.171
+        ]
+      ]
+    },
+    {
+      "start": "https://huggingface.co",
+      "goal": "the documentation",
+      "found": true,
+      "path": [
+        [
+          "Docs",
+          0.135
+        ]
+      ]
+    },
+    {
+      "start": "https://www.rust-lang.org",
+      "goal": "how to install Rust",
+      "found": true,
+      "path": [
+        [
+          "Install",
+          0.307
+        ]
+      ]
+    },
+    {
+      "start": "https://fastapi.tiangolo.com",
+      "goal": "the tutorial",
+      "found": false,
+      "path": [
+        [
+          "Requirements",
+          0.081
+        ],
+        [
+          "Opinions",
+          0.086
+        ],
+        [
+          "FastAPI mini documentary",
+          0.059
+        ],
+        [
+          "Learn",
+          0.073
+        ]
+      ]
+    },
+    {
+      "start": "https://www.postgresql.org",
+      "goal": "the documentation",
+      "found": true,
+      "path": [
+        [
+          "New to PostgreSQL?",
+          0.092
+        ],
+        [
+          "many features",
+          0.24
+        ],
+        [
+          "Foreign Data Wrappers",
+          0.094
+        ],
+        [
+          "Documentation",
+          0.093
+        ]
+      ]
+    },
+    {
+      "start": "https://stripe.com",
+      "goal": "the pricing page",
+      "found": true,
+      "path": [
+        [
+          "Pricing",
+          0.378
+        ]
+      ]
+    },
+    {
+      "start": "https://nodejs.org",
+      "goal": "the download page",
+      "found": true,
+      "path": [
+        [
+          "Download",
+          0.529
+        ]
+      ]
+    }
+  ]
+}

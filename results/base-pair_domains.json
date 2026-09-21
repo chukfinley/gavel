@@ -1,0 +1,83 @@
+{
+  "strata": {
+    "amazon-stars": {
+      "rows": 250,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "ece": 0.011780271053314209
+    },
+    "civil-comments": {
+      "rows": 250,
+      "accuracy": 0.9399999976158142,
+      "balanced_accuracy": 0.25,
+      "ece": 0.08885662770271302
+    },
+    "clinc-intent": {
+      "rows": 250,
+      "accuracy": 0.972000002861023,
+      "balanced_accuracy": 0.9722000190189907,
+      "ece": 0.029811612129211424
+    },
+    "cola-grammar": {
+      "rows": 250,
+      "accuracy": 0.7599999904632568,
+      "balanced_accuracy": 0.7583333253860474,
+      "ece": 0.07484836518764496
+    },
+    "fever-evidence": {
+      "rows": 250,
+      "accuracy": 0.843999981880188,
+      "balanced_accuracy": 0.8438951373100281,
+      "ece": 0.08164063215255737
+    },
+    "finance-sentiment": {
+      "rows": 250,
+      "accuracy": 0.8759999871253967,
+      "balanced_accuracy": 0.8725283940633138,
+      "ece": 0.134688778758049
+    },
+    "go-emotions": {
+      "rows": 250,
+      "accuracy": 0.800000011920929,
+      "balanced_accuracy": 0.7937791347503662,
+      "ece": 0.14586678117513657
+    },
+    "helpsteer2": {
+      "rows": 250,
+      "accuracy": 0.5400000214576721,
+      "balanced_accuracy": 0.33862443268299103,
+      "ece": 0.10531900322437288
+    },
+    "ledgar-clause": {
+      "rows": 250,
+      "accuracy": 0.8999999761581421,
+      "balanced_accuracy": 0.8993048866589864,
+      "ece": 0.07110674548149108
+    },
+    "liar2": {
+      "rows": 250,
+      "accuracy": 0.2800000011920929,
+      "balanced_accuracy": 0.2332153581082821,
+      "ece": 0.05584322783350945
+    },
+    "pii-masking": {
+      "rows": 250,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "ece": 0.007541919231414795
+    },
+    "wikiqa-adequacy": {
+      "rows": 250,
+      "accuracy": 0.9440000057220459,
+      "balanced_accuracy": 0.5,
+      "ece": 0.033934713363647465
+    },
+    "yahoo-topics": {
+      "rows": 250,
+      "accuracy": 0.6159999966621399,
+      "balanced_accuracy": 0.6090675950050354,
+      "ece": 0.10217846518754961
+    }
+  },
+  "mean": 0.6977652525372338
+}

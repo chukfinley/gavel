@@ -1,0 +1,35 @@
+{
+  "strata": {
+    "sem-factcheck": {
+      "rows": 200,
+      "accuracy": 0.8299999833106995,
+      "balanced_accuracy": 0.8301199376583099,
+      "ece": 0.14870755746960637
+    },
+    "sem-hallucination": {
+      "rows": 200,
+      "accuracy": 0.5049999952316284,
+      "balanced_accuracy": 0.5020032078027725,
+      "ece": 0.027721305489540098
+    },
+    "sem-jailbreak": {
+      "rows": 200,
+      "accuracy": 0.8299999833106995,
+      "balanced_accuracy": 0.8298829793930054,
+      "ece": 0.09867226421833039
+    },
+    "sem-modality": {
+      "rows": 200,
+      "accuracy": 0.9449999928474426,
+      "balanced_accuracy": 0.9438991149266561,
+      "ece": 0.05505836486816407
+    },
+    "sem-safety": {
+      "rows": 200,
+      "accuracy": 0.9549999833106995,
+      "balanced_accuracy": 0.949999988079071,
+      "ece": 0.04526127099990845
+    }
+  },
+  "mean": 0.8111810455719631
+}

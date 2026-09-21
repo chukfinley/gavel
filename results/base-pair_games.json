@@ -1,0 +1,17 @@
+{
+  "strata": {
+    "game-scaled_maze": {
+      "rows": 840,
+      "accuracy": 0.5428571701049805,
+      "balanced_accuracy": 0.5860317498445511,
+      "ece": 0.04865745525984537
+    },
+    "game-snake_one_step_safety_v4": {
+      "rows": 378,
+      "accuracy": 0.9417989253997803,
+      "balanced_accuracy": 0.5,
+      "ece": 0.08624367928378797
+    }
+  },
+  "mean": 0.5430158749222755
+}

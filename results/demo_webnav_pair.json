@@ -1,0 +1,148 @@
+{
+  "model": "chukfinley/gavel-vela-32k",
+  "solved": 4,
+  "of": 8,
+  "median_ms": 770.8,
+  "tasks": [
+    {
+      "start": "https://github.com",
+      "goal": "the pricing page",
+      "found": false,
+      "path": [
+        [
+          "GitHub Copilot Write better code with AI",
+          0.1
+        ],
+        [
+          "GitHub Copilot app Direct agents from issue to merge",
+          0.11
+        ],
+        [
+          "MCP Registry Integrate external tools",
+          0.082
+        ],
+        [
+          "Actions Automate any workflow",
+          0.086
+        ]
+      ]
+    },
+    {
+      "start": "https://www.python.org",
+      "goal": "the download page for Python",
+      "found": true,
+      "path": [
+        [
+          "Alternative Implementations",
+          0.089
+        ]
+      ]
+    },
+    {
+      "start": "https://huggingface.co",
+      "goal": "the documentation",
+      "found": false,
+      "path": [
+        [
+          "secemp9/arxiv-complete Updated 1 day ago \u2022 9.86k \u2022 306",
+          0.055
+        ],
+        [
+          "arxiv",
+          0.087
+        ],
+        [
+          "Datasets",
+          0.156
+        ],
+        [
+          "Hugging Face",
+          0.101
+        ]
+      ]
+    },
+    {
+      "start": "https://www.rust-lang.org",
+      "goal": "how to install Rust",
+      "found": true,
+      "path": [
+        [
+          "Tools",
+          0.154
+        ],
+        [
+          "Install",
+          0.347
+        ]
+      ]
+    },
+    {
+      "start": "https://fastapi.tiangolo.com",
+      "goal": "the tutorial",
+      "found": false,
+      "path": [
+        [
+          "FastAPI mini documentary",
+          0.095
+        ],
+        [
+          "Typer , the FastAPI of CLIs",
+          0.093
+        ],
+        [
+          "Create it",
+          0.083
+        ],
+        [
+          "Recap",
+          0.053
+        ]
+      ]
+    },
+    {
+      "start": "https://www.postgresql.org",
+      "goal": "the documentation",
+      "found": true,
+      "path": [
+        [
+          "official documentation",
+          0.058
+        ]
+      ]
+    },
+    {
+      "start": "https://stripe.com",
+      "goal": "the pricing page",
+      "found": true,
+      "path": [
+        [
+          "Pricing",
+          0.084
+        ]
+      ]
+    },
+    {
+      "start": "https://nodejs.org",
+      "goal": "the download page",
+      "found": false,
+      "path": [
+        [
+          "Beta Docs",
+          0.155
+        ],
+        [
+          "About this documentation",
+          0.06
+        ],
+        [
+          "Modules: node:module API",
+          0.045
+        ],
+        [
+          "module.findPackageJSON",
+          0.06
+        ]
+      ]
+    }
+  ]
+}

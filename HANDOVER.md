@@ -142,6 +142,26 @@ than after it.
   generic question, so the key is weak). Redo with options in the key on
   the new mix before drawing a conclusion for the v2 gap.
 
+* **WebUI** (2026-09-21): `scripts/webui.sh` serves `src/gavel/webui.py` on
+  port 8030. Scoreboard from `results/` next to the published numbers,
+  playground (pair or span, bundled questions), benchmark and demo jobs as
+  subprocesses of the pod scripts, training tab with the 40k distillation
+  button. The page is `src/gavel/web/index.html`, no build step.
+* **`decide_many` on the span head is broken as trained.** Three snake
+  safety questions in one sequence: 0.065 right; the same three one by
+  one: 0.95. `train_span.py` never packs several questions behind one
+  state, so the head has never seen a second `[Q]` group. Fix: build
+  training sequences with 1–4 questions that share a state (games,
+  jevbench-style rows, the criteria wordings) before trusting the bundled
+  path. Until then the WebUI's bundle switch is a demonstration of the bug.
+* **Snake is answered from the prior.** Pair and span both say "Yes" to
+  every safety question (150/150 on training rows, gold 94 % yes), so the
+  demo's 10.8 food eaten is the food heuristic alone; `yes_rate` in
+  `results/demo_snake_*.json` makes that visible. The 1356 snake rows are
+  too few and too one-sided to teach collision reasoning.
+* **Web navigation** works: span head 6/8 sites at 34 ms per page, pair
+  4/8 at 771 ms (40 links each pass through the pair model one by one).
+
 ## The one thing to decide
 
 Whether the product is short states on a CPU or long documents on a GPU.

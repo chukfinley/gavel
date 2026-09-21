@@ -25,6 +25,7 @@ test = ["pytest>=8.0"]
 
 [project.scripts]
 gavel-serve = "gavel.serve:main"
+gavel-webui = "gavel.webui:main"
 
 [tool.pytest.ini_options]
 # `_scratch` holds cloned foreign repositories (benchmark harnesses); their

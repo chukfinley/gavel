@@ -1,0 +1,20 @@
+{
+  "model": {
+    "steps": 117.25,
+    "eaten": 10.8,
+    "ms_per_turn": 46.3,
+    "safety_accuracy": 0.944,
+    "turns": 2361
+  },
+  "size": 16,
+  "bundled": false,
+  "random": {
+    "steps": 49.05,
+    "eaten": 0.25
+  },
+  "oracle": {
+    "steps": 200,
+    "eaten": 17.85
+  },
+  "judge": "chukfinley/gavel-vela-32k"
+}
