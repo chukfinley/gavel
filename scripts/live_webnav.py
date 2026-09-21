@@ -31,14 +31,21 @@ LINKS_JS = """
     if (r.width < 4 || r.height < 4) continue;
     const style = getComputedStyle(a);
     if (style.visibility === 'hidden' || style.display === 'none') continue;
-    const text = (a.innerText || a.getAttribute('aria-label') || '').replace(/\\s+/g, ' ').trim();
-    if (text.length < 2 || text.length > 60) continue;
+    const text = (a.innerText || a.getAttribute('aria-label') || a.title || '').replace(/\\s+/g, ' ').trim();
+    if (text.length < 2 || text.length > 80) continue;
+    const href = a.href || '';
+    if (!href.startsWith('http')) continue;
+    if (href.split('#')[0] === location.href.split('#')[0]) continue;   // same page, other anchor
     const key = text.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push({text, href: a.href, x: r.x + window.scrollX, y: r.y + window.scrollY, w: r.width, h: r.height, index: out.length});
+    const main = !!a.closest('main, [role=main], #main, #mainContent, #content, article, .main');
+    const chrome = !!a.closest('header, nav, footer, [role=navigation], [role=banner], [role=contentinfo], #navbar, #nav-main, #navFooter');
+    out.push({text, href, main, chrome, y: r.y + window.scrollY, index: out.length});
     a.dataset.gavelIndex = String(out.length - 1);
   }
+  // Content first, then navigation, then the rest; the model reads the top of the list first.
+  out.sort((p, q) => (q.main - p.main) || (p.chrome - q.chrome) || (p.y - q.y));
   return {title: document.title,
           headings: [...document.querySelectorAll('h1,h2')].map(h => h.innerText.replace(/\\s+/g, ' ').trim()).filter(Boolean).slice(0, 12),
           links: out};
@@ -80,7 +87,10 @@ def main() -> None:
     parser.add_argument("--goal", required=True)
     parser.add_argument("--pattern", default=None, help="regex on the URL that means the goal is reached")
     parser.add_argument("--hops", type=int, default=5)
-    parser.add_argument("--max-links", type=int, default=40)
+    parser.add_argument("--max-links", type=int, default=120)
+    parser.add_argument("--jev", action="store_true", help="the closed model over OpenRouter")
+    parser.add_argument("--record", default="",
+                        help="append every decision as a training row (label = the choice made)")
     parser.add_argument("--trace-dir", required=True)
     args = parser.parse_args()
 
@@ -94,15 +104,20 @@ def main() -> None:
 
     pattern = args.pattern or "|".join(re.escape(w) for w in re.findall(r"[a-z]{4,}", args.goal.lower())
                                        if w not in {"page", "with", "that", "this", "from", "into", "what"})
-    emit(kind="start", url=args.url, goal=args.goal, pattern=pattern, model=args.span or args.model)
+    emit(kind="start", url=args.url, goal=args.goal, pattern=pattern,
+         model="typesafe/jev-1.13" if args.jev else (args.span or args.model))
 
-    if args.span:
+    if args.jev:
+        from gavel.jevapi import JevGavel
+        judge = JevGavel()
+    elif args.span:
         from gavel.spanapi import SpanGavel
         judge = SpanGavel.from_checkpoint(args.span, max_length=4096)
     else:
         from gavel import Gavel
         judge = Gavel.from_pretrained(args.model, None, 4096)
     emit(kind="loaded", device=str(judge.device))
+    recorder = open(args.record, "a") if args.record else None
 
     from playwright.sync_api import sync_playwright
     with sync_playwright() as pw:
@@ -134,6 +149,18 @@ def main() -> None:
             verdict = judge.decide(state, f"Which link leads to {args.goal}?", options)
             ms = round((time.perf_counter() - started) * 1000, 1)
             chosen = next(link for link in links if link["text"] == verdict.option)
+            if recorder is not None:
+                import hashlib
+                row_id = hashlib.sha1(f"{page.url}|{args.goal}|{step}".encode()).hexdigest()[:20]
+                recorder.write(json.dumps({
+                    "id": row_id, "state": state, "question": f"Which link leads to {args.goal}?",
+                    "options": [{"id": f"o{k}", "description": link["text"]} for k, link in enumerate(links)],
+                    "label": links.index(chosen), "source": "webnav-jev" if args.jev else "webnav-ours",
+                    "task": "choice",
+                    "meta": {"url": page.url, "goal": args.goal, "href": chosen["href"],
+                             "teacher": [verdict.probabilities.get(link["text"], 0.0) for link in links]
+                             if args.jev else None}}) + "\n")
+                recorder.flush()
             try:
                 page.evaluate(MARK_JS, chosen["index"])
                 page.wait_for_timeout(150)
@@ -143,6 +170,7 @@ def main() -> None:
             page.screenshot(path=str(trace_dir / shot_pick))
             found = bool(pattern) and re.search(pattern, chosen["href"], re.IGNORECASE) is not None
             emit(kind="step", step=step, url=page.url, title=info["title"], ms=ms,
+                 usd=round(getattr(judge, "spent_usd", 0.0), 5),
                  chosen=chosen["text"], href=chosen["href"], confidence=verdict.confidence,
                  options=[{"text": link["text"], "href": link["href"],
                            "p": verdict.probabilities.get(link["text"], 0.0)} for link in links],

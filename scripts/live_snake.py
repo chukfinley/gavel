@@ -28,6 +28,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--max-steps", type=int, default=300)
     parser.add_argument("--bundled", action="store_true")
+    parser.add_argument("--jev", action="store_true", help="the closed model over OpenRouter")
     parser.add_argument("--trace-dir", required=True)
     args = parser.parse_args()
     trace_dir = Path(args.trace_dir)
@@ -38,9 +39,13 @@ def main() -> None:
         trace.write(json.dumps(record) + "\n")
         trace.flush()
 
-    emit(kind="start", size=args.size, seed=args.seed, model=args.span or args.model,
+    emit(kind="start", size=args.size, seed=args.seed,
+         model="typesafe/jev-1.13" if args.jev else (args.span or args.model),
          bundled=args.bundled and bool(args.span))
-    if args.span:
+    if args.jev:
+        from gavel.jevapi import JevGavel
+        judge = JevGavel()
+    elif args.span:
         from gavel.spanapi import SpanGavel
         judge = SpanGavel.from_checkpoint(args.span, max_length=2048)
     else:
@@ -56,7 +61,9 @@ def main() -> None:
         truth = {d: game.safe(d) for d in legal}
         state = game.text()
         started = time.perf_counter()
-        if args.bundled and args.span:
+        if args.jev:
+            answers = judge.decide_many(state, [(question(d), ["Yes", "No"]) for d in legal], noul=True)
+        elif args.bundled and args.span:
             answers = judge.decide_many(state, [(question(d), ["Yes", "No"]) for d in legal])
         else:
             answers = [judge.decide(state, question(d), ["Yes", "No"]) for d in legal]

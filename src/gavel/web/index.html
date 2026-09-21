@@ -87,19 +87,20 @@ details summary{cursor:pointer;color:var(--muted)}
 
 <section id="play">
   <h1>Playground</h1>
-  <p class="sub">One state, one or many typed questions, a distribution back. No token is generated.</p>
-  <div class="grid2">
-    <div class="card">
-      <label>Model</label><select id="p-model"></select>
-      <label>State</label><textarea id="p-state">Customer message: "I was charged twice for the March invoice, and the second charge overdrew my account. I have already sent the bank statement last week and nobody replied."</textarea>
-      <div id="p-questions"></div>
-      <div class="row" style="margin-top:8px">
-        <button class="ghost small" onclick="addQuestion()">+ question</button>
-        <label style="margin:0;display:flex;gap:6px;align-items:center;font-weight:500"><input type="checkbox" id="p-bundled" style="width:auto"> bundle questions into one sequence (span head)</label>
-      </div>
-      <div class="row" style="margin-top:16px"><button onclick="decide()" id="p-go">Decide</button><span class="muted" id="p-time"></span></div>
+  <p class="sub">One state, one or many typed questions. Our model on the left, the closed model on the right, the same request to both.</p>
+  <div class="card">
+    <div class="row"><div style="flex:1;min-width:280px"><label>Our model</label><select id="p-model"></select></div><div style="flex:1;min-width:200px"><label>Compared with</label><input value="Jev 1.13 (TypeSafe, via OpenRouter)" disabled></div></div>
+    <label>State</label><textarea id="p-state">Customer message: "I was charged twice for the March invoice, and the second charge overdrew my account. I have already sent the bank statement last week and nobody replied."</textarea>
+    <div id="p-questions"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="ghost small" onclick="addQuestion()">+ question</button>
+      <label style="margin:0;display:flex;gap:6px;align-items:center;font-weight:500"><input type="checkbox" id="p-bundled" style="width:auto"> bundle questions into one sequence (span head)</label>
     </div>
-    <div class="card"><h2 style="margin-top:0">Verdicts</h2><div id="p-out" class="muted">Nothing yet.</div></div>
+    <div class="row" style="margin-top:16px"><button onclick="decide()" id="p-go">Decide with both</button></div>
+  </div>
+  <div class="grid2">
+    <div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Ours</h2><span class="muted" id="p-time-ours"></span></div><div id="p-out-ours" class="muted" style="margin-top:12px">Nothing yet.</div></div>
+    <div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Jev 1.13</h2><span class="muted" id="p-time-jev"></span></div><div id="p-out-jev" class="muted" style="margin-top:12px">Nothing yet.</div></div>
   </div>
 </section>
 
@@ -160,16 +161,16 @@ details summary{cursor:pointer;color:var(--muted)}
 
 <section id="live">
   <h1>Live</h1>
-  <p class="sub">Watch a decision happen. The browser is real; the model only ever sees the page as text.</p>
+  <p class="sub">Watch a decision happen, ours on the left, the closed model on the right, same task. The browser is real; both models only ever see the page as text. Every step is written to <span class="mono">data/traces/webnav.jsonl</span> as a training row.</p>
   <div class="card">
     <div class="row">
       <div style="flex:1;min-width:150px"><label>Demo</label><select id="l-kind" onchange="liveForm()"><option value="web">Web navigation</option><option value="snake">Snake</option></select></div>
-      <div style="flex:2;min-width:260px"><label>Model</label><select id="l-model"></select></div>
+      <div style="flex:2;min-width:260px"><label>Our model</label><select id="l-model"></select></div>
     </div>
     <div class="row" id="l-web">
-      <div style="flex:2;min-width:240px"><label>Start URL</label><input id="l-url" value="https://stripe.com"></div>
-      <div style="flex:2;min-width:240px"><label>Goal</label><input id="l-goal" value="the pricing page"></div>
-      <div style="flex:1;min-width:160px"><label>Reached when URL matches (regex, optional)</label><input id="l-pattern" placeholder="pricing"></div>
+      <div style="flex:2;min-width:240px"><label>Start URL</label><input id="l-url" value="https://www.amazon.de/"></div>
+      <div style="flex:2;min-width:240px"><label>Goal</label><input id="l-goal" value="Microsoft Surface Pro, 12 inch, Snapdragon X Plus, 16 GB RAM, 256 GB SSD"></div>
+      <div style="flex:1;min-width:160px"><label>Reached when URL matches (regex, optional)</label><input id="l-pattern" placeholder="surface"></div>
       <div style="width:80px"><label>Hops</label><input id="l-hops" value="5"></div>
     </div>
     <div class="row" id="l-snake" style="display:none">
@@ -178,25 +179,11 @@ details summary{cursor:pointer;color:var(--muted)}
       <div style="width:110px"><label>Max turns</label><input id="l-steps" value="300"></div>
       <label style="margin:22px 0 0;display:flex;gap:6px;align-items:center;font-weight:500"><input type="checkbox" id="l-bundled" style="width:auto"> bundle the three questions (span head)</label>
     </div>
-    <div class="row" style="margin-top:16px"><button onclick="startLive()" id="l-go">Start</button><span class="muted" id="l-status"></span></div>
+    <div class="row" style="margin-top:16px"><button onclick="startLive()" id="l-go">Start both</button><span class="muted" id="l-status"></span></div>
   </div>
-  <div id="l-webview" style="display:none">
-    <div class="grid2" style="grid-template-columns:3fr 2fr">
-      <div class="card" style="padding:10px"><div class="row" style="justify-content:space-between;padding:4px 8px"><span id="l-shot-title" class="mono muted"></span><span id="l-shot-step" class="pill"></span></div><img id="l-shot" style="width:100%;border-radius:8px;border:1px solid var(--line);display:block;background:#0b0e14;min-height:200px"></div>
-      <div>
-        <div class="card"><h2 style="margin-top:0">This page's links, as the model scored them</h2><div id="l-options" class="muted">waiting…</div></div>
-        <div class="card"><h2 style="margin-top:0">Path</h2><div id="l-path" class="muted"></div></div>
-      </div>
-    </div>
-  </div>
-  <div id="l-snakeview" style="display:none">
-    <div class="grid2" style="grid-template-columns:auto 1fr">
-      <div class="card" style="padding:12px"><canvas id="l-board" width="480" height="480" style="display:block;border-radius:8px;background:#0b0e14"></canvas></div>
-      <div>
-        <div class="card"><div class="kpi"><div><b id="l-turn">0</b><span>turn</span></div><div><b id="l-eaten">0</b><span>food eaten</span></div><div><b id="l-ms">—</b><span>ms per turn</span></div><div><b id="l-right">—</b><span>safety verdicts right</span></div></div></div>
-        <div class="card"><h2 style="margin-top:0">The three questions this turn</h2><div id="l-verdicts" class="muted">waiting…</div></div>
-      </div>
-    </div>
+  <div class="grid2" id="l-columns" style="display:none">
+    <div class="card" style="padding:14px" id="col-ours"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Ours</h2><span class="pill" id="l-state-ours">idle</span></div><div class="lv"></div></div>
+    <div class="card" style="padding:14px" id="col-jev"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Jev 1.13</h2><span class="pill" id="l-state-jev">idle</span></div><div class="lv"></div></div>
   </div>
 </section>
 </main>
@@ -219,7 +206,8 @@ async function loadModels(){
   models = await api('/api/models');
   for(const id of ['#p-model','#b-model','#d-model','#l-model']){
     const sel=$(id), cur=sel.value;
-    sel.innerHTML = models.map(m=>`<option value="${m.id}">${m.label}${m.loaded?' · loaded':''}</option>`).join('');
+    const pool = (id==='#p-model'||id==='#l-model') ? models.filter(m=>m.kind!=='jev') : models;
+    sel.innerHTML = pool.map(m=>`<option value="${m.id}">${m.label}${m.loaded?' · loaded':''}</option>`).join('');
     if(cur && models.some(m=>m.id===cur)) sel.value=cur;
   }
 }
@@ -309,17 +297,21 @@ async function loadResults(){results=await api('/api/results');renderScoreboard(
 const defaults=[{q:'Which team should handle this?',o:'billing: refunds, payments, invoices, unexpected charges|tech: bugs, errors, crashes, downtime|sales: pricing, quotes, upgrades|account: login, password, profile'},{q:'Is the customer angry?',o:'Yes|No'},{q:'Does this need a reply today?',o:'Yes|No'}];
 function addQuestion(q='',o=''){const d=document.createElement('div');d.className='q';d.innerHTML=`<label>Question</label><input class="pq" value="${q.replace(/"/g,'&quot;')}"><label>Options, separated by |</label><input class="po" value="${o.replace(/"/g,'&quot;')}"><div style="text-align:right;margin-top:6px"><button class="ghost small" onclick="this.closest('.q').remove()">remove</button></div>`;$('#p-questions').appendChild(d)}
 defaults.forEach(d=>addQuestion(d.q,d.o));
+async function decideOne(side, model, qs, bundled){
+  const out=$('#p-out-'+side), tm=$('#p-time-'+side);
+  tm.textContent='…';
+  try{
+    const r=await api('/api/decide',{model,state:$('#p-state').value,questions:qs,bundled});
+    tm.textContent=`${r.milliseconds} ms · ${r.device}${r.usd?` · ${r.usd} $ so far`:''}`;
+    out.innerHTML=r.verdicts.map((v,i)=>{const e=Object.entries(v.probabilities).sort((a,b)=>b[1]-a[1]);return `<div style="margin-bottom:16px"><div style="font-weight:600;margin-bottom:6px">${qs[i].question} <span class="pill">${v.option.split(':')[0]} · ${(100*v.confidence).toFixed(0)} %</span></div>`+e.map(([o,p])=>`<div class="prob ${o===v.option?'win':''}"><span title="${o}">${o.length>34?o.slice(0,32)+'…':o}</span><div class="bar"><i style="width:${(100*p).toFixed(1)}%"></i></div><span class="num">${(100*p).toFixed(1)} %</span></div>`).join('')+'</div>'}).join('');
+  }catch(e){out.innerHTML=`<span class="bad">${e.message}</span>`;tm.textContent=''}
+}
 async function decide(){
   const qs=[...document.querySelectorAll('.q')].map(d=>({question:d.querySelector('.pq').value,options:d.querySelector('.po').value.split('|').map(s=>s.trim()).filter(Boolean)})).filter(q=>q.question&&q.options.length>1);
   if(!qs.length) return toast('Give at least one question with two options',true);
-  $('#p-go').disabled=true;$('#p-time').textContent='loading…';
-  try{
-    const r=await api('/api/decide',{model:$('#p-model').value,state:$('#p-state').value,questions:qs,bundled:$('#p-bundled').checked});
-    $('#p-time').textContent=`${r.milliseconds} ms on ${r.device}`;
-    $('#p-out').innerHTML=r.verdicts.map((v,i)=>{const e=Object.entries(v.probabilities).sort((a,b)=>b[1]-a[1]);return `<div style="margin-bottom:16px"><div style="font-weight:600;margin-bottom:6px">${qs[i].question} <span class="pill">${v.option.split(':')[0]} · ${(100*v.confidence).toFixed(0)} %</span></div>`+e.map(([o,p])=>`<div class="prob ${o===v.option?'win':''}"><span title="${o}">${o.length>34?o.slice(0,32)+'…':o}</span><div class="bar"><i style="width:${(100*p).toFixed(1)}%"></i></div><span class="num">${(100*p).toFixed(1)} %</span></div>`).join('')+'</div>'}).join('');
-    loadModels();
-  }catch(e){toast(e.message,true);$('#p-time').textContent=''}
-  $('#p-go').disabled=false;
+  $('#p-go').disabled=true;
+  await Promise.all([decideOne('ours',$('#p-model').value,qs,$('#p-bundled').checked),decideOne('jev',JEV,qs,false)]);
+  $('#p-go').disabled=false; loadModels();
 }
 
 // ---------------------------------------------------------------- jobs
@@ -358,60 +350,68 @@ async function refreshStatus(){
 
 
 // ---------------------------------------------------------------- live
-let live={id:null,kind:null,seen:0,timer:null,queue:[],lines:[]};
+const JEV='jev:typesafe/jev-1.13';
+let live={runs:{},timer:null,kind:null};
 function liveForm(){const k=$('#l-kind').value;$('#l-web').style.display=k==='web'?'':'none';$('#l-snake').style.display=k==='snake'?'':'none'}
+function columnHtml(side,kind){
+  if(kind==='web') return `<div class="row" style="justify-content:space-between;padding:6px 0"><span class="mono muted" id="l-title-${side}"></span><span class="pill" id="l-step-${side}"></span></div><img id="l-shot-${side}" style="width:100%;border-radius:8px;border:1px solid var(--line);display:block;background:#0b0e14;min-height:160px"><h2>Links, as scored</h2><div id="l-options-${side}" class="muted">waiting…</div><h2>Path</h2><div id="l-path-${side}" class="muted"></div>`;
+  return `<canvas id="l-board-${side}" width="400" height="400" style="display:block;border-radius:8px;background:#0b0e14;margin:8px auto"></canvas><div class="kpi" style="margin-top:10px"><div><b id="l-turn-${side}">0</b><span>turn</span></div><div><b id="l-eaten-${side}">0</b><span>food eaten</span></div><div><b id="l-ms-${side}">—</b><span>ms per turn</span></div><div><b id="l-right-${side}">—</b><span>safety right</span></div></div><h2>The three questions this turn</h2><div id="l-verdicts-${side}" class="muted">waiting…</div>`;
+}
 async function startLive(){
   const kind=$('#l-kind').value;
-  const body={kind,model:$('#l-model').value,url:$('#l-url').value,goal:$('#l-goal').value,pattern:$('#l-pattern').value||null,hops:+$('#l-hops').value,size:+$('#l-size').value,seed:+$('#l-seed').value,max_steps:+$('#l-steps').value,bundled:$('#l-bundled').checked};
+  const base={kind,url:$('#l-url').value,goal:$('#l-goal').value,pattern:$('#l-pattern').value||null,hops:+$('#l-hops').value,size:+$('#l-size').value,seed:+$('#l-seed').value,max_steps:+$('#l-steps').value};
+  clearInterval(live.timer); live={runs:{},timer:null,kind};
+  $('#l-columns').style.display='';
+  for(const side of ['ours','jev']){document.querySelector(`#col-${side} .lv`).innerHTML=columnHtml(side,kind);$(`#l-state-${side}`).textContent='starting';if(kind==='snake'){live.size=base.size;drawBoard(side,null)}}
+  $('#l-go').disabled=true;$('#l-status').textContent='';
   try{
-    const r=await api('/api/live',body);
-    clearInterval(live.timer);live={id:r.id,kind,seen:0,timer:null,queue:[],lines:[],right:0,total:0};
-    $('#l-webview').style.display=kind==='web'?'':'none';$('#l-snakeview').style.display=kind==='snake'?'':'none';
-    $('#l-options').innerHTML='loading the model…';$('#l-path').innerHTML='';$('#l-verdicts').innerHTML='loading the model…';$('#l-shot').removeAttribute('src');$('#l-shot-title').textContent='';$('#l-shot-step').textContent='';
-    $('#l-status').textContent='started';$('#l-go').disabled=true;
+    const [a,b]=await Promise.all([api('/api/live',{...base,model:$('#l-model').value,bundled:$('#l-bundled').checked}),api('/api/live',{...base,model:JEV})]);
+    live.runs={ours:{id:a.id,seen:0,queue:[],right:0,total:0,done:false},jev:{id:b.id,seen:0,queue:[],right:0,total:0,done:false}};
     live.timer=setInterval(pollLive,700);
-    if(kind==='snake') drawBoard(null);
-  }catch(e){toast(e.message,true)}
+  }catch(e){toast(e.message,true);$('#l-go').disabled=false}
 }
 async function pollLive(){
-  if(!live.id) return;
-  const r=await api(`/api/live/${live.id}?start=${live.seen}`);
-  live.seen=r.total; for(const l of r.lines){live.lines.push(l); if(live.kind==='web') renderWebLine(l); else live.queue.push(l)}
-  if(live.kind==='snake') stepSnake();
-  if(r.status!=='running'&&r.status!=='unknown'&&(live.kind==='web'||!live.queue.length)){clearInterval(live.timer);live.timer=null;$('#l-go').disabled=false;$('#l-status').textContent=r.status==='done'?'finished':'stopped: '+r.status;if(r.status==='failed'){const j=r.job;if(j){const lg=await api(`/api/log?path=${encodeURIComponent(j.log)}&lines=12`);toast(lg.text.split('\n').slice(-3).join(' '),true)}}}
+  for(const [side,run] of Object.entries(live.runs)){
+    if(run.done) continue;
+    const r=await api(`/api/live/${run.id}?start=${run.seen}`);
+    run.seen=r.total; for(const l of r.lines){ if(live.kind==='web') renderWebLine(side,l); else run.queue.push(l) }
+    if(live.kind==='snake') stepSnake(side,run);
+    if(r.status!=='running'&&r.status!=='unknown'&&(live.kind==='web'||!run.queue.length)){run.done=true;$(`#l-state-${side}`).textContent=r.status==='done'?$(`#l-state-${side}`).textContent:'stopped: '+r.status;if(r.status==='failed'&&r.job){const lg=await api(`/api/log?path=${encodeURIComponent(r.job.log)}&lines=12`);$(`#l-path-${side}`)&&($(`#l-path-${side}`).innerHTML+=`<div class="bad mono">${lg.text.split('\n').slice(-3).join('<br>').replace(/</g,'&lt;')}</div>`)}}
+  }
+  if(Object.values(live.runs).every(r=>r.done)){clearInterval(live.timer);live.timer=null;$('#l-go').disabled=false;$('#l-status').textContent='both finished'}
 }
-function renderWebLine(l){
-  const st=$('#l-status');
-  if(l.kind==='loaded') st.textContent='model on '+l.device+', opening the browser…';
-  if(l.kind==='error'){st.textContent='browser error: '+l.message;$('#l-path').innerHTML+=`<div class="bad">step ${l.step}: ${l.message}</div>`}
-  if(l.kind==='dead_end'){$('#l-shot').src=`/traces/${live.id}/${l.shot}?t=${Date.now()}`;$('#l-path').innerHTML+=`<div class="muted">step ${l.step}: no links left on ${l.title}</div>`;st.textContent='dead end'}
+function renderWebLine(side,l){
+  const st=$(`#l-state-${side}`), run=live.runs[side];
+  if(l.kind==='loaded') st.textContent='opening the browser…';
+  if(l.kind==='error'){st.textContent='browser error';$(`#l-path-${side}`).innerHTML+=`<div class="bad">step ${l.step}: ${l.message}</div>`}
+  if(l.kind==='dead_end'){$(`#l-shot-${side}`).src=`/traces/${run.id}/${l.shot}?t=${Date.now()}`;$(`#l-path-${side}`).innerHTML+=`<div class="muted">step ${l.step}: no links left on ${l.title}</div>`;st.textContent='dead end'}
   if(l.kind==='step'){
-    $('#l-shot').src=`/traces/${live.id}/${l.shot}?t=${Date.now()}`;$('#l-shot-title').textContent=l.title+' — '+l.url;$('#l-shot-step').textContent=`step ${l.step} · ${l.ms} ms · ${l.options.length} links · ${l.state_chars} chars of state`;
-    const opts=[...l.options].sort((a,b)=>b.p-a.p).slice(0,14);
-    $('#l-options').innerHTML=opts.map(o=>`<div class="prob ${o.text===l.chosen?'win':''}"><span title="${o.href}">${o.text.length>30?o.text.slice(0,28)+'…':o.text}</span><div class="bar"><i style="width:${(100*o.p).toFixed(1)}%"></i></div><span class="num">${(100*o.p).toFixed(1)} %</span></div>`).join('')+(l.options.length>14?`<div class="muted" style="margin-top:6px">${l.options.length-14} more links below ${(100*opts[13].p).toFixed(1)} %</div>`:'');
-    $('#l-path').innerHTML+=`<div style="margin-bottom:6px"><span class="pill">${l.step}</span> ${l.title.slice(0,40)} → <b>${l.chosen}</b> <span class="muted">${(100*l.confidence).toFixed(0)} %${l.found?' · <span class="good">goal reached</span>':''}</span></div>`;
+    $(`#l-shot-${side}`).src=`/traces/${run.id}/${l.shot}?t=${Date.now()}`;$(`#l-title-${side}`).textContent=(l.title||'').slice(0,60);$(`#l-step-${side}`).textContent=`step ${l.step} · ${l.ms} ms · ${l.options.length} links${l.usd?` · ${l.usd} $`:''}`;
+    const opts=[...l.options].sort((a,b)=>b.p-a.p).slice(0,10);
+    $(`#l-options-${side}`).innerHTML=opts.map(o=>`<div class="prob ${o.text===l.chosen?'win':''}" style="grid-template-columns:150px 1fr 54px"><span title="${o.href}">${o.text.length>24?o.text.slice(0,22)+'…':o.text}</span><div class="bar"><i style="width:${(100*o.p).toFixed(1)}%"></i></div><span class="num">${(100*o.p).toFixed(1)} %</span></div>`).join('');
+    $(`#l-path-${side}`).innerHTML+=`<div style="margin-bottom:6px"><span class="pill">${l.step}</span> <b>${l.chosen}</b> <span class="muted">${(100*l.confidence).toFixed(0)} %${l.found?' · <span class="good">goal reached</span>':''}</span></div>`;
     st.textContent=l.found?'goal reached':'following the link…';
   }
-  if(l.kind==='arrived'){$('#l-shot').src=`/traces/${live.id}/${l.shot}?t=${Date.now()}`;$('#l-shot-title').textContent=l.title+' — '+l.url;$('#l-shot-step').textContent='arrived'}
-  if(l.kind==='done') st.textContent=l.found?'goal reached':'goal not reached within the hop limit';
+  if(l.kind==='arrived'){$(`#l-shot-${side}`).src=`/traces/${run.id}/${l.shot}?t=${Date.now()}`;$(`#l-title-${side}`).textContent=(l.title||'').slice(0,60);$(`#l-step-${side}`).textContent='arrived'}
+  if(l.kind==='done') st.textContent=l.found?'goal reached':'not reached within the hop limit';
 }
-function stepSnake(){
-  if(!live.queue.length) return;
-  const l=live.queue.shift();
-  if(l.kind==='loaded'){$('#l-status').textContent='model on '+l.device+', playing…';return stepSnake()}
-  if(l.kind==='start'){live.size=l.size;return stepSnake()}
-  if(l.kind==='done'){$('#l-status').textContent=`game over after ${l.steps} turns, ${l.eaten} food`;return}
-  if(l.kind!=='step') return stepSnake();
-  drawBoard(l);
-  $('#l-turn').textContent=l.step;$('#l-eaten').textContent=l.eaten;$('#l-ms').textContent=l.ms;
-  for(const v of Object.values(l.verdicts)){live.total++;if(v.safe===v.truth)live.right++}
-  $('#l-right').textContent=live.total?(100*live.right/live.total).toFixed(0)+' %':'—';
+function stepSnake(side,run){
+  if(!run.queue.length) return;
+  const l=run.queue.shift(), st=$(`#l-state-${side}`);
+  if(l.kind==='loaded'){st.textContent='playing…';return stepSnake(side,run)}
+  if(l.kind==='start'){live.size=l.size;return stepSnake(side,run)}
+  if(l.kind==='done'){st.textContent=`game over after ${l.steps} turns, ${l.eaten} food`;return}
+  if(l.kind!=='step') return stepSnake(side,run);
+  drawBoard(side,l);
+  $(`#l-turn-${side}`).textContent=l.step;$(`#l-eaten-${side}`).textContent=l.eaten;$(`#l-ms-${side}`).textContent=l.ms;
+  for(const v of Object.values(l.verdicts)){run.total++;if(v.safe===v.truth)run.right++}
+  $(`#l-right-${side}`).textContent=run.total?(100*run.right/run.total).toFixed(0)+' %':'—';
   const names={north:'↑ north',south:'↓ south',east:'→ east',west:'← west'};
-  $('#l-verdicts').innerHTML=Object.entries(l.verdicts).map(([d,v])=>`<div class="prob ${d===l.move?'win':''}"><span>${names[d]} ${d===l.move?'<span class="pill">taken</span>':''}</span><div class="bar"><i style="width:${(100*v.p_yes).toFixed(1)}%"></i></div><span class="num">${(100*v.p_yes).toFixed(0)} %</span></div><div class="muted" style="margin:-2px 0 8px;font-size:12px">model: ${v.safe?'safe':'collision'} · truth: ${v.truth?'safe':'collision'} ${v.safe===v.truth?'<span class="good">✓</span>':'<span class="bad">✗</span>'}</div>`).join('');
-  if(!l.alive) $('#l-status').textContent='crashed';
+  $(`#l-verdicts-${side}`).innerHTML=Object.entries(l.verdicts).map(([d,v])=>`<div class="prob ${d===l.move?'win':''}" style="grid-template-columns:120px 1fr 54px"><span>${names[d]} ${d===l.move?'<span class="pill">taken</span>':''}</span><div class="bar"><i style="width:${(100*v.p_yes).toFixed(1)}%"></i></div><span class="num">${(100*v.p_yes).toFixed(0)} %</span></div><div class="muted" style="margin:-2px 0 8px;font-size:12px">model: ${v.safe?'safe':'collision'} · truth: ${v.truth?'safe':'collision'} ${v.safe===v.truth?'<span class="good">✓</span>':'<span class="bad">✗</span>'}</div>`).join('');
+  if(!l.alive) st.textContent='crashed';
 }
-function drawBoard(l){
-  const c=$('#l-board'),ctx=c.getContext('2d'),n=live.size||16,cell=c.width/n;
+function drawBoard(side,l){
+  const c=$(`#l-board-${side}`);if(!c)return;const ctx=c.getContext('2d'),n=live.size||16,cell=c.width/n;
   ctx.fillStyle='#0b0e14';ctx.fillRect(0,0,c.width,c.height);
   ctx.strokeStyle='#161c28';for(let i=0;i<=n;i++){ctx.beginPath();ctx.moveTo(i*cell,0);ctx.lineTo(i*cell,c.height);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*cell);ctx.lineTo(c.width,i*cell);ctx.stroke()}
   if(!l) return;
@@ -422,7 +422,6 @@ function drawBoard(l){
   for(const [d,v] of Object.entries(l.verdicts)){const [dr,dc]=dirs[d];ctx.strokeStyle=v.safe?'rgba(76,212,139,.9)':'rgba(255,107,107,.9)';ctx.lineWidth=d===l.move?4:2;ctx.strokeRect((hc+dc)*cell+3,(hr+dr)*cell+3,cell-6,cell-6)}
   ctx.lineWidth=1;
 }
-
 (async()=>{await loadModels();await loadResults();refreshJobs();refreshStatus();setInterval(refreshJobs,4000);setInterval(refreshStatus,5000);})();
 </script>
 </body>

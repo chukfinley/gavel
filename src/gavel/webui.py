@@ -84,9 +84,14 @@ def checkpoint_kind(path: Path) -> str:
     return kind
 
 
+JEV_ID = "jev:typesafe/jev-1.13"
+
+
 def discover_models() -> list[dict[str, Any]]:
     models = [{"id": f"hub:{HUB_MODEL}", "kind": "pair", "run": "hub-main",
-               "label": f"Hub {HUB_MODEL} (pair)", "path": HUB_MODEL}]
+               "label": f"Hub {HUB_MODEL} (pair)", "path": HUB_MODEL},
+              {"id": JEV_ID, "kind": "jev", "run": "jev",
+               "label": "Jev 1.13 (TypeSafe, via OpenRouter)", "path": "typesafe/jev-1.13"}]
     if EXPORT.exists():
         for folder in sorted(EXPORT.iterdir()):
             if (folder / "config.json").exists():
@@ -129,7 +134,10 @@ class Judges:
             spec = next((m for m in discover_models() if m["id"] == model_id), None)
             if spec is None:
                 raise KeyError(model_id)
-            if spec["kind"] == "span":
+            if spec["kind"] == "jev":
+                from .jevapi import JevGavel
+                judge = JevGavel()
+            elif spec["kind"] == "span":
                 from .spanapi import SpanGavel
                 judge = SpanGavel.from_checkpoint(spec["path"], max_length=8192)
             elif spec["path"].endswith(".pt"):
@@ -408,14 +416,19 @@ def build_app():
             judge = judges.get(request.model)
         except KeyError:
             raise HTTPException(404, f"no model {request.model}") from None
+        from .jevapi import JevGavel
         from .spanapi import SpanGavel
         started = time.perf_counter()
-        if isinstance(judge, SpanGavel) and request.bundled:
-            verdicts = judge.decide_many(request.state, [(q.question, q.options) for q in request.questions])
-        else:
-            verdicts = [judge.decide(request.state, q.question, q.options) for q in request.questions]
+        try:
+            if isinstance(judge, JevGavel) or (isinstance(judge, SpanGavel) and request.bundled):
+                verdicts = judge.decide_many(request.state, [(q.question, q.options) for q in request.questions])
+            else:
+                verdicts = [judge.decide(request.state, q.question, q.options) for q in request.questions]
+        except Exception as error:
+            raise HTTPException(502, str(error)[:300]) from None
         ms = (time.perf_counter() - started) * 1000
         return {"milliseconds": round(ms, 1), "device": str(judge.device),
+                "usd": round(getattr(judge, "spent_usd", 0.0), 5),
                 "verdicts": [{"option": v.option, "confidence": v.confidence,
                               "probabilities": v.probabilities} for v in verdicts]}
 
@@ -449,7 +462,9 @@ def build_app():
         spec = next((m for m in discover_models() if m["id"] == request.model), None)
         if spec is None:
             raise HTTPException(404, f"no model {request.model}")
-        if spec["kind"] == "span":
+        if spec["kind"] == "jev":
+            flag = ["--jev"]
+        elif spec["kind"] == "span":
             flag = ["--span", spec["path"]]
         elif spec["path"].endswith(".pt"):
             raise HTTPException(422, "live demos load pair models from the Hub or export/ only")
@@ -459,8 +474,10 @@ def build_app():
         folder = TRACES / live_id
         folder.mkdir(parents=True, exist_ok=True)
         if request.kind == "web":
+            (ROOT / "data" / "traces").mkdir(parents=True, exist_ok=True)
             command = [PY, "scripts/live_webnav.py", *flag, "--url", request.url, "--goal", request.goal,
-                       "--hops", str(request.hops), "--trace-dir", str(folder)]
+                       "--hops", str(request.hops), "--trace-dir", str(folder),
+                       "--record", "data/traces/webnav.jsonl"]
             if request.pattern:
                 command += ["--pattern", request.pattern]
             label = f"live web · {spec['run']} · {request.url} → {request.goal}"

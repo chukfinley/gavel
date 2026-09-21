@@ -42,55 +42,127 @@ from gavel.schema import read_jsonl
 from gavel.span import SpanScorer, build_tokenizer, encode
 
 
-def batches(rows, size, rng, shuffle_options=True):
-    """Yields (prepared, labels, chunk, permutations); permutations[i][slot]
-    is the original option index that sits in that slot."""
+def batches(rows, size, rng, shuffle_options=True, pack=1, by_state=None, pack_share=0.0):
+    """Batches of sequences; each sequence holds one or more questions.
+
+    Yields `(prepared, targets, chunk, permutations)`. Every element of the
+    batch is a list of rows that share a state: one row normally, up to
+    `pack` rows when packing. `targets[i][j]` is the gold slot of question
+    `j` inside its own options, `permutations[i][j][slot]` the original
+    option index that landed in that slot.
+
+    Packing is why this exists: a head that only ever saw one `[Q]` group
+    answers three bundled questions at 0.065 accuracy (2026-09-21). The
+    training sequences have to look like the serving sequences.
+    """
     order = list(range(len(rows)))
     rng.shuffle(order)
+    packable = [group for group in (by_state or {}).values() if len(group) >= 2]
     for start in range(0, len(order) - size + 1, size):
-        chunk = [rows[i] for i in order[start : start + size]]
-        prepared, labels, permutations = [], [], []
-        for row in chunk:
-            options = list(row.options)
-            index = list(range(len(options)))
-            if shuffle_options:
-                rng.shuffle(index)
-            texts = [options[i].description for i in index]
-            labels.append(index.index(row.label))
-            prepared.append((row.state, [(row.question, texts)]))
-            permutations.append(index)
-        yield prepared, torch.tensor(labels), chunk, permutations
+        prepared, targets, chunk, permutations = [], [], [], []
+        for i in order[start : start + size]:
+            if pack > 1 and packable and rng.random() < pack_share:
+                group = rng.choice(packable)
+                members = [rows[j] for j in rng.sample(group, min(pack, len(group)))]
+            else:
+                members = [rows[i]]
+            questions, labels, perms = [], [], []
+            for row in members:
+                index = list(range(len(row.options)))
+                if shuffle_options:
+                    rng.shuffle(index)
+                questions.append((row.question, [row.options[k].description for k in index]))
+                labels.append(index.index(row.label))
+                perms.append(index)
+            prepared.append((members[0].state, questions))
+            targets.append(labels)
+            chunk.append(members)
+            permutations.append(perms)
+        yield prepared, targets, chunk, permutations
+
+
+def gold_slots(batch, targets, device):
+    """(batch, width) one-hot over option slots, and questions per row."""
+    target = torch.zeros(batch.group.shape, device=device)
+    counts = torch.zeros(len(targets), device=device)
+    for i, (labels, widths) in enumerate(zip(targets, batch.counts)):
+        offset = 0
+        for label, width in zip(labels, widths):
+            target[i, offset + label] = 1.0
+            offset += width
+        counts[i] = len(labels)
+    return target, counts.clamp(min=1.0)
 
 
 @torch.no_grad()
-def teacher_distribution(teacher, rows, device, max_length):
-    """The pair model's probabilities for the same rows, in the same order.
+def teacher_distribution(teacher, rows, device, max_length, width):
+    """The pair model's probabilities for every question in every row.
 
     One tokenizer call and one forward for the whole batch. The first version
     called `teacher.decide()` once per row — eight tokenizations, eight
     forwards and eight device syncs per step, which was 40-50 percent of the
     step — and looked the result up by option text, so two options with the
-    same text collapsed into one entry. Scores are indexed by position now.
+    same text collapsed into one entry. Scores are indexed by position now,
+    one softmax per question, laid out in the slot order `encode` uses.
     """
-    premises, hypotheses, widths = [], [], []
-    for state, questions in rows:
-        question, options = questions[0]
-        premise = (state or question).strip()
-        for option in options:
-            premises.append(premise)
-            hypotheses.append(teacher._hypothesis(question, option))
-        widths.append(len(options))
+    premises, hypotheses, segments = [], [], []
+    for row, (state, questions) in enumerate(rows):
+        offset = 0
+        for question, options in questions:
+            premise = (state or question).strip()
+            for option in options:
+                premises.append(premise)
+                hypotheses.append(teacher._hypothesis(question, option))
+            segments.append((row, offset, len(options)))
+            offset += len(options)
     encoding = teacher.tokenizer(premises, hypotheses, padding=True, truncation=True,
                                  max_length=max_length, return_tensors="pt").to(device)
     with torch.autocast(device_type="cuda", dtype=torch.bfloat16,
                         enabled=device.startswith("cuda")):
         logits = teacher.model(**encoding).logits[:, 0].float() / teacher.temperature
-    padded = torch.zeros(len(widths), max(widths), device=device)
+    padded = torch.zeros(len(rows), width, device=device)
     start = 0
-    for row, width in enumerate(widths):
-        padded[row, :width] = F.softmax(logits[start : start + width], dim=-1)
-        start += width
+    for row, offset, count in segments:
+        padded[row, offset : offset + count] = F.softmax(logits[start : start + count], dim=-1)
+        start += count
     return padded
+
+
+def file_distribution(chunk, permutations, width, device):
+    """Jev's probabilities where a row has them, laid out like the slots."""
+    soft = torch.zeros(len(chunk), width, device=device)
+    has = torch.zeros(len(chunk), width, dtype=torch.bool, device=device)
+    for i, (members, perms) in enumerate(zip(chunk, permutations)):
+        offset = 0
+        for row, index in zip(members, perms):
+            teacher = row.meta.get("teacher")
+            if teacher and len(teacher) == len(row.options):
+                values = torch.tensor([teacher[k] for k in index], device=device)
+                soft[i, offset : offset + len(index)] = values
+                has[i, offset : offset + len(index)] = True
+            offset += len(index)
+    return soft, has
+
+
+def packed_loss(log_probabilities, target, questions, valid, soft, brier_weight, teacher_weight):
+    """Cross entropy, Brier and the teacher's KL per question, averaged.
+
+    `target` is one-hot per question over the option slots, `questions` the
+    number of questions per row, `soft` a per-question distribution or zero
+    where no teacher spoke. Padded slots are zeroed before any product, the
+    lesson of `distillation_loss`.
+    """
+    valid = valid.float()
+    safe_log = log_probabilities.masked_fill(valid == 0, 0.0)
+    probabilities = safe_log.exp() * valid
+    nll = -(target * safe_log).sum(-1) / questions
+    brier = (((probabilities - target) ** 2) * valid).sum(-1) / questions
+    loss = nll.mean() + brier_weight * brier.mean()
+    if soft is not None:
+        soft = soft * valid
+        kl = (soft * (soft.clamp_min(1e-8).log() - safe_log) * valid).sum(-1) / questions
+        loss = loss + teacher_weight * kl.mean()
+    return loss
 
 
 @torch.no_grad()
@@ -99,7 +171,9 @@ def evaluate(model, tokenizer, rows, device, max_length, batch_size, flip_check)
     rng = random.Random(7)
     per_source: dict[str, list[int]] = defaultdict(list)
     flips = total = 0
-    for prepared, labels, chunk, _ in batches(rows, batch_size, rng, shuffle_options=False):
+    for prepared, targets, nested, _ in batches(rows, batch_size, rng, shuffle_options=False):
+        chunk = [members[0] for members in nested]
+        labels = torch.tensor([t[0] for t in targets])
         batch = encode(tokenizer, prepared, max_length, device)
         autocast = torch.autocast(device_type="cuda", dtype=torch.bfloat16,
                                   enabled=str(device).startswith("cuda"))
@@ -212,6 +286,10 @@ def main() -> None:
     parser.add_argument("--eval-every", type=int, default=2000)
     parser.add_argument("--eval-rows", type=int, default=2000)
     parser.add_argument("--max-options", type=int, default=12)
+    parser.add_argument("--pack", type=int, default=4,
+                        help="up to this many questions that share a state in one sequence")
+    parser.add_argument("--pack-share", type=float, default=0.5,
+                        help="share of sequences that are packed when a state has several rows")
     parser.add_argument("--grad-checkpoint", action="store_true")
     parser.add_argument("--adam8bit", action="store_true")
     parser.add_argument("--flip-check", action="store_true", default=True)
@@ -231,6 +309,12 @@ def main() -> None:
            if r.label is not None and 2 <= len(r.options) <= args.max_options]
     rng.shuffle(dev)
     dev = dev[: args.eval_rows]
+    by_state = defaultdict(list)
+    for i, row in enumerate(rows):
+        if row.state:
+            by_state[row.state].append(i)
+    packable = sum(1 for g in by_state.values() if len(g) >= 2)
+    print(f"states with several questions: {packable}", flush=True)
     teacher_table = teaching.load(args.teacher_file) if args.teacher_file else {}
     if teacher_table:
         labelled = teaching.attach(rows, teacher_table)
@@ -270,17 +354,19 @@ def main() -> None:
         pct_start=args.warmup)
 
     best, history, step, started = -1.0, [], 0, time.time()
-    stream = batches(rows, args.batch_size, rng)
+    stream = batches(rows, args.batch_size, rng, pack=args.pack, by_state=by_state,
+                     pack_share=args.pack_share)
     model.train()
     while step < args.steps:
         try:
-            prepared, labels, chunk, permutations = next(stream)
+            prepared, targets, chunk, permutations = next(stream)
         except StopIteration:
-            stream = batches(rows, args.batch_size, rng)
+            stream = batches(rows, args.batch_size, rng, pack=args.pack, by_state=by_state,
+                             pack_share=args.pack_share)
             continue
         step += 1
         batch = encode(tokenizer, prepared, args.max_length, device)
-        labels = labels.to(device)
+        target, questions = gold_slots(batch, targets, device)
         # bf16 autocast, as the pair model was trained, calibrated and
         # measured. The first version ran everything in fp32, which on a
         # 3090 is half the tensor-core rate for nothing.
@@ -288,22 +374,18 @@ def main() -> None:
                             enabled=device.startswith("cuda")):
             scores = model(batch)
         log_probabilities = model.group_log_softmax(scores, batch.group)
+        width = log_probabilities.size(-1)
 
-        soft = (teacher_distribution(teacher, prepared, device, args.max_length)
+        soft = (teacher_distribution(teacher, prepared, device, args.max_length, width)
                 if teacher is not None else None)
         if teacher_table:
-            # Rows that Jev labelled take Jev's distribution; the others keep
-            # the pair model's, if there is one.
-            file_soft, has = teaching.soft_targets(chunk, log_probabilities.size(-1), permutations)
-            file_soft, has = file_soft.to(device), has.to(device)
-            if soft is None:
-                soft = torch.where(has[:, None], file_soft, torch.zeros_like(file_soft))
-                if not has.any():
-                    soft = None
-            else:
-                soft = torch.where(has[:, None], file_soft, soft)
-        loss = distillation_loss(log_probabilities, labels, batch.group >= 0, soft,
-                                 args.brier_weight, args.teacher_weight)
+            # Questions that Jev labelled take Jev's distribution; the
+            # others keep the pair model's, if there is one.
+            file_soft, has = file_distribution(chunk, permutations, width, device)
+            soft = torch.where(has, file_soft, soft) if soft is not None else \
+                (file_soft if has.any() else None)
+        loss = packed_loss(log_probabilities, target, questions, batch.group >= 0, soft,
+                           args.brier_weight, args.teacher_weight)
 
         optimiser.zero_grad(set_to_none=True)
         loss.backward()
