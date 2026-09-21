@@ -49,6 +49,12 @@ def load(folder: Path, names: list[str]) -> list:
     return rows
 
 
+def content_key(row) -> str:
+    """The text of a decision, so a copy under another id is still found."""
+    options = "\x1f".join(o.description.strip().lower() for o in row.options)
+    return f"{row.state.strip().lower()}\x1e{row.question.strip().lower()}\x1e{options}"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", default="data")
@@ -120,8 +126,14 @@ def main() -> None:
     rng.shuffle(dev)
     write_jsonl(folder / "dev_strat_v2.jsonl", dev)
 
+    # Ids are not enough: the criteria and claims builders write several
+    # wordings of one item under different ids, and a few sources repeat
+    # an item verbatim. Anything with a dev row's text is held out too,
+    # otherwise the dev score for that stratum measures recall of the
+    # training set (1450 criteria rows leaked this way on 2026-09-21).
+    held_text = {content_key(r) for r in dev}
     before = len(rows)
-    rows = [r for r in rows if r.id not in held]
+    rows = [r for r in rows if r.id not in held and content_key(r) not in held_text]
     print(f"\nheld out of training: {before - len(rows)} rows")
     write_jsonl(folder / "train_v6.jsonl", rows)
     write_jsonl(folder / "train_route.jsonl", [r for r in rows if r.source in ROUTE])
