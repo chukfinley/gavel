@@ -130,6 +130,18 @@ than after it.
   five unseen scripts and confidence falls by 0.154 with it. `LEARNINGS.md`
   item 7.
 
+* The local `data/train_v6.jsonl` was the old 566k mix; only the pods
+  had the 1.09M one. On 2026-09-21 `_scratch/build_mix_local.sh` rebuilds
+  it here (same chain as `longrun.sh` lines 27-38) and touches
+  `data/.mix_v6_full`. `_scratch/wait_gpu_then_span.sh` then distils the
+  span head from Hub `main` for 40000 steps on the 3060 as `base-span-40k`,
+  as soon as the card has 10 GB free and that marker exists. It never
+  kills another process; ComfyUI held the card when it was started.
+* Dev overlap, first pass on the old mix: 8367 training rows share state
+  and question with a dev row, 7672 of them `abstain-missing` (empty state,
+  generic question, so the key is weak). Redo with options in the key on
+  the new mix before drawing a conclusion for the v2 gap.
+
 ## The one thing to decide
 
 Whether the product is short states on a CPU or long documents on a GPU.
