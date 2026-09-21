@@ -341,3 +341,40 @@ GLiNER2 drops 10.7 points because it is keyword-driven; Laya is low
 everywhere. A model trained on a wide public mix should lose less across a
 domain shift than any of them. That is the number to aim at, and it is the one
 nobody except Jev currently holds.
+
+## What the Jev demos in the field actually do (Theo, "Jev is incredible", 2026-09)
+
+The demos that made the model known are not vision and not text
+generation. Every one of them hands the model *structured program state
+as text* plus a fixed set of options, and reads back one choice:
+
+* iOS simulator and website navigation: the accessibility tree or the
+  page HTML is the state, the tappable elements or links are the options.
+  "Once it has the ability to see" is explicitly named as missing.
+* Minecraft and board games: the game state as data, the legal moves as
+  options. "Not an image because it doesn't have vision."
+* Classification of 32311 chat messages, incident routing with eleven
+  states, a "smart if statement" between agent steps.
+* Numbers quoted: 70–500 ms per decision, P95 240 ms at 38 decisions/s,
+  4 cents per million input tokens, output free, 32k context.
+
+That is the same contract as `Gavel.decide`. Two demos of it live in this
+repo now: `scripts/demo_snake.py` (safety questions per legal move, the
+same wording as the training rows) and `scripts/demo_webnav.py` (HTML in,
+link out, four hops). Their numbers are in `results/demo_*.json`.
+
+Latency on an RTX 3060 (`results/latency_cuda.json`, 2026-09-21), median
+of seven, pair model versus span head, and the span head with four
+questions on one state:
+
+| state tokens | options | pair ms | span ms | span, 4 questions |
+|---|---|---|---|---|
+| 64 | 8 | 20.6 | 16.4 | 17.3 |
+| 256 | 8 | 56.8 | 18.1 | 17.8 |
+| 1024 | 8 | 196.8 | 33.0 | 33.0 |
+| 4096 | 2 | 255.6 | 105.2 | 107.0 |
+| 4096 | 8 | 1263.1 | 107.3 | 115.2 |
+
+The span head's cost is the state, not the options or the questions. That
+is the property the one-sequence model was built for; the accuracy gap to
+the pair model is the open question the 40k-step distillation answers.
