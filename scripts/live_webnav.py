@@ -125,6 +125,11 @@ def main() -> None:
         page = browser.new_page(viewport={"width": 1280, "height": 800},
                                 user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36")
         url, seen, found = args.url, set(), False
+        # A link text chosen once is not offered again: Amazon's category
+        # link carries new tracking parameters on every page, so the URL
+        # filter alone let the first harvest pick "Computer & Tablets" six
+        # times in a row (2026-09-21).
+        chosen_texts: set[str] = set()
         for step in range(1, args.hops + 1):
             try:
                 page.goto(url, wait_until="domcontentloaded", timeout=30000)
@@ -137,7 +142,8 @@ def main() -> None:
             host = urlparse(page.url).netloc.split(".")[-2:]
             links = [link for link in info["links"]
                      if urlparse(link["href"]).netloc.split(".")[-2:] == host
-                     and link["href"] not in seen and not link["href"].startswith("mailto")][: args.max_links]
+                     and link["href"] not in seen and not link["href"].startswith("mailto")
+                     and link["text"].strip().lower() not in chosen_texts][: args.max_links]
             shot_page = f"step{step}_page.png"
             page.screenshot(path=str(trace_dir / shot_page))
             if not links:
@@ -149,6 +155,8 @@ def main() -> None:
             verdict = judge.decide(state, f"Which link leads to {args.goal}?", options)
             ms = round((time.perf_counter() - started) * 1000, 1)
             chosen = next(link for link in links if link["text"] == verdict.option)
+            chosen_texts.add(chosen["text"].strip().lower())
+            seen.add(chosen["href"])
             if recorder is not None:
                 import hashlib
                 row_id = hashlib.sha1(f"{page.url}|{args.goal}|{step}".encode()).hexdigest()[:20]

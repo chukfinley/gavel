@@ -187,6 +187,24 @@ than after it.
   the level text, or define the scale in the question. Decide before the
   next mix.
 
+* **Jev beside us, live (2026-09-21).** `src/gavel/jevapi.py` puts the
+  closed model behind `decide`/`decide_many` over OpenRouter's decisions
+  endpoint; the WebUI's playground and live tab run every request on both,
+  ours left, Jev right. On amazon.de, goal "Microsoft Surface Pro 12 inch
+  Snapdragon X Plus 16 GB 256 GB": Jev reaches the product in 3–4 hops
+  (Computer → Tablets → Microsoft → the item, 98 %) for 0.003 $; our pair
+  model reads 92 links as 92 sequences, takes 14 s per page, and picks
+  "Lieferung verfolgen" at 3 %. That gap is the work. Two levers, both
+  wired: Jev's probabilities as a KL target (`--teacher-file`, labels in
+  `data/jev/`), and Jev's own navigation decisions as training rows
+  (`scripts/harvest_webnav.py` → `data/traces/webnav.jsonl` →
+  `scripts/build_webnav.py` → source `webnav` in the mix). The span head
+  is the right shape for 100-link pages (one pass); it needs the packed
+  training (`--pack`) before its bundled answers can be trusted.
+* `_scratch/jev_distil_chain.sh` continues the baseline pair model with
+  the Jev labels (10k steps, batch 4, 3060) as `runs/jev-pair`, then dev,
+  JevBench and cbench land in `results/jev-pair_*.json`.
+
 ## The one thing to decide
 
 Whether the product is short states on a CPU or long documents on a GPU.
