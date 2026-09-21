@@ -87,13 +87,10 @@ class Gavel:
             return f"{question[len(CLAIM_PREFIX):].rstrip('.')}. {option}."
         return f"{question} The answer is {option}."
 
+    block = 32
+
     @torch.no_grad()
-    def decide(self, state: str, question: str, options: Sequence[str],
-               abstain: bool = False, threshold: float = 0.0) -> Verdict:
-        """Pick one option. With `abstain`, an extra option is offered."""
-        choices = list(options) + ([self.ABSTAIN] if abstain else [])
-        premise = (state or question).strip()
-        pairs = [self._hypothesis(question, choice) for choice in choices]
+    def _pair_logits(self, premise: str, pairs: list[str]) -> torch.Tensor:
         encoding = self.tokenizer([premise] * len(pairs), pairs, padding=True,
                                   truncation=True, max_length=self.max_length,
                                   return_tensors="pt").to(self.device)
@@ -102,7 +99,21 @@ class Gavel:
         # pod's benchmark evaluations crashed and published no numbers.
         with torch.autocast(device_type="cuda", dtype=torch.bfloat16,
                             enabled=str(self.device).startswith("cuda")):
-            logits = self.model(**encoding).logits[:, ENTAILMENT].float() / self.temperature
+            return self.model(**encoding).logits[:, ENTAILMENT].float() / self.temperature
+
+    @torch.no_grad()
+    def decide(self, state: str, question: str, options: Sequence[str],
+               abstain: bool = False, threshold: float = 0.0) -> Verdict:
+        """Pick one option. With `abstain`, an extra option is offered."""
+        choices = list(options) + ([self.ABSTAIN] if abstain else [])
+        premise = (state or question).strip()
+        pairs = [self._hypothesis(question, choice) for choice in choices]
+        # Options are scored in blocks: a page with 120 links and a 4k-token
+        # state is 120 sequences of 4k tokens, which is 8 GB in one forward
+        # and an out-of-memory on a 12 GB card (2026-09-21). The softmax runs
+        # over all blocks together, so the result is the same.
+        logits = torch.cat([self._pair_logits(premise, pairs[start : start + self.block])
+                            for start in range(0, len(pairs), self.block)])
         probabilities = F.softmax(logits, dim=-1).cpu().tolist()
         best = max(range(len(choices)), key=probabilities.__getitem__)
         confidence = probabilities[best]

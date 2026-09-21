@@ -378,3 +378,12 @@ questions on one state:
 The span head's cost is the state, not the options or the questions. That
 is the property the one-sequence model was built for; the accuracy gap to
 the pair model is the open question the 40k-step distillation answers.
+
+## Bespoke-Nimble-9B (added 2026-09-21)
+
+A LoRA adapter (165 MiB) on Qwen3.5-9B: booleans, enums and rubric
+score levels read off the allowed answer tokens, no free text, prompt
+capped at 2048 tokens, Apache 2.0. Decoder weight class, so it sits with
+kev and decider, not with us. The card names no benchmark numbers and no
+training sets; the suite is the 13 manifests in `bespokelabsai/nimble`,
+still not wired here. Note the 2048-token cap against our 32768.
