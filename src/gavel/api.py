@@ -112,8 +112,10 @@ class Gavel:
         # state is 120 sequences of 4k tokens, which is 8 GB in one forward
         # and an out-of-memory on a 12 GB card (2026-09-21). The softmax runs
         # over all blocks together, so the result is the same.
-        logits = torch.cat([self._pair_logits(premise, pairs[start : start + self.block])
-                            for start in range(0, len(pairs), self.block)])
+        # 32 pairs at 1k tokens, 8 at 4k: the block shrinks with the window.
+        block = max(1, min(self.block, 32 * 1024 // max(self.max_length, 1)))
+        logits = torch.cat([self._pair_logits(premise, pairs[start : start + block])
+                            for start in range(0, len(pairs), block)])
         probabilities = F.softmax(logits, dim=-1).cpu().tolist()
         best = max(range(len(choices)), key=probabilities.__getitem__)
         confidence = probabilities[best]

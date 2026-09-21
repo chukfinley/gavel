@@ -1,0 +1,36 @@
+{"url": "https://www.amazon.de/", "goal": "Microsoft Surface Pro, 12 inch, Snapdragon X Plus, 16 GB RAM, 256 GB SSD", "pattern": "surface"}
+{"url": "https://www.amazon.de/", "goal": "a Logitech MX Master 3S mouse", "pattern": "mx-master|MX-Master|logitech"}
+{"url": "https://www.amazon.de/", "goal": "the Kindle Paperwhite", "pattern": "paperwhite|kindle"}
+{"url": "https://www.otto.de/", "goal": "a washing machine from Bosch", "pattern": "bosch|waschmaschine"}
+{"url": "https://www.mediamarkt.de/", "goal": "the iPhone 16", "pattern": "iphone"}
+{"url": "https://www.saturn.de/", "goal": "a 65 inch OLED television", "pattern": "oled|fernseher"}
+{"url": "https://www.thomann.de/de/", "goal": "a Fender Stratocaster electric guitar", "pattern": "strat|fender"}
+{"url": "https://www.ikea.com/de/de/", "goal": "the BILLY bookcase", "pattern": "billy"}
+{"url": "https://www.zalando.de/", "goal": "men's running shoes", "pattern": "laufschuhe|running"}
+{"url": "https://www.bahn.de/", "goal": "the page to buy a Deutschlandticket", "pattern": "deutschlandticket|deutschland-ticket"}
+{"url": "https://www.wikipedia.org/", "goal": "the German Wikipedia article about Berlin", "pattern": "de\\.wikipedia\\.org/wiki/Berlin"}
+{"url": "https://en.wikipedia.org/wiki/Main_Page", "goal": "the article about the Python programming language", "pattern": "Python_\\(programming"}
+{"url": "https://github.com", "goal": "the pricing page", "pattern": "pricing"}
+{"url": "https://github.com/pytorch/pytorch", "goal": "the open issues of this repository", "pattern": "/issues"}
+{"url": "https://docs.python.org/3/", "goal": "the documentation of the asyncio module", "pattern": "asyncio"}
+{"url": "https://www.python.org", "goal": "the download page for Python", "pattern": "download"}
+{"url": "https://huggingface.co", "goal": "the documentation", "pattern": "docs"}
+{"url": "https://www.rust-lang.org", "goal": "how to install Rust", "pattern": "install|get-started"}
+{"url": "https://fastapi.tiangolo.com", "goal": "the tutorial", "pattern": "tutorial"}
+{"url": "https://www.postgresql.org", "goal": "the documentation", "pattern": "docs"}
+{"url": "https://stripe.com", "goal": "the pricing page", "pattern": "pricing"}
+{"url": "https://nodejs.org", "goal": "the download page", "pattern": "download"}
+{"url": "https://www.heise.de/", "goal": "the newest news about Linux", "pattern": "linux|thema"}
+{"url": "https://www.tagesschau.de/", "goal": "the weather forecast", "pattern": "wetter"}
+{"url": "https://www.spiegel.de/", "goal": "the sports section", "pattern": "sport"}
+{"url": "https://www.bbc.com/", "goal": "the weather forecast", "pattern": "weather"}
+{"url": "https://www.dm.de/", "goal": "a toothbrush", "pattern": "zahnb"}
+{"url": "https://www.rewe.de/", "goal": "the weekly offers", "pattern": "angebote"}
+{"url": "https://www.chefkoch.de/", "goal": "a recipe for lasagne", "pattern": "lasagne"}
+{"url": "https://www.booking.com/", "goal": "hotels in Hamburg", "pattern": "hamburg"}
+{"url": "https://www.apple.com/de/", "goal": "the MacBook Air", "pattern": "macbook-air"}
+{"url": "https://www.lego.com/de-de", "goal": "the LEGO Star Wars sets", "pattern": "star-wars"}
+{"url": "https://www.nytimes.com/", "goal": "the crossword", "pattern": "crossword"}
+{"url": "https://www.reddit.com/", "goal": "the r/MachineLearning community", "pattern": "MachineLearning"}
+{"url": "https://www.hetzner.com/", "goal": "the cloud server pricing", "pattern": "cloud"}
+{"url": "https://www.tagesschau.de/", "goal": "the page about the DAX stock index", "pattern": "boerse|dax"}
