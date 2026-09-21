@@ -5,3 +5,4 @@ runs/
 *.log
 __pycache__/
 export/
+.env

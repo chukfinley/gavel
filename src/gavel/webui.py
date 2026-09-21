@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PY = str(ROOT / ".venv" / "bin" / "python")
 RESULTS, LOGS, RUNS, EXPORT = ROOT / "results", ROOT / "logs", ROOT / "runs", ROOT / "export"
 JOBS_FILE = ROOT / "_scratch" / "webui_jobs.json"
+TRACES = ROOT / "_scratch" / "traces"
 HUB_MODEL = "chukfinley/gavel-vela-32k"
 
 # What the field publishes, so the scoreboard shows the gap, not just us.
@@ -375,6 +376,18 @@ def build_app():
         model: str | None = None
         extra: dict[str, Any] = Field(default_factory=dict)
 
+    class LiveRequest(BaseModel):
+        kind: str = "web"
+        model: str
+        url: str = "https://stripe.com"
+        goal: str = "the pricing page"
+        pattern: str | None = None
+        hops: int = 5
+        size: int = 16
+        seed: int = 0
+        max_steps: int = 300
+        bundled: bool = False
+
     @app.get("/", response_class=HTMLResponse)
     def index() -> str:
         return (Path(__file__).parent / "web" / "index.html").read_text()
@@ -430,6 +443,65 @@ def build_app():
     @app.post("/api/jobs/{job_id}/stop")
     def stop_job(job_id: str) -> dict[str, Any]:
         return {"stopped": jobs.stop(job_id)}
+
+    @app.post("/api/live")
+    def start_live(request: LiveRequest) -> dict[str, Any]:
+        spec = next((m for m in discover_models() if m["id"] == request.model), None)
+        if spec is None:
+            raise HTTPException(404, f"no model {request.model}")
+        if spec["kind"] == "span":
+            flag = ["--span", spec["path"]]
+        elif spec["path"].endswith(".pt"):
+            raise HTTPException(422, "live demos load pair models from the Hub or export/ only")
+        else:
+            flag = ["--model", spec["path"]]
+        live_id = time.strftime("%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:4]
+        folder = TRACES / live_id
+        folder.mkdir(parents=True, exist_ok=True)
+        if request.kind == "web":
+            command = [PY, "scripts/live_webnav.py", *flag, "--url", request.url, "--goal", request.goal,
+                       "--hops", str(request.hops), "--trace-dir", str(folder)]
+            if request.pattern:
+                command += ["--pattern", request.pattern]
+            label = f"live web · {spec['run']} · {request.url} → {request.goal}"
+        elif request.kind == "snake":
+            command = [PY, "scripts/live_snake.py", *flag, "--size", str(request.size), "--seed",
+                       str(request.seed), "--max-steps", str(request.max_steps), "--trace-dir", str(folder)]
+            if request.bundled:
+                command.append("--bundled")
+            label = f"live snake · {spec['run']} · {request.size}x{request.size} seed {request.seed}"
+        else:
+            raise HTTPException(422, "kind is web or snake")
+        job = jobs.start(f"live-{request.kind}", command, label, None)
+        job["live"] = live_id
+        jobs.save()
+        return {"id": live_id, "job": job}
+
+    @app.get("/api/live/{live_id}")
+    def read_live(live_id: str, start: int = 0) -> dict[str, Any]:
+        if not re.fullmatch(r"[\w-]+", live_id):
+            raise HTTPException(403, "bad id")
+        file = TRACES / live_id / "trace.jsonl"
+        lines: list[dict[str, Any]] = []
+        if file.exists():
+            for raw in file.read_text().splitlines():
+                try:
+                    lines.append(json.loads(raw))
+                except Exception:
+                    pass
+        job = next((j for j in jobs.poll() if j.get("live") == live_id), None)
+        return {"id": live_id, "lines": lines[start:], "total": len(lines),
+                "status": job["status"] if job else "unknown", "job": job}
+
+    @app.get("/traces/{live_id}/{name}")
+    def trace_file(live_id: str, name: str):
+        from fastapi.responses import FileResponse
+        if not re.fullmatch(r"[\w-]+", live_id) or not re.fullmatch(r"[\w.-]+\.png", name):
+            raise HTTPException(403, "bad path")
+        file = TRACES / live_id / name
+        if not file.exists():
+            raise HTTPException(404, "no such file")
+        return FileResponse(file, headers={"Cache-Control": "no-store"})
 
     @app.get("/api/log")
     def read_log(path: str, lines: int = 200) -> dict[str, Any]:

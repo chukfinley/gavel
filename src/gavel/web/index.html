@@ -58,6 +58,7 @@ details summary{cursor:pointer;color:var(--muted)}
   <a data-tab="play">Playground</a>
   <a data-tab="bench">Benchmarks</a>
   <a data-tab="demos">Demos</a>
+  <a data-tab="live">Live</a>
   <a data-tab="train">Training</a>
   <div class="gpu" id="gpu"><b>GPU</b><span class="muted">…</span></div>
 </nav>
@@ -156,6 +157,48 @@ details summary{cursor:pointer;color:var(--muted)}
   </div>
   <div class="card"><h2 style="margin-top:0">Logs</h2><div id="tr-logs"></div></div>
 </section>
+
+<section id="live">
+  <h1>Live</h1>
+  <p class="sub">Watch a decision happen. The browser is real; the model only ever sees the page as text.</p>
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:150px"><label>Demo</label><select id="l-kind" onchange="liveForm()"><option value="web">Web navigation</option><option value="snake">Snake</option></select></div>
+      <div style="flex:2;min-width:260px"><label>Model</label><select id="l-model"></select></div>
+    </div>
+    <div class="row" id="l-web">
+      <div style="flex:2;min-width:240px"><label>Start URL</label><input id="l-url" value="https://stripe.com"></div>
+      <div style="flex:2;min-width:240px"><label>Goal</label><input id="l-goal" value="the pricing page"></div>
+      <div style="flex:1;min-width:160px"><label>Reached when URL matches (regex, optional)</label><input id="l-pattern" placeholder="pricing"></div>
+      <div style="width:80px"><label>Hops</label><input id="l-hops" value="5"></div>
+    </div>
+    <div class="row" id="l-snake" style="display:none">
+      <div style="width:90px"><label>Board</label><input id="l-size" value="16"></div>
+      <div style="width:90px"><label>Seed</label><input id="l-seed" value="0"></div>
+      <div style="width:110px"><label>Max turns</label><input id="l-steps" value="300"></div>
+      <label style="margin:22px 0 0;display:flex;gap:6px;align-items:center;font-weight:500"><input type="checkbox" id="l-bundled" style="width:auto"> bundle the three questions (span head)</label>
+    </div>
+    <div class="row" style="margin-top:16px"><button onclick="startLive()" id="l-go">Start</button><span class="muted" id="l-status"></span></div>
+  </div>
+  <div id="l-webview" style="display:none">
+    <div class="grid2" style="grid-template-columns:3fr 2fr">
+      <div class="card" style="padding:10px"><div class="row" style="justify-content:space-between;padding:4px 8px"><span id="l-shot-title" class="mono muted"></span><span id="l-shot-step" class="pill"></span></div><img id="l-shot" style="width:100%;border-radius:8px;border:1px solid var(--line);display:block;background:#0b0e14;min-height:200px"></div>
+      <div>
+        <div class="card"><h2 style="margin-top:0">This page's links, as the model scored them</h2><div id="l-options" class="muted">waiting…</div></div>
+        <div class="card"><h2 style="margin-top:0">Path</h2><div id="l-path" class="muted"></div></div>
+      </div>
+    </div>
+  </div>
+  <div id="l-snakeview" style="display:none">
+    <div class="grid2" style="grid-template-columns:auto 1fr">
+      <div class="card" style="padding:12px"><canvas id="l-board" width="480" height="480" style="display:block;border-radius:8px;background:#0b0e14"></canvas></div>
+      <div>
+        <div class="card"><div class="kpi"><div><b id="l-turn">0</b><span>turn</span></div><div><b id="l-eaten">0</b><span>food eaten</span></div><div><b id="l-ms">—</b><span>ms per turn</span></div><div><b id="l-right">—</b><span>safety verdicts right</span></div></div></div>
+        <div class="card"><h2 style="margin-top:0">The three questions this turn</h2><div id="l-verdicts" class="muted">waiting…</div></div>
+      </div>
+    </div>
+  </div>
+</section>
 </main>
 <div class="toast" id="toast"></div>
 
@@ -174,7 +217,7 @@ if(location.hash){const a=document.querySelector(`nav a[data-tab="${location.has
 // ---------------------------------------------------------------- models
 async function loadModels(){
   models = await api('/api/models');
-  for(const id of ['#p-model','#b-model','#d-model']){
+  for(const id of ['#p-model','#b-model','#d-model','#l-model']){
     const sel=$(id), cur=sel.value;
     sel.innerHTML = models.map(m=>`<option value="${m.id}">${m.label}${m.loaded?' · loaded':''}</option>`).join('');
     if(cur && models.some(m=>m.id===cur)) sel.value=cur;
@@ -311,6 +354,73 @@ async function refreshStatus(){
   let h='';for(const [run,hist] of Object.entries(t.histories)){const pts=(Array.isArray(hist)?hist:hist.evals||hist.history||[]).filter(p=>p&&(p.dev_accuracy!=null||p.accuracy!=null||p.mean!=null));if(!pts.length)continue;const val=p=>p.dev_accuracy??p.accuracy??p.mean;const best=Math.max(...pts.map(val));h+=`<div class="row" style="margin-bottom:6px"><span style="width:160px" class="mono">${run}</span><span>${pts.map(p=>`<span class="pill ${val(p)===best?'done':''}" title="step ${p.step}">${(100*val(p)).toFixed(1)}</span>`).join(' ')}</span></div>`}
   $('#tr-hist').innerHTML=h||'<span class="muted">no history.json yet</span>';
   $('#tr-logs').innerHTML=Object.entries(t.logs).map(([n,txt])=>`<div class="mono muted" style="margin:8px 0 4px">${n}</div><pre>${txt.replace(/</g,'&lt;')||'(empty)'}</pre>`).join('')||'<span class="muted">no training log</span>';
+}
+
+
+// ---------------------------------------------------------------- live
+let live={id:null,kind:null,seen:0,timer:null,queue:[],lines:[]};
+function liveForm(){const k=$('#l-kind').value;$('#l-web').style.display=k==='web'?'':'none';$('#l-snake').style.display=k==='snake'?'':'none'}
+async function startLive(){
+  const kind=$('#l-kind').value;
+  const body={kind,model:$('#l-model').value,url:$('#l-url').value,goal:$('#l-goal').value,pattern:$('#l-pattern').value||null,hops:+$('#l-hops').value,size:+$('#l-size').value,seed:+$('#l-seed').value,max_steps:+$('#l-steps').value,bundled:$('#l-bundled').checked};
+  try{
+    const r=await api('/api/live',body);
+    clearInterval(live.timer);live={id:r.id,kind,seen:0,timer:null,queue:[],lines:[],right:0,total:0};
+    $('#l-webview').style.display=kind==='web'?'':'none';$('#l-snakeview').style.display=kind==='snake'?'':'none';
+    $('#l-options').innerHTML='loading the model…';$('#l-path').innerHTML='';$('#l-verdicts').innerHTML='loading the model…';$('#l-shot').removeAttribute('src');$('#l-shot-title').textContent='';$('#l-shot-step').textContent='';
+    $('#l-status').textContent='started';$('#l-go').disabled=true;
+    live.timer=setInterval(pollLive,700);
+    if(kind==='snake') drawBoard(null);
+  }catch(e){toast(e.message,true)}
+}
+async function pollLive(){
+  if(!live.id) return;
+  const r=await api(`/api/live/${live.id}?start=${live.seen}`);
+  live.seen=r.total; for(const l of r.lines){live.lines.push(l); if(live.kind==='web') renderWebLine(l); else live.queue.push(l)}
+  if(live.kind==='snake') stepSnake();
+  if(r.status!=='running'&&r.status!=='unknown'&&(live.kind==='web'||!live.queue.length)){clearInterval(live.timer);live.timer=null;$('#l-go').disabled=false;$('#l-status').textContent=r.status==='done'?'finished':'stopped: '+r.status;if(r.status==='failed'){const j=r.job;if(j){const lg=await api(`/api/log?path=${encodeURIComponent(j.log)}&lines=12`);toast(lg.text.split('\n').slice(-3).join(' '),true)}}}
+}
+function renderWebLine(l){
+  const st=$('#l-status');
+  if(l.kind==='loaded') st.textContent='model on '+l.device+', opening the browser…';
+  if(l.kind==='error'){st.textContent='browser error: '+l.message;$('#l-path').innerHTML+=`<div class="bad">step ${l.step}: ${l.message}</div>`}
+  if(l.kind==='dead_end'){$('#l-shot').src=`/traces/${live.id}/${l.shot}?t=${Date.now()}`;$('#l-path').innerHTML+=`<div class="muted">step ${l.step}: no links left on ${l.title}</div>`;st.textContent='dead end'}
+  if(l.kind==='step'){
+    $('#l-shot').src=`/traces/${live.id}/${l.shot}?t=${Date.now()}`;$('#l-shot-title').textContent=l.title+' — '+l.url;$('#l-shot-step').textContent=`step ${l.step} · ${l.ms} ms · ${l.options.length} links · ${l.state_chars} chars of state`;
+    const opts=[...l.options].sort((a,b)=>b.p-a.p).slice(0,14);
+    $('#l-options').innerHTML=opts.map(o=>`<div class="prob ${o.text===l.chosen?'win':''}"><span title="${o.href}">${o.text.length>30?o.text.slice(0,28)+'…':o.text}</span><div class="bar"><i style="width:${(100*o.p).toFixed(1)}%"></i></div><span class="num">${(100*o.p).toFixed(1)} %</span></div>`).join('')+(l.options.length>14?`<div class="muted" style="margin-top:6px">${l.options.length-14} more links below ${(100*opts[13].p).toFixed(1)} %</div>`:'');
+    $('#l-path').innerHTML+=`<div style="margin-bottom:6px"><span class="pill">${l.step}</span> ${l.title.slice(0,40)} → <b>${l.chosen}</b> <span class="muted">${(100*l.confidence).toFixed(0)} %${l.found?' · <span class="good">goal reached</span>':''}</span></div>`;
+    st.textContent=l.found?'goal reached':'following the link…';
+  }
+  if(l.kind==='arrived'){$('#l-shot').src=`/traces/${live.id}/${l.shot}?t=${Date.now()}`;$('#l-shot-title').textContent=l.title+' — '+l.url;$('#l-shot-step').textContent='arrived'}
+  if(l.kind==='done') st.textContent=l.found?'goal reached':'goal not reached within the hop limit';
+}
+function stepSnake(){
+  if(!live.queue.length) return;
+  const l=live.queue.shift();
+  if(l.kind==='loaded'){$('#l-status').textContent='model on '+l.device+', playing…';return stepSnake()}
+  if(l.kind==='start'){live.size=l.size;return stepSnake()}
+  if(l.kind==='done'){$('#l-status').textContent=`game over after ${l.steps} turns, ${l.eaten} food`;return}
+  if(l.kind!=='step') return stepSnake();
+  drawBoard(l);
+  $('#l-turn').textContent=l.step;$('#l-eaten').textContent=l.eaten;$('#l-ms').textContent=l.ms;
+  for(const v of Object.values(l.verdicts)){live.total++;if(v.safe===v.truth)live.right++}
+  $('#l-right').textContent=live.total?(100*live.right/live.total).toFixed(0)+' %':'—';
+  const names={north:'↑ north',south:'↓ south',east:'→ east',west:'← west'};
+  $('#l-verdicts').innerHTML=Object.entries(l.verdicts).map(([d,v])=>`<div class="prob ${d===l.move?'win':''}"><span>${names[d]} ${d===l.move?'<span class="pill">taken</span>':''}</span><div class="bar"><i style="width:${(100*v.p_yes).toFixed(1)}%"></i></div><span class="num">${(100*v.p_yes).toFixed(0)} %</span></div><div class="muted" style="margin:-2px 0 8px;font-size:12px">model: ${v.safe?'safe':'collision'} · truth: ${v.truth?'safe':'collision'} ${v.safe===v.truth?'<span class="good">✓</span>':'<span class="bad">✗</span>'}</div>`).join('');
+  if(!l.alive) $('#l-status').textContent='crashed';
+}
+function drawBoard(l){
+  const c=$('#l-board'),ctx=c.getContext('2d'),n=live.size||16,cell=c.width/n;
+  ctx.fillStyle='#0b0e14';ctx.fillRect(0,0,c.width,c.height);
+  ctx.strokeStyle='#161c28';for(let i=0;i<=n;i++){ctx.beginPath();ctx.moveTo(i*cell,0);ctx.lineTo(i*cell,c.height);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*cell);ctx.lineTo(c.width,i*cell);ctx.stroke()}
+  if(!l) return;
+  const body=l.body_after||l.body;
+  ctx.fillStyle='#f5b642';ctx.beginPath();ctx.arc(l.food[1]*cell+cell/2,l.food[0]*cell+cell/2,cell*0.32,0,7);ctx.fill();
+  body.forEach(([r,col],i)=>{ctx.fillStyle=i===0?'#4cd48b':'#2a8a5c';ctx.fillRect(col*cell+1,r*cell+1,cell-2,cell-2)});
+  const [hr,hc]=l.body[0], dirs={north:[-1,0],south:[1,0],east:[0,1],west:[0,-1]};
+  for(const [d,v] of Object.entries(l.verdicts)){const [dr,dc]=dirs[d];ctx.strokeStyle=v.safe?'rgba(76,212,139,.9)':'rgba(255,107,107,.9)';ctx.lineWidth=d===l.move?4:2;ctx.strokeRect((hc+dc)*cell+3,(hr+dr)*cell+3,cell-6,cell-6)}
+  ctx.lineWidth=1;
 }
 
 (async()=>{await loadModels();await loadResults();refreshJobs();refreshStatus();setInterval(refreshJobs,4000);setInterval(refreshStatus,5000);})();
