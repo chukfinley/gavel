@@ -158,8 +158,8 @@ def main() -> None:
     print(f"{len(rows)} rows in {len(batches)} requests, {len(done)} already labelled", flush=True)
 
     session = requests.Session(impersonate="chrome")
-    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json",
-               "HTTP-Referer": "https://github.com/chukfinley/gavel", "X-Title": "gavel distillation"}
+    # Only what the request needs. No app title, no referer.
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     build = native_body if args.shape == "native" else chat_body
 
     if args.probe:
