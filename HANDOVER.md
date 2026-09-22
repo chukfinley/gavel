@@ -238,6 +238,12 @@ than after it.
   dataset (`data/`), continues from the Hub pair model, and distils the
   span head with packed questions.
 
+* **`build_domains.py` "Aborted (core dumped)" on pods is harmless.** On
+  2026-09-22 the pod log shows `wrote 147593 training rows and 3250 test
+  rows` and *then* the abort: it happens at interpreter exit (a native
+  destructor in arrow or tokenizers under Python 3.11), after every file
+  is written. `longrun.sh` does not stop on it. Do not chase it.
+
 ## The one thing to decide
 
 Whether the product is short states on a CPU or long documents on a GPU.
