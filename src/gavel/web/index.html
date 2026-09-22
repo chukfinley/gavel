@@ -59,6 +59,7 @@ details summary{cursor:pointer;color:var(--muted)}
   <a data-tab="bench">Benchmarks</a>
   <a data-tab="demos">Demos</a>
   <a data-tab="live">Live</a>
+  <a data-tab="tasks">Tasks</a>
   <a data-tab="train">Training</a>
   <div class="gpu" id="gpu"><b>GPU</b><span class="muted">…</span></div>
 </nav>
@@ -186,6 +187,23 @@ details summary{cursor:pointer;color:var(--muted)}
     <div class="card" style="padding:14px" id="col-jev"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Jev 1.13</h2><span class="pill" id="l-state-jev">idle</span></div><div class="lv"></div></div>
   </div>
 </section>
+
+<section id="tasks">
+  <h1>Tasks</h1>
+  <p class="sub">Many items, the same questions. Emails: spam, reply needed, priority, category. Products: which of 33 shop categories. Ours and Jev answer every item; gold is shown where the dataset has it. Jev's answers are written to <span class="mono">data/traces/tasks.jsonl</span> as training rows.</p>
+  <div class="card">
+    <div class="row">
+      <div style="flex:1;min-width:150px"><label>Task</label><select id="t-task"><option value="emails">Email triage (Enron)</option><option value="products">Product → category</option></select></div>
+      <div style="flex:2;min-width:260px"><label>Our model</label><select id="t-model"></select></div>
+      <div style="width:90px"><label>Items</label><input id="t-n" value="20"></div>
+      <div style="width:90px"><label>Offset</label><input id="t-offset" value="0"></div>
+      <div style="align-self:flex-end"><button onclick="startTask()" id="t-go">Run both</button></div>
+      <span class="muted" id="t-status"></span>
+    </div>
+  </div>
+  <div class="card" id="t-summary" style="display:none"><div class="kpi" id="t-kpi"></div></div>
+  <div class="card" style="overflow:auto"><table id="t-table"></table></div>
+</section>
 </main>
 <div class="toast" id="toast"></div>
 
@@ -204,9 +222,9 @@ if(location.hash){const a=document.querySelector(`nav a[data-tab="${location.has
 // ---------------------------------------------------------------- models
 async function loadModels(){
   models = await api('/api/models');
-  for(const id of ['#p-model','#b-model','#d-model','#l-model']){
+  for(const id of ['#p-model','#b-model','#d-model','#l-model','#t-model']){
     const sel=$(id), cur=sel.value;
-    const pool = (id==='#p-model'||id==='#l-model') ? models.filter(m=>m.kind!=='jev') : models;
+    const pool = (id==='#p-model'||id==='#l-model'||id==='#t-model') ? models.filter(m=>m.kind!=='jev') : models;
     sel.innerHTML = pool.map(m=>`<option value="${m.id}">${m.label}${m.loaded?' · loaded':''}</option>`).join('');
     if(cur && models.some(m=>m.id===cur)) sel.value=cur;
   }
@@ -422,6 +440,54 @@ function drawBoard(side,l){
   for(const [d,v] of Object.entries(l.verdicts)){const [dr,dc]=dirs[d];ctx.strokeStyle=v.safe?'rgba(76,212,139,.9)':'rgba(255,107,107,.9)';ctx.lineWidth=d===l.move?4:2;ctx.strokeRect((hc+dc)*cell+3,(hr+dr)*cell+3,cell-6,cell-6)}
   ctx.lineWidth=1;
 }
+
+// ---------------------------------------------------------------- tasks
+let task={runs:{},timer:null,items:{}};
+async function startTask(){
+  const base={kind:'task',task:$('#t-task').value,n:+$('#t-n').value,offset:+$('#t-offset').value};
+  clearInterval(task.timer); task={runs:{},timer:null,items:{},name:base.task};
+  $('#t-table').innerHTML='';$('#t-summary').style.display='none';$('#t-go').disabled=true;$('#t-status').textContent='starting…';
+  try{
+    const [a,b]=await Promise.all([api('/api/live',{...base,model:$('#t-model').value}),api('/api/live',{...base,model:JEV})]);
+    task.runs={ours:{id:a.id,seen:0,done:false,ms:[],usd:0},jev:{id:b.id,seen:0,done:false,ms:[],usd:0}};
+    task.timer=setInterval(pollTask,900);
+  }catch(e){toast(e.message,true);$('#t-go').disabled=false}
+}
+async function pollTask(){
+  for(const [side,run] of Object.entries(task.runs)){
+    if(run.done) continue;
+    const r=await api(`/api/live/${run.id}?start=${run.seen}`);
+    run.seen=r.total;
+    for(const l of r.lines){
+      if(l.kind==='item'){const it=task.items[l.index]||(task.items[l.index]={state:l.state,item:l.item,ours:null,jev:null});it[side]=l.answers;run.ms.push(l.ms);run.usd=l.usd||0}
+      if(l.kind==='error'){const it=task.items[l.index]||(task.items[l.index]={state:'',item:'',ours:null,jev:null});it[side]={_error:l.message}}
+    }
+    if(r.status!=='running'&&r.status!=='unknown') run.done=true;
+  }
+  renderTask();
+  const st=Object.entries(task.runs).map(([s,r])=>`${s}: ${r.done?'done':'running'} ${r.ms.length} items`).join(' · ');
+  $('#t-status').textContent=st;
+  if(Object.values(task.runs).every(r=>r.done)){clearInterval(task.timer);task.timer=null;$('#t-go').disabled=false}
+}
+function renderTask(){
+  const idx=Object.keys(task.items).map(Number).sort((a,b)=>a-b); if(!idx.length) return;
+  const qnames=[...new Set(idx.flatMap(i=>Object.keys(task.items[i].ours||task.items[i].jev||{})))].filter(q=>q!=='_error');
+  let html='<tr><th>#</th><th>item</th>'+qnames.map(q=>`<th>${q}<br><span class="muted" style="text-transform:none">ours · Jev · gold</span></th>`).join('')+'</tr>';
+  const stats={};for(const q of qnames)stats[q]={agree:0,n:0,oursRight:0,jevRight:0,gold:0};
+  for(const i of idx){const it=task.items[i];
+    html+=`<tr><td class="muted">${i+1}</td><td style="max-width:420px"><div class="mono" style="font-size:11px;white-space:pre-wrap;max-height:90px;overflow:hidden">${(it.state||'').replace(/</g,'&lt;')}</div></td>`;
+    for(const q of qnames){const o=it.ours&&it.ours[q],j=it.jev&&it.jev[q];const oo=o?o.option.split(':')[0]:(it.ours&&it.ours._error?'err':'…'),jo=j?j.option.split(':')[0]:(it.jev&&it.jev._error?'err':'…');const gold=(j&&j.gold)||(o&&o.gold);const g=gold?gold.split(':')[0]:'';
+      if(o&&j){stats[q].n++;if(o.option===j.option)stats[q].agree++;if(gold){stats[q].gold++;if(o.option===gold)stats[q].oursRight++;if(j.option===gold)stats[q].jevRight++}}
+      const cls=(a)=>gold?(a===gold.split(':')[0]?'good':'bad'):(o&&j&&o.option===j.option?'':'muted');
+      html+=`<td style="white-space:nowrap"><span class="${cls(oo)}">${oo}</span> <span class="muted">${o?(100*o.confidence).toFixed(0)+'%':''}</span> · <span class="${cls(jo)}">${jo}</span> <span class="muted">${j?(100*j.confidence).toFixed(0)+'%':''}</span>${g?` · <b>${g}</b>`:''}</td>`}
+    html+='</tr>'}
+  $('#t-table').innerHTML=html;
+  const med=a=>a.length?a.slice().sort((x,y)=>x-y)[a.length>>1]:null;
+  let k='';for(const q of qnames){const s=stats[q];k+=`<div><b>${s.n?(100*s.agree/s.n).toFixed(0)+' %':'—'}</b><span>${q}: agreement (${s.n})</span></div>`;if(s.gold)k+=`<div><b>${(100*s.oursRight/s.gold).toFixed(0)} % / ${(100*s.jevRight/s.gold).toFixed(0)} %</b><span>${q}: ours / Jev right vs gold</span></div>`}
+  k+=`<div><b>${med(task.runs.ours?.ms||[])??'—'} / ${med(task.runs.jev?.ms||[])??'—'} ms</b><span>per item, ours / Jev</span></div><div><b>${(task.runs.jev?.usd||0).toFixed(4)} $</b><span>Jev spent</span></div>`;
+  $('#t-kpi').innerHTML=k;$('#t-summary').style.display='';
+}
+
 (async()=>{await loadModels();await loadResults();refreshJobs();refreshStatus();setInterval(refreshJobs,4000);setInterval(refreshStatus,5000);})();
 </script>
 </body>

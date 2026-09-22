@@ -44,7 +44,7 @@ PUBLISHED = {
 JEVBENCH_ITEMS = {"easy": 48, "standard": 72, "hard": 111}
 MISC_PREFIXES = ("demo_", "latency_", "unreadable", "jevbench_hard")
 GENERAL_SETS = ["general", "quiz", "multilingual", "tools", "browser", "moderation",
-                "more", "semrouter", "kotoba", "domains", "games", "routing"]
+                "more", "semrouter", "kotoba", "domains", "games", "routing", "jevdistill", "jevdistill_hard"]
 
 
 def environment() -> dict[str, str]:
@@ -104,6 +104,8 @@ def discover_models() -> list[dict[str, Any]]:
                                "path": str(head)})
     if RUNS.exists():
         for folder in sorted(RUNS.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+            if folder.name.startswith(("smoke", "debug", "mbert")):
+                continue
             for name in ("best-calibrated.pt", "best.pt", "pair.pt"):
                 file = folder / name
                 if not file.exists():
@@ -395,6 +397,9 @@ def build_app():
         seed: int = 0
         max_steps: int = 300
         bundled: bool = False
+        task: str = "emails"
+        n: int = 20
+        offset: int = 0
 
     @app.get("/", response_class=HTMLResponse)
     def index() -> str:
@@ -487,8 +492,14 @@ def build_app():
             if request.bundled:
                 command.append("--bundled")
             label = f"live snake · {spec['run']} · {request.size}x{request.size} seed {request.seed}"
+        elif request.kind == "task":
+            (ROOT / "data" / "traces").mkdir(parents=True, exist_ok=True)
+            command = [PY, "scripts/run_task.py", *flag, "--task", request.task, "--n", str(request.n),
+                       "--offset", str(request.offset), "--trace-dir", str(folder),
+                       "--record", "data/traces/tasks.jsonl"]
+            label = f"task {request.task} · {spec['run']} · {request.n} items"
         else:
-            raise HTTPException(422, "kind is web or snake")
+            raise HTTPException(422, "kind is web, snake or task")
         job = jobs.start(f"live-{request.kind}", command, label, None)
         job["live"] = live_id
         jobs.save()

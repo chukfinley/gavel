@@ -56,7 +56,7 @@ $PY scripts/eval_cbench.py --checkpoint runs/longrun/best-calibrated.pt \
 $PY scripts/eval_jevbench.py --checkpoint runs/longrun/best-calibrated.pt \
   --suite /root/run/jevbench --max-length 4096 \
   --out results/longrun_jevbench.json 2>&1 | tail -16
-for s in general quiz multilingual tools browser moderation more semrouter kotoba domains games routing; do
+for s in general quiz multilingual tools browser moderation more semrouter kotoba domains games routing jevdistill jevdistill_hard; do
   [ -f "data/test_${s}.jsonl" ] && $PY scripts/eval_general.py \
     --checkpoint runs/longrun/best-calibrated.pt --test "data/test_${s}.jsonl" \
     --batch-size 4 --max-length 1024 --out "results/longrun_${s}.json" \
