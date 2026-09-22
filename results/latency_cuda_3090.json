@@ -1,0 +1,86 @@
+[
+  {
+    "state_tokens": 64,
+    "options": 2,
+    "pair_ms": 36.9,
+    "span_ms": 22.9,
+    "span_4q_ms": 23.9
+  },
+  {
+    "state_tokens": 64,
+    "options": 5,
+    "pair_ms": 99.6,
+    "span_ms": 21.4,
+    "span_4q_ms": 22.0
+  },
+  {
+    "state_tokens": 64,
+    "options": 8,
+    "pair_ms": 149.7,
+    "span_ms": 20.6,
+    "span_4q_ms": 22.0
+  },
+  {
+    "state_tokens": 256,
+    "options": 2,
+    "pair_ms": 37.0,
+    "span_ms": 20.5,
+    "span_4q_ms": 21.8
+  },
+  {
+    "state_tokens": 256,
+    "options": 5,
+    "pair_ms": 93.6,
+    "span_ms": 21.6,
+    "span_4q_ms": 22.6
+  },
+  {
+    "state_tokens": 256,
+    "options": 8,
+    "pair_ms": 148.5,
+    "span_ms": 21.5,
+    "span_4q_ms": 22.4
+  },
+  {
+    "state_tokens": 1024,
+    "options": 2,
+    "pair_ms": 39.8,
+    "span_ms": 21.7,
+    "span_4q_ms": 22.8
+  },
+  {
+    "state_tokens": 1024,
+    "options": 5,
+    "pair_ms": 98.9,
+    "span_ms": 21.8,
+    "span_4q_ms": 23.0
+  },
+  {
+    "state_tokens": 1024,
+    "options": 8,
+    "pair_ms": 159.0,
+    "span_ms": 22.5,
+    "span_4q_ms": 23.7
+  },
+  {
+    "state_tokens": 4096,
+    "options": 2,
+    "pair_ms": 127.0,
+    "span_ms": 50.5,
+    "span_4q_ms": 52.0
+  },
+  {
+    "state_tokens": 4096,
+    "options": 5,
+    "pair_ms": 312.5,
+    "span_ms": 51.2,
+    "span_4q_ms": 53.0
+  },
+  {
+    "state_tokens": 4096,
+    "options": 8,
+    "pair_ms": 498.5,
+    "span_ms": 51.6,
+    "span_4q_ms": 53.7
+  }
+]

@@ -401,3 +401,24 @@ The added sources (navigation, snake, tickets, emails, products) raise
 the model on the tasks they cover and on nothing else; the outside suites
 do not move or fall. JevBench's own table now also lists decider-2b
 (0.847 / 0.459) and nimble-9b (0.931 / 0.369) on standard / hard.
+
+## The one-sequence head, second attempt (pod, 2026-09-22)
+
+Distilled from the `pod-full` pair model with packed sequences (up to
+four questions per state, half the batches), Jev's distribution where
+it exists, the pair model's elsewhere, 10k steps at batch 8 on a 3090
+(0.34 $). `results/pod-span_jevbench.json`, `results/latency_cuda_3090.json`,
+`results/demo_snake_pod-span_bundled.json`.
+
+| | old span head (2026-09-21) | new span head | its teacher |
+|---|---|---|---|
+| JevBench easy / standard / hard | 0.958 / 0.528 / 0.342 | **1.000 / 0.681 / 0.360** | 0.979 / 0.681 / 0.324 |
+| dev, 20 strata | — | 0.688 | 0.702 |
+| snake, three questions in one sequence, safety right | 0.065 | **0.901** | — |
+| RTX 3090, 1024 tokens, 8 options | — | 22 ms | 159 ms |
+| RTX 3090, 4096 tokens, 8 options | — | 52 ms | 499 ms |
+| four questions on one state | — | +1 ms | — |
+
+The head now matches the pair model on the outside suite and answers
+several questions in one pass; the packed training was the missing
+piece. It is `span-head.pt` on Hub main `2a560d72`.

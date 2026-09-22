@@ -262,6 +262,19 @@ than after it.
   The Jev-4b dataset upstream is gone (404); our copy lives in
   `chukfinley/gavel-runs/data/jev4b/` and the builder falls back to it.
 
+* **Span head, packed (pod `klb4i2am5pjchj`, 2026-09-22, 0.34 $):**
+  JevBench 1.000 / 0.681 / 0.360 against its teacher's 0.979 / 0.681 /
+  0.324 and the old head's 0.958 / 0.528 / 0.342; snake bundled 0.901
+  right (was 0.065); 22 ms at 1k tokens and 8 options on a 3090, 52 ms
+  at 4k. Hub main `2a560d72` = `pod-full` pair + this head. Local copy in
+  `export/hub-main/` for the WebUI. The pair model on main is the
+  `pod-full` one (dev 0.702, outside suites a point or four below the
+  baseline `1023a938`); the span head is what ships.
+* Next: the span head's own held-out numbers per stratum and cbench with
+  a `--span-checkpoint` path in `eval_cbench.py` (not wired); the snake
+  yes-rate of 0.90 says the safety question is still partly answered from
+  the prior — more balanced boards or Jev's snake verdicts would fix it.
+
 ## The one thing to decide
 
 Whether the product is short states on a CPU or long documents on a GPU.

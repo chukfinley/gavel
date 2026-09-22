@@ -1,0 +1,22 @@
+{
+  "judge": "runs/span/best.pt",
+  "size": 16,
+  "bundled": true,
+  "random": {
+    "steps": 65.4,
+    "eaten": 0.2
+  },
+  "model": {
+    "steps": 101.5,
+    "eaten": 10.2,
+    "ms_per_turn": 20.9,
+    "safety_accuracy": 0.901,
+    "yes_rate": 0.9,
+    "unsafe_share": 0.057,
+    "turns": 1025
+  },
+  "oracle": {
+    "steps": 200,
+    "eaten": 18.2
+  }
+}
