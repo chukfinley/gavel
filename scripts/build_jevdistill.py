@@ -25,9 +25,23 @@ def fetch() -> None:
         return
     import os
 
-    from huggingface_hub import snapshot_download
-    snapshot_download("MagaBitmex/jev-4b-distill-data", repo_type="dataset", local_dir=str(ROOT),
-                      token=os.environ.get("HF_TOKEN"))
+    from huggingface_hub import hf_hub_download, snapshot_download
+
+    token = os.environ.get("HF_TOKEN")
+    try:
+        snapshot_download("MagaBitmex/jev-4b-distill-data", repo_type="dataset", local_dir=str(ROOT), token=token)
+    except Exception as error:
+        # The upstream repo answered 404 on 2026-09-22 (gone or private). Our
+        # own copy of the six files sits in the results dataset, Apache 2.0.
+        print("upstream dataset unavailable, using our copy:", str(error)[:80])
+        repo = os.environ.get("RESULTS_REPO", "chukfinley/gavel-runs")
+        for name in ("data3/train.jsonl", "data3/train_teacher.jsonl", "data3/eval.jsonl",
+                     "data3/eval_teacher.jsonl", "data_hard/eval.jsonl", "data_hard/eval_teacher.jsonl"):
+            local = hf_hub_download(repo, f"data/jev4b/{name}", repo_type="dataset",
+                                    local_dir=str(ROOT / ".mirror"), token=token)
+            target = ROOT / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(open(local, "rb").read())
 
 
 def rows_of(file: Path, teacher_file: Path | None, source: str) -> list[dict]:
