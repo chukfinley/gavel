@@ -1,0 +1,113 @@
+{
+  "strata": {
+    "abstain-held": {
+      "rows": 200,
+      "accuracy": 0.9599999785423279,
+      "balanced_accuracy": 0.9471225312777928,
+      "ece": 0.03149920225143432
+    },
+    "anli-r1-dev": {
+      "rows": 200,
+      "accuracy": 0.625,
+      "balanced_accuracy": 0.6268081267674764,
+      "ece": 0.23853635758161545
+    },
+    "anli-r3-dev": {
+      "rows": 200,
+      "accuracy": 0.49000000953674316,
+      "balanced_accuracy": 0.48967285950978595,
+      "ece": 0.32195935502648354
+    },
+    "arc-easy-dev": {
+      "rows": 200,
+      "accuracy": 0.550000011920929,
+      "balanced_accuracy": 0.5487661808729172,
+      "ece": 0.12339322686195373
+    },
+    "boolq-held": {
+      "rows": 200,
+      "accuracy": 0.7149999737739563,
+      "balanced_accuracy": 0.6900244951248169,
+      "ece": 0.10974870011210441
+    },
+    "claims-held": {
+      "rows": 200,
+      "accuracy": 0.8550000190734863,
+      "balanced_accuracy": 0.835999995470047,
+      "ece": 0.06184679821133614
+    },
+    "clinc-dev": {
+      "rows": 200,
+      "accuracy": 0.9850000143051147,
+      "balanced_accuracy": 0.9822012086709341,
+      "ece": 0.015053827315568924
+    },
+    "criteria-held": {
+      "rows": 200,
+      "accuracy": 0.8100000023841858,
+      "balanced_accuracy": 0.8520572185516357,
+      "ece": 0.10602543860673905
+    },
+    "domains-held": {
+      "rows": 200,
+      "accuracy": 0.8500000238418579,
+      "balanced_accuracy": 0.7605421036481858,
+      "ece": 0.0510792875289917
+    },
+    "knowledge-held": {
+      "rows": 200,
+      "accuracy": 0.6499999761581421,
+      "balanced_accuracy": 0.6878945231437683,
+      "ece": 0.0932119716703892
+    },
+    "mmlu-dev": {
+      "rows": 200,
+      "accuracy": 0.38999998569488525,
+      "balanced_accuracy": 0.3855113014578819,
+      "ece": 0.1245176537334919
+    },
+    "moderation-held": {
+      "rows": 200,
+      "accuracy": 0.8899999856948853,
+      "balanced_accuracy": 0.8555805186430613,
+      "ece": 0.06138406962156297
+    },
+    "openbookqa-dev": {
+      "rows": 200,
+      "accuracy": 0.47999998927116394,
+      "balanced_accuracy": 0.4810786470770836,
+      "ece": 0.12425478413701058
+    },
+    "packet-held": {
+      "rows": 200,
+      "accuracy": 0.800000011920929,
+      "balanced_accuracy": 0.8153231143951416,
+      "ece": 0.05895469173789024
+    },
+    "router-held": {
+      "rows": 200,
+      "accuracy": 0.6100000143051147,
+      "balanced_accuracy": 0.6093501448631287,
+      "ece": 0.06662379205226898
+    },
+    "scales-held": {
+      "rows": 200,
+      "accuracy": 0.5950000286102295,
+      "balanced_accuracy": 0.5417805671691894,
+      "ece": 0.07102493211627006
+    },
+    "snli-dev": {
+      "rows": 200,
+      "accuracy": 0.7149999737739563,
+      "balanced_accuracy": 0.7182539701461792,
+      "ece": 0.2196028691530228
+    },
+    "wanli-held": {
+      "rows": 200,
+      "accuracy": 0.7099999785423279,
+      "balanced_accuracy": 0.6823093891143799,
+      "ece": 0.20871099427342416
+    }
+  },
+  "mean": 0.6950153831057447
+}

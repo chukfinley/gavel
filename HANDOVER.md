@@ -205,6 +205,29 @@ than after it.
   the Jev labels (10k steps, batch 4, 3060) as `runs/jev-pair`, then dev,
   JevBench and cbench land in `results/jev-pair_*.json`.
 
+* **`runs/jev-pair` (2026-09-21, 10k steps, 79k Jev-labelled rows as KL
+  target, teacher share 0.5, lr 1e-5): no movement.** Dev 0.695 vs 0.690,
+  JevBench 1.000/0.694/0.342 vs 0.979/0.694/0.369, cbench 0.623 vs 0.629.
+  Knowledge strata up a little (knowledge-held 0.575→0.650, openbookqa
+  0.425→0.480, wanli 0.650→0.710), the rest noise. Soft labels on 9 % of
+  the rows do not carry facts into a 307M encoder. Results in
+  `results/jev-pair_*.json`.
+* **`_scratch/local_full_chain.sh` (started 2026-09-22 13:15 local):** the
+  mix with every new source (webnav from Jev's navigation, balanced snake
+  from the simulator, the Jev-4b distillation tickets, Enron spam, 22k
+  products, Jev's task answers), pair model continued 30k steps with the
+  Jev KL target, then the span head with packed questions, 20k steps.
+  About 7 h + 4 h on the 3060. `runs/full-pair`, `runs/full-span`,
+  `results/full-*`. `_scratch/night.log` has the stamps.
+* **Tasks tab and sources (2026-09-22):** email triage (Enron, spam gold)
+  and product → 33 categories (gold), both models per item, agreement and
+  accuracy in the UI; `scripts/run_task.py`, `src/gavel/tasks.py`. Jev's
+  answers on all 824 items are harvested into `data/traces/tasks.jsonl`
+  and folded in by `build_tasktraces.py`. `build_jevdistill.py` turns
+  MagaBitmex/jev-4b-distill-data (7200 questions with Jev's distributions)
+  into a source plus two test sets, `test_jevdistill` and
+  `test_jevdistill_hard`.
+
 ## The one thing to decide
 
 Whether the product is short states on a CPU or long documents on a GPU.

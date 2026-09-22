@@ -23,7 +23,7 @@ TRAIN_PARTS = ["train.jsonl", "business.jsonl", "router.jsonl", "abstain_short.j
                "browser.jsonl", "moderation.jsonl", "more.jsonl", "semrouter.jsonl", "kotoba.jsonl", "grounded.jsonl", "scales.jsonl",
                "criteria.jsonl", "claims.jsonl", "domains.jsonl", "games.jsonl", "routing.jsonl",
                "webnav.jsonl", "snake.jsonl", "jevdistill.jsonl", "emails_spam.jsonl",
-               "products.jsonl"]
+               "products.jsonl", "tasktraces.jsonl"]
 LONG_PARTS = ["long.jsonl", "abstain_long.jsonl", "more_long.jsonl"]
 AGENT_PARTS = ["tools.jsonl", "browser.jsonl"]
 ROUTE = {"router-difficulty", "router-tier", "banking77", "ag-news", "dbpedia",
