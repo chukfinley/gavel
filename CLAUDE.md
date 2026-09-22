@@ -110,6 +110,15 @@ Two fields are load-bearing and were learned the hard way:
   exactly one, and the failure we retry against is a broken host, which a
   longer card list does not avoid.
 
+## Never train on the workstation GPU
+
+The owner's rule of 2026-09-22: **no training on the local card.** The
+RTX 3060 in the desktop serves the WebUI, demos, latency measurements and
+small evaluations. Every training or distillation run goes to a rented
+pod, even a short one. A local run on 2026-09-22 got to step 15400 of
+30000 (dev 0.693 at 15000) before it was killed; the chain scripts under
+`_scratch/` that started it are not to be re-armed.
+
 ## Rented machines
 
 * `python scripts/runpod_launch.py ensure` rents until one machine can

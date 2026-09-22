@@ -19,6 +19,17 @@ ROOT = Path("_scratch/jev4b")
 YES = {"yes", "true"}
 
 
+def fetch() -> None:
+    """The dataset is on the Hub; a pod does not have the local snapshot."""
+    if (ROOT / "data3" / "train.jsonl").exists():
+        return
+    import os
+
+    from huggingface_hub import snapshot_download
+    snapshot_download("MagaBitmex/jev-4b-distill-data", repo_type="dataset", local_dir=str(ROOT),
+                      token=os.environ.get("HF_TOKEN"))
+
+
 def rows_of(file: Path, teacher_file: Path | None, source: str) -> list[dict]:
     teachers = {}
     if teacher_file and teacher_file.exists():
@@ -93,6 +104,7 @@ def write(path: str, rows: list[dict]) -> None:
 
 
 def main() -> None:
+    fetch()
     write("data/jevdistill.jsonl", rows_of(ROOT / "data3/train.jsonl", ROOT / "data3/train_teacher.jsonl", "jevdistill"))
     write("data/test_jevdistill.jsonl", rows_of(ROOT / "data3/eval.jsonl", ROOT / "data3/eval_teacher.jsonl", "jevdistill-eval"))
     write("data/test_jevdistill_hard.jsonl", rows_of(ROOT / "data_hard/eval.jsonl", ROOT / "data_hard/eval_teacher.jsonl", "jevdistill-hard"))

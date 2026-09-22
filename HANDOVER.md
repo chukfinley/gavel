@@ -228,6 +228,16 @@ than after it.
   into a source plus two test sets, `test_jevdistill` and
   `test_jevdistill_hard`.
 
+* **Local `full-pair` run, 2026-09-22, stopped by the owner at step 15400
+  of 30000 (SIGTERM).** Dev 0.682 → 0.687 → 0.693 at 5k/10k/15k against
+  0.690 for the baseline; `runs/full-pair/best.pt` is the step-15000
+  checkpoint on the 966k-row mix with the Jev KL target. New rule in
+  `CLAUDE.md`: nothing trains on the workstation any more. The same
+  recipe goes to a pod through `scripts/longrun.sh`, which now pulls the
+  Jev labels and the harvested traces from the `chukfinley/gavel-runs`
+  dataset (`data/`), continues from the Hub pair model, and distils the
+  span head with packed questions.
+
 ## The one thing to decide
 
 Whether the product is short states on a CPU or long documents on a GPU.
