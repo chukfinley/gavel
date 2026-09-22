@@ -1,0 +1,17 @@
+{
+  "strata": {
+    "routing-rule": {
+      "rows": 276,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "ece": 0.12362158125725344
+    },
+    "routing-specialist": {
+      "rows": 324,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "ece": 0.06303786789929425
+    }
+  },
+  "mean": 1.0
+}

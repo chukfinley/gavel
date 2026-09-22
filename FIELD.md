@@ -387,3 +387,17 @@ capped at 2048 tokens, Apache 2.0. Decoder weight class, so it sits with
 kev and decider, not with us. The card names no benchmark numbers and no
 training sets; the suite is the 13 manifests in `bespokelabsai/nimble`,
 still not wired here. Note the 2048-token cap against our 32768.
+
+## Pod run of 2026-09-22: more data and Jev's labels
+
+| model | dev (strata mean) | cbench v2 | combined | JevBench easy / standard / hard |
+|---|---|---|---|---|
+| baseline pair (`1023a938`) | 0.690 (18 strata) | 0.619 | 0.629 | 0.979 / 0.694 / 0.369 |
+| `jev-pair` (10k steps, Jev KL, local) | 0.695 | 0.612 | 0.623 | 1.000 / 0.694 / 0.342 |
+| `pod-full` (30k steps, 1.14M rows, Jev KL, Hub `2e9a4a65`) | 0.702 (20 strata) | 0.610 | 0.619 | 0.979 / 0.681 / 0.324 |
+| Jev 1.13 on our dev | 0.799 | — | — | 1.000 / 0.986 / 0.730 |
+
+The added sources (navigation, snake, tickets, emails, products) raise
+the model on the tasks they cover and on nothing else; the outside suites
+do not move or fall. JevBench's own table now also lists decider-2b
+(0.847 / 0.459) and nimble-9b (0.931 / 0.369) on standard / hard.

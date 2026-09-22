@@ -1,0 +1,475 @@
+{
+  "v1": {
+    "micro": 0.717948717948718,
+    "macro": 0.7138875,
+    "cases": 78,
+    "tasks": [
+      {
+        "task": "support_department",
+        "type": "choice",
+        "correct": 12,
+        "cases": 15,
+        "accuracy": 0.8
+      },
+      {
+        "task": "email_intent",
+        "type": "choice",
+        "correct": 9,
+        "cases": 10,
+        "accuracy": 0.9
+      },
+      {
+        "task": "refund_eligible",
+        "type": "noul",
+        "correct": 4,
+        "cases": 10,
+        "accuracy": 0.4
+      },
+      {
+        "task": "urgency",
+        "type": "noul",
+        "correct": 8,
+        "cases": 8,
+        "accuracy": 1.0
+      },
+      {
+        "task": "secret_leak",
+        "type": "noul",
+        "correct": 4,
+        "cases": 8,
+        "accuracy": 0.5
+      },
+      {
+        "task": "frustration_level",
+        "type": "score",
+        "correct": 6,
+        "cases": 9,
+        "accuracy": 0.6667
+      },
+      {
+        "task": "incident_severity",
+        "type": "score",
+        "correct": 4,
+        "cases": 9,
+        "accuracy": 0.4444
+      },
+      {
+        "task": "review_sentiment",
+        "type": "score",
+        "correct": 9,
+        "cases": 9,
+        "accuracy": 1.0
+      }
+    ],
+    "published": {
+      "jev": [
+        0.974,
+        0.972
+      ],
+      "von-1.0.1": [
+        0.923,
+        0.93
+      ],
+      "gliner2": [
+        0.795,
+        0.785
+      ],
+      "laya": [
+        0.615,
+        0.619
+      ]
+    }
+  },
+  "v2": {
+    "micro": 0.6096997690531177,
+    "macro": 0.6078265306122449,
+    "cases": 866,
+    "tasks": [
+      {
+        "task": "support_department_v2",
+        "type": "choice",
+        "correct": 13,
+        "cases": 17,
+        "accuracy": 0.7647
+      },
+      {
+        "task": "email_intent_v2",
+        "type": "choice",
+        "correct": 12,
+        "cases": 15,
+        "accuracy": 0.8
+      },
+      {
+        "task": "refund_eligible_v2",
+        "type": "noul",
+        "correct": 4,
+        "cases": 17,
+        "accuracy": 0.2353
+      },
+      {
+        "task": "urgency_v2",
+        "type": "noul",
+        "correct": 16,
+        "cases": 18,
+        "accuracy": 0.8889
+      },
+      {
+        "task": "secret_leak_v2",
+        "type": "noul",
+        "correct": 9,
+        "cases": 16,
+        "accuracy": 0.5625
+      },
+      {
+        "task": "frustration_level_v2",
+        "type": "score",
+        "correct": 8,
+        "cases": 18,
+        "accuracy": 0.4444
+      },
+      {
+        "task": "incident_severity_v2",
+        "type": "score",
+        "correct": 5,
+        "cases": 14,
+        "accuracy": 0.3571
+      },
+      {
+        "task": "review_sentiment_v2",
+        "type": "score",
+        "correct": 12,
+        "cases": 18,
+        "accuracy": 0.6667
+      },
+      {
+        "task": "expense_category",
+        "type": "choice",
+        "correct": 17,
+        "cases": 18,
+        "accuracy": 0.9444
+      },
+      {
+        "task": "oncall_route",
+        "type": "choice",
+        "correct": 13,
+        "cases": 17,
+        "accuracy": 0.7647
+      },
+      {
+        "task": "churn_risk",
+        "type": "score",
+        "correct": 13,
+        "cases": 18,
+        "accuracy": 0.7222
+      },
+      {
+        "task": "lead_qualification",
+        "type": "score",
+        "correct": 7,
+        "cases": 16,
+        "accuracy": 0.4375
+      },
+      {
+        "task": "app_review_intent",
+        "type": "choice",
+        "correct": 14,
+        "cases": 16,
+        "accuracy": 0.875
+      },
+      {
+        "task": "content_moderation",
+        "type": "choice",
+        "correct": 12,
+        "cases": 18,
+        "accuracy": 0.6667
+      },
+      {
+        "task": "code_review_intent",
+        "type": "choice",
+        "correct": 13,
+        "cases": 17,
+        "accuracy": 0.7647
+      },
+      {
+        "task": "commit_intent",
+        "type": "choice",
+        "correct": 8,
+        "cases": 15,
+        "accuracy": 0.5333
+      },
+      {
+        "task": "recipe_cuisine",
+        "type": "choice",
+        "correct": 13,
+        "cases": 18,
+        "accuracy": 0.7222
+      },
+      {
+        "task": "question_duplicate",
+        "type": "noul",
+        "correct": 11,
+        "cases": 16,
+        "accuracy": 0.6875
+      },
+      {
+        "task": "sql_injection_risk",
+        "type": "noul",
+        "correct": 8,
+        "cases": 15,
+        "accuracy": 0.5333
+      },
+      {
+        "task": "travel_policy_violation",
+        "type": "noul",
+        "correct": 10,
+        "cases": 17,
+        "accuracy": 0.5882
+      },
+      {
+        "task": "contains_pii",
+        "type": "noul",
+        "correct": 10,
+        "cases": 17,
+        "accuracy": 0.5882
+      },
+      {
+        "task": "contains_spoiler",
+        "type": "noul",
+        "correct": 8,
+        "cases": 16,
+        "accuracy": 0.5
+      },
+      {
+        "task": "formality_level",
+        "type": "score",
+        "correct": 7,
+        "cases": 16,
+        "accuracy": 0.4375
+      },
+      {
+        "task": "phishing_email",
+        "type": "noul",
+        "correct": 10,
+        "cases": 17,
+        "accuracy": 0.5882
+      },
+      {
+        "task": "meeting_conflict",
+        "type": "noul",
+        "correct": 8,
+        "cases": 17,
+        "accuracy": 0.4706
+      },
+      {
+        "task": "hazmat_shipping",
+        "type": "noul",
+        "correct": 7,
+        "cases": 16,
+        "accuracy": 0.4375
+      },
+      {
+        "task": "dietary_vegan",
+        "type": "noul",
+        "correct": 8,
+        "cases": 17,
+        "accuracy": 0.4706
+      },
+      {
+        "task": "news_topic",
+        "type": "choice",
+        "correct": 16,
+        "cases": 17,
+        "accuracy": 0.9412
+      },
+      {
+        "task": "document_type",
+        "type": "choice",
+        "correct": 10,
+        "cases": 15,
+        "accuracy": 0.6667
+      },
+      {
+        "task": "reading_level",
+        "type": "score",
+        "correct": 5,
+        "cases": 16,
+        "accuracy": 0.3125
+      },
+      {
+        "task": "insurance_claim_priority",
+        "type": "score",
+        "correct": 7,
+        "cases": 16,
+        "accuracy": 0.4375
+      },
+      {
+        "task": "symptom_triage",
+        "type": "score",
+        "correct": 7,
+        "cases": 19,
+        "accuracy": 0.3684
+      },
+      {
+        "task": "delivery_exception",
+        "type": "choice",
+        "correct": 16,
+        "cases": 19,
+        "accuracy": 0.8421
+      },
+      {
+        "task": "city_service_request",
+        "type": "choice",
+        "correct": 19,
+        "cases": 19,
+        "accuracy": 1.0
+      },
+      {
+        "task": "ad_policy_violation",
+        "type": "noul",
+        "correct": 8,
+        "cases": 16,
+        "accuracy": 0.5
+      },
+      {
+        "task": "fair_housing_violation",
+        "type": "noul",
+        "correct": 9,
+        "cases": 18,
+        "accuracy": 0.5
+      },
+      {
+        "task": "contract_clause_type",
+        "type": "choice",
+        "correct": 16,
+        "cases": 17,
+        "accuracy": 0.9412
+      },
+      {
+        "task": "voice_assistant_intent",
+        "type": "choice",
+        "correct": 17,
+        "cases": 20,
+        "accuracy": 0.85
+      },
+      {
+        "task": "grammar_issue",
+        "type": "choice",
+        "correct": 8,
+        "cases": 21,
+        "accuracy": 0.381
+      },
+      {
+        "task": "action_item_assignment",
+        "type": "noul",
+        "correct": 13,
+        "cases": 19,
+        "accuracy": 0.6842
+      },
+      {
+        "task": "suspicious_transaction",
+        "type": "noul",
+        "correct": 8,
+        "cases": 17,
+        "accuracy": 0.4706
+      },
+      {
+        "task": "return_reason",
+        "type": "choice",
+        "correct": 12,
+        "cases": 18,
+        "accuracy": 0.6667
+      },
+      {
+        "task": "allergen_present",
+        "type": "noul",
+        "correct": 10,
+        "cases": 22,
+        "accuracy": 0.4545
+      },
+      {
+        "task": "home_service_routing",
+        "type": "choice",
+        "correct": 20,
+        "cases": 23,
+        "accuracy": 0.8696
+      },
+      {
+        "task": "gaming_report_type",
+        "type": "choice",
+        "correct": 12,
+        "cases": 20,
+        "accuracy": 0.6
+      },
+      {
+        "task": "warranty_claim_eligible",
+        "type": "noul",
+        "correct": 9,
+        "cases": 20,
+        "accuracy": 0.45
+      },
+      {
+        "task": "weather_alert_severity",
+        "type": "score",
+        "correct": 10,
+        "cases": 22,
+        "accuracy": 0.4545
+      },
+      {
+        "task": "content_type",
+        "type": "choice",
+        "correct": 13,
+        "cases": 22,
+        "accuracy": 0.5909
+      },
+      {
+        "task": "veterinary_triage",
+        "type": "score",
+        "correct": 7,
+        "cases": 20,
+        "accuracy": 0.35
+      }
+    ],
+    "published": {
+      "jev": [
+        0.964,
+        0.966
+      ],
+      "von-1.0.1": [
+        0.666,
+        0.667
+      ],
+      "gliner2": [
+        0.688,
+        0.684
+      ],
+      "laya": [
+        0.585,
+        0.583
+      ]
+    }
+  },
+  "combined": {
+    "micro": 0.6186440677966102,
+    "macro": 0.6227122807017544,
+    "cases": 944,
+    "published": {
+      "jev": [
+        0.965,
+        0.967
+      ],
+      "von-1.0.1": [
+        0.687,
+        0.704
+      ],
+      "gliner2": [
+        0.697,
+        0.698
+      ],
+      "laya": [
+        0.587,
+        0.588
+      ]
+    }
+  },
+  "latency_ms": 24.0469480967307
+}

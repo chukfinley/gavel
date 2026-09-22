@@ -1,0 +1,146 @@
+{
+  "easy": {
+    "accuracy": 0.9791666666666666,
+    "correct": 47,
+    "items": 48,
+    "families": {
+      "extraction": {
+        "accuracy": 1.0,
+        "n": 12
+      },
+      "fact": {
+        "accuracy": 0.9167,
+        "n": 12
+      },
+      "intent": {
+        "accuracy": 1.0,
+        "n": 12
+      },
+      "tool_selection": {
+        "accuracy": 1.0,
+        "n": 12
+      }
+    }
+  },
+  "standard": {
+    "accuracy": 0.6805555555555556,
+    "correct": 49,
+    "items": 72,
+    "families": {
+      "adequacy": {
+        "accuracy": 0.4167,
+        "n": 12
+      },
+      "extraction": {
+        "accuracy": 0.9167,
+        "n": 12
+      },
+      "intent": {
+        "accuracy": 0.75,
+        "n": 12
+      },
+      "ordinal": {
+        "accuracy": 0.9167,
+        "n": 12
+      },
+      "policy": {
+        "accuracy": 0.4167,
+        "n": 12
+      },
+      "routing": {
+        "accuracy": 0.6667,
+        "n": 12
+      }
+    }
+  },
+  "hard": {
+    "accuracy": 0.32432432432432434,
+    "correct": 36,
+    "items": 111,
+    "families": {
+      "adversarial": {
+        "accuracy": 0.5,
+        "n": 6
+      },
+      "ambiguous": {
+        "accuracy": 0.4286,
+        "n": 7
+      },
+      "judge_hard": {
+        "accuracy": 0.4706,
+        "n": 17
+      },
+      "long_policy": {
+        "accuracy": 0.3158,
+        "n": 19
+      },
+      "multi_hop": {
+        "accuracy": 0.2778,
+        "n": 18
+      },
+      "probability": {
+        "accuracy": 0.4,
+        "n": 10
+      },
+      "routing_hard": {
+        "accuracy": 0.2,
+        "n": 5
+      },
+      "temporal_numeric": {
+        "accuracy": 0.1333,
+        "n": 15
+      },
+      "tradeoff": {
+        "accuracy": 0.3333,
+        "n": 6
+      },
+      "trap": {
+        "accuracy": 0.25,
+        "n": 8
+      }
+    }
+  },
+  "latency_ms": 45.547122676006126,
+  "published": {
+    "gpt-5.6-luna": [
+      1.0,
+      0.972,
+      0.964
+    ],
+    "jev-1.13.0": [
+      1.0,
+      0.986,
+      0.73
+    ],
+    "djev": [
+      1.0,
+      0.986,
+      0.676
+    ],
+    "openjev-26b": [
+      1.0,
+      0.972,
+      0.64
+    ],
+    "semif-4b": [
+      1.0,
+      0.986,
+      0.613
+    ],
+    "decider-2b-v10": [
+      1.0,
+      0.847,
+      0.459
+    ],
+    "nimble-9b": [
+      1.0,
+      0.931,
+      0.369
+    ],
+    "open-jev-deberta": [
+      1.0,
+      0.431,
+      0.378
+    ]
+  }
+}

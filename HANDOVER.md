@@ -244,6 +244,24 @@ than after it.
   destructor in arrow or tokenizers under Python 3.11), after every file
   is written. `longrun.sh` does not stop on it. Do not chase it.
 
+* **Pod run `pod-full`, 2026-09-22 (RTX 3090, 1.35 $):** pair model
+  continued from Hub main on the 1.14M-row mix with the Jev KL target, 30k
+  steps, batch 8/16, lr 2e-5. Dev 0.687 → 0.684 → 0.686 → 0.695 → 0.700
+  → **0.702** (20 strata, now including the products, emails and task
+  held-outs). JevBench 0.979 / 0.681 / 0.324 (baseline 0.979 / 0.694 /
+  0.369), cbench v2 0.610, combined 0.619 (baseline 0.619 / 0.629). Better
+  on our own strata, worse on the two outside suites, hard tier −4.5.
+  Results in `results/pod-full_*.json`; the model is Hub main `2e9a4a65`,
+  the baseline stays at revision `1023a938`.
+* **The span distillation on that pod died of OOM at step 1400**: packed
+  batches (four questions per sequence, batch 16) sent ~320 pairs through
+  the teacher in one forward. `teacher_distribution` now runs in blocks of
+  64, `longrun.sh` records the real exit code (a `$(stamp)` in the echo had
+  reset `$?` to 0), and `SKIP_TRAIN=1 PAIR_REVISION=<sha>` runs only
+  calibration, measurement and the span head from a published pair model.
+  The Jev-4b dataset upstream is gone (404); our copy lives in
+  `chukfinley/gavel-runs/data/jev4b/` and the builder falls back to it.
+
 ## The one thing to decide
 
 Whether the product is short states on a CPU or long documents on a GPU.

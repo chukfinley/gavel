@@ -1,0 +1,65 @@
+{
+  "strata": {
+    "kotoba-cola": {
+      "rows": 300,
+      "accuracy": 0.75,
+      "balanced_accuracy": 0.637301579117775,
+      "ece": 0.04581410109996796
+    },
+    "kotoba-counterfactual": {
+      "rows": 300,
+      "accuracy": 0.9366666674613953,
+      "balanced_accuracy": 0.7220889627933502,
+      "ece": 0.04187779267628988
+    },
+    "kotoba-emotion": {
+      "rows": 600,
+      "accuracy": 0.8166666626930237,
+      "balanced_accuracy": 0.612340067823728,
+      "ece": 0.05698112418254217
+    },
+    "kotoba-imdb": {
+      "rows": 300,
+      "accuracy": 0.8899999856948853,
+      "balanced_accuracy": 0.8898645043373108,
+      "ece": 0.05176362286011378
+    },
+    "kotoba-mnli": {
+      "rows": 600,
+      "accuracy": 0.8349999785423279,
+      "balanced_accuracy": 0.8272222280502319,
+      "ece": 0.051955511023600895
+    },
+    "kotoba-mrpc": {
+      "rows": 300,
+      "accuracy": 0.753333330154419,
+      "balanced_accuracy": 0.6807598024606705,
+      "ece": 0.09460987230141957
+    },
+    "kotoba-paws": {
+      "rows": 300,
+      "accuracy": 0.8899999856948853,
+      "balanced_accuracy": 0.8920784890651703,
+      "ece": 0.06076002955436706
+    },
+    "kotoba-qnli": {
+      "rows": 300,
+      "accuracy": 0.79666668176651,
+      "balanced_accuracy": 0.7956618368625641,
+      "ece": 0.08302577604850134
+    },
+    "kotoba-rte": {
+      "rows": 277,
+      "accuracy": 0.7906137108802795,
+      "balanced_accuracy": 0.793135017156601,
+      "ece": 0.1214091968235126
+    },
+    "kotoba-yelp": {
+      "rows": 600,
+      "accuracy": 0.75,
+      "balanced_accuracy": 0.6790353178977966,
+      "ece": 0.06390676180521647
+    }
+  },
+  "mean": 0.7529487805565199
+}

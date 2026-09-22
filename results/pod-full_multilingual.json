@@ -1,0 +1,119 @@
+{
+  "strata": {
+    "belebele-ar": {
+      "rows": 200,
+      "accuracy": 0.7099999785423279,
+      "balanced_accuracy": 0.7131283134222031,
+      "ece": 0.13249610021710395
+    },
+    "belebele-de": {
+      "rows": 200,
+      "accuracy": 0.8349999785423279,
+      "balanced_accuracy": 0.8344707638025284,
+      "ece": 0.08498896434903144
+    },
+    "belebele-en": {
+      "rows": 200,
+      "accuracy": 0.8949999809265137,
+      "balanced_accuracy": 0.8935346603393555,
+      "ece": 0.04483614519238472
+    },
+    "belebele-es": {
+      "rows": 200,
+      "accuracy": 0.8799999952316284,
+      "balanced_accuracy": 0.8804832994937897,
+      "ece": 0.06522399097681046
+    },
+    "belebele-fr": {
+      "rows": 200,
+      "accuracy": 0.8199999928474426,
+      "balanced_accuracy": 0.8228640258312225,
+      "ece": 0.09826198756694793
+    },
+    "belebele-hi": {
+      "rows": 200,
+      "accuracy": 0.6650000214576721,
+      "balanced_accuracy": 0.6733216941356659,
+      "ece": 0.13072466492652893
+    },
+    "belebele-it": {
+      "rows": 200,
+      "accuracy": 0.8550000190734863,
+      "balanced_accuracy": 0.8594039231538773,
+      "ece": 0.043535652160644533
+    },
+    "belebele-pt": {
+      "rows": 200,
+      "accuracy": 0.8149999976158142,
+      "balanced_accuracy": 0.8178634941577911,
+      "ece": 0.10994281634688377
+    },
+    "belebele-ru": {
+      "rows": 200,
+      "accuracy": 0.7950000166893005,
+      "balanced_accuracy": 0.8006883561611176,
+      "ece": 0.11017306134104726
+    },
+    "belebele-zh": {
+      "rows": 200,
+      "accuracy": 0.8149999976158142,
+      "balanced_accuracy": 0.8229053318500519,
+      "ece": 0.0823801138997078
+    },
+    "xnli-test-ar": {
+      "rows": 200,
+      "accuracy": 0.7599999904632568,
+      "balanced_accuracy": 0.7601387103398641,
+      "ece": 0.1306280253827572
+    },
+    "xnli-test-de": {
+      "rows": 200,
+      "accuracy": 0.7850000262260437,
+      "balanced_accuracy": 0.7849389513333639,
+      "ece": 0.114177206158638
+    },
+    "xnli-test-en": {
+      "rows": 200,
+      "accuracy": 0.8450000286102295,
+      "balanced_accuracy": 0.8449419538180033,
+      "ece": 0.09352309048175811
+    },
+    "xnli-test-es": {
+      "rows": 200,
+      "accuracy": 0.7900000214576721,
+      "balanced_accuracy": 0.7901402115821838,
+      "ece": 0.11271219581365585
+    },
+    "xnli-test-hi": {
+      "rows": 200,
+      "accuracy": 0.7149999737739563,
+      "balanced_accuracy": 0.715136448542277,
+      "ece": 0.11647112876176834
+    },
+    "xnli-test-ru": {
+      "rows": 200,
+      "accuracy": 0.7350000143051147,
+      "balanced_accuracy": 0.7354138294855753,
+      "ece": 0.1581777264177799
+    },
+    "xnli-test-tr": {
+      "rows": 200,
+      "accuracy": 0.75,
+      "balanced_accuracy": 0.7503392100334167,
+      "ece": 0.12939795434474946
+    },
+    "xnli-test-vi": {
+      "rows": 200,
+      "accuracy": 0.7599999904632568,
+      "balanced_accuracy": 0.7599879503250122,
+      "ece": 0.1457643576711416
+    },
+    "xnli-test-zh": {
+      "rows": 200,
+      "accuracy": 0.7799999713897705,
+      "balanced_accuracy": 0.7800392111142477,
+      "ece": 0.11722380936145782
+    }
+  },
+  "mean": 0.7915652809958709
+}

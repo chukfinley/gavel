@@ -115,11 +115,18 @@ def teacher_distribution(teacher, rows, device, max_length, width):
                 hypotheses.append(teacher._hypothesis(question, option))
             segments.append((row, offset, len(options)))
             offset += len(options)
-    encoding = teacher.tokenizer(premises, hypotheses, padding=True, truncation=True,
-                                 max_length=max_length, return_tensors="pt").to(device)
-    with torch.autocast(device_type="cuda", dtype=torch.bfloat16,
-                        enabled=device.startswith("cuda")):
-        logits = teacher.model(**encoding).logits[:, 0].float() / teacher.temperature
+    # In blocks: a packed batch of 16 sequences with four questions of five
+    # options each is 320 pairs, and one forward over all of them took a
+    # 24 GB card down at step 1400 on 2026-09-22.
+    logits = []
+    for start in range(0, len(premises), 64):
+        encoding = teacher.tokenizer(premises[start : start + 64], hypotheses[start : start + 64],
+                                     padding=True, truncation=True, max_length=max_length,
+                                     return_tensors="pt").to(device)
+        with torch.autocast(device_type="cuda", dtype=torch.bfloat16,
+                            enabled=device.startswith("cuda")):
+            logits.append(teacher.model(**encoding).logits[:, 0].float() / teacher.temperature)
+    logits = torch.cat(logits)
     padded = torch.zeros(len(rows), width, device=device)
     start = 0
     for row, offset, count in segments:

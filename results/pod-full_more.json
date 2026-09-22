@@ -1,0 +1,53 @@
+{
+  "strata": {
+    "arabic-mmlu": {
+      "rows": 200,
+      "accuracy": 0.4099999964237213,
+      "balanced_accuracy": 0.4203093498945236,
+      "ece": 0.10943796902894974
+    },
+    "code-defect": {
+      "rows": 200,
+      "accuracy": 0.5199999809265137,
+      "balanced_accuracy": 0.5276167243719101,
+      "ece": 0.0057680487632751475
+    },
+    "exams-multilingual": {
+      "rows": 200,
+      "accuracy": 0.3499999940395355,
+      "balanced_accuracy": 0.2838089823722839,
+      "ece": 0.11035480558872222
+    },
+    "longbench-v2": {
+      "rows": 200,
+      "accuracy": 0.24500000476837158,
+      "balanced_accuracy": 0.24183157831430435,
+      "ece": 0.2273276726901531
+    },
+    "safety-aegis": {
+      "rows": 200,
+      "accuracy": 0.949999988079071,
+      "balanced_accuracy": 0.9513130784034729,
+      "ece": 0.025706523209810258
+    },
+    "safety-injection": {
+      "rows": 200,
+      "accuracy": 0.9950000047683716,
+      "balanced_accuracy": 0.9964788854122162,
+      "ece": 0.010074172019958496
+    },
+    "tickets-priority": {
+      "rows": 94,
+      "accuracy": 0.5319148898124695,
+      "balanced_accuracy": 0.4424598527451356,
+      "ece": 0.11032344337473524
+    },
+    "tickets-queue": {
+      "rows": 106,
+      "accuracy": 0.8113207817077637,
+      "balanced_accuracy": 0.8020482301712036,
+      "ece": 0.13234398303166875
+    }
+  },
+  "mean": 0.5832333352106314
+}

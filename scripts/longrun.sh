@@ -45,16 +45,26 @@ $PY scripts/assemble.py | tail -1
 $PY scripts/build_grounded.py >> logs/build.log 2>&1
 $PY scripts/assemble.py | tail -1
 
+# SKIP_TRAIN=1 takes the pair model from the Hub (PAIR_REVISION, default
+# main) as runs/longrun/best.pt and goes straight to calibration and the
+# span head. That is how the span head gets its own run after the pair
+# model is done, without paying for the training again.
+if [ "${SKIP_TRAIN:-0}" = "1" ]; then
+  mkdir -p runs/longrun
+  $PY scripts/pair_checkpoint_from_hub.py --model chukfinley/gavel-vela-32k \
+    --revision "${PAIR_REVISION:-main}" --out runs/longrun/best.pt >> logs/build.log 2>&1
+  echo "[$(stamp)] skipping training, pair model from the Hub (${PAIR_REVISION:-main})"
+fi
 # Continue from the published pair model unless told otherwise: the
 # backbone is fixed, the mix grows, the model keeps what it has.
-if [ -z "${INIT:-}" ] && [ "${FROM_HUB:-1}" = "1" ]; then
+if [ "${SKIP_TRAIN:-0}" != "1" ] && [ -z "${INIT:-}" ] && [ "${FROM_HUB:-1}" = "1" ]; then
   $PY scripts/pair_checkpoint_from_hub.py --model chukfinley/gavel-vela-32k \
     --revision "${HUB_REVISION:-main}" --out runs/init/pair.pt >> logs/build.log 2>&1 && INIT=runs/init/pair.pt
 fi
 TEACHER_FILE=${TEACHER_FILE:-data/jev/train_v6.jsonl}
 [ -f "$TEACHER_FILE" ] || TEACHER_FILE=""
-echo "[$(stamp)] training $STEPS steps on $BACKBONE${INIT:+ from $INIT}${TEACHER_FILE:+ with teacher file}"
-$PY scripts/train.py --backbone "$BACKBONE" --grad-checkpoint --adam8bit \
+[ "${SKIP_TRAIN:-0}" = "1" ] || echo "[$(stamp)] training $STEPS steps on $BACKBONE${INIT:+ from $INIT}${TEACHER_FILE:+ with teacher file}"
+[ "${SKIP_TRAIN:-0}" = "1" ] || $PY scripts/train.py --backbone "$BACKBONE" --grad-checkpoint --adam8bit \
   ${INIT:+--init-from "$INIT"} \
   ${TEACHER_FILE:+--teacher-file "$TEACHER_FILE" --teacher-weight 1.0 --teacher-share 0.3} \
   --train data/train_v6.jsonl --dev data/dev_strat_v2.jsonl \
@@ -95,7 +105,8 @@ $PY scripts/train_span.py --backbone "$BACKBONE" \
   --out runs/span --steps "$SPAN_STEPS" --batch-size "$SPAN_BATCH" \
   --max-length 512 --lr "$SPAN_LR" --head-lr 3e-4 \
   --eval-every 2000 --eval-rows 2600 > logs/span.log 2>&1
-echo "[$(stamp)] span training exit: $?"
+rc=$?   # before $(stamp), which resets $? to 0 and printed "exit: 0" over an OOM
+echo "[$(stamp)] span training exit: $rc"
 
 if [ -f runs/span/best.pt ]; then
   echo "[$(stamp)] measuring the one-sequence model"

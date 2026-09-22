@@ -1,0 +1,83 @@
+{
+  "strata": {
+    "amazon-stars": {
+      "rows": 250,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "ece": 0.0001035928726196289
+    },
+    "civil-comments": {
+      "rows": 250,
+      "accuracy": 0.9399999976158142,
+      "balanced_accuracy": 0.25,
+      "ece": 0.03303668522834778
+    },
+    "clinc-intent": {
+      "rows": 250,
+      "accuracy": 0.972000002861023,
+      "balanced_accuracy": 0.9722612415041242,
+      "ece": 0.01739327502250672
+    },
+    "cola-grammar": {
+      "rows": 250,
+      "accuracy": 0.7559999823570251,
+      "balanced_accuracy": 0.754487156867981,
+      "ece": 0.06743164360523224
+    },
+    "fever-evidence": {
+      "rows": 250,
+      "accuracy": 0.8679999709129333,
+      "balanced_accuracy": 0.8674245476722717,
+      "ece": 0.05708393943309785
+    },
+    "finance-sentiment": {
+      "rows": 250,
+      "accuracy": 0.8799999952316284,
+      "balanced_accuracy": 0.877208391825358,
+      "ece": 0.050511209487915036
+    },
+    "go-emotions": {
+      "rows": 250,
+      "accuracy": 0.7919999957084656,
+      "balanced_accuracy": 0.7825920184453329,
+      "ece": 0.05496541517972946
+    },
+    "helpsteer2": {
+      "rows": 250,
+      "accuracy": 0.5600000023841858,
+      "balanced_accuracy": 0.36663348227739334,
+      "ece": 0.05281839096546173
+    },
+    "ledgar-clause": {
+      "rows": 250,
+      "accuracy": 0.8960000276565552,
+      "balanced_accuracy": 0.8953438500563303,
+      "ece": 0.040480658531188964
+    },
+    "liar2": {
+      "rows": 250,
+      "accuracy": 0.30000001192092896,
+      "balanced_accuracy": 0.22438672371208668,
+      "ece": 0.05148368686437607
+    },
+    "pii-masking": {
+      "rows": 250,
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "ece": 0.0003203749656677246
+    },
+    "wikiqa-adequacy": {
+      "rows": 250,
+      "accuracy": 0.9399999976158142,
+      "balanced_accuracy": 0.49788135290145874,
+      "ece": 0.023401414394378664
+    },
+    "yahoo-topics": {
+      "rows": 250,
+      "accuracy": 0.6200000047683716,
+      "balanced_accuracy": 0.6217800319194794,
+      "ece": 0.06048393189907073
+    }
+  },
+  "mean": 0.7007691382447552
+}
