@@ -114,7 +114,9 @@ def start(args, fatal: bool = True) -> dict | None:
         "env": {"HF_TOKEN": token,
                 "RESULTS_REPO": args.results,
                 "GAVEL_REPO": args.repo,
-                "HF_HUB_ENABLE_HF_TRANSFER": "1"},
+                "HF_HUB_ENABLE_HF_TRANSFER": "1",
+                # Anything the run should see: STEPS, SKIP_TRAIN, SPAN_BATCH, ...
+                **dict(item.split("=", 1) for item in (getattr(args, "env", None) or []))},
         "dockerStartCmd": ["bash", "-lc", command],
     }
     pod = call("POST", "/pods", body, fatal=fatal)
@@ -230,6 +232,8 @@ def main() -> None:
     begin.add_argument("--image", default=IMAGE)
     begin.add_argument("--disk", type=int, default=120)
     begin.add_argument("--cloud", default="COMMUNITY", choices=["COMMUNITY", "SECURE"])
+    begin.add_argument("--env", action="append", default=[], metavar="KEY=VALUE",
+                       help="extra environment for the run, repeatable")
     begin.add_argument("--spot", action="store_true",
                        help="cheaper, but the pod can be taken away")
     begin.add_argument("--results", default="chukfinley/gavel-runs")
@@ -253,6 +257,8 @@ def main() -> None:
     keep.add_argument("--image", default=IMAGE)
     keep.add_argument("--disk", type=int, default=120)
     keep.add_argument("--cloud", default="COMMUNITY", choices=["COMMUNITY", "SECURE"])
+    keep.add_argument("--env", action="append", default=[], metavar="KEY=VALUE",
+                      help="extra environment for the run, repeatable")
     keep.add_argument("--spot", action="store_true")
     keep.add_argument("--results", default="chukfinley/gavel-runs")
     keep.add_argument("--repo", default="https://github.com/chukfinley/gavel.git")
